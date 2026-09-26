@@ -1,56 +1,28 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import supabase from "../supabase";
 
 const FeedbacksContext = createContext();
 
-const STORAGE_KEY = "app_feedbacks";
-
-const INITIAL_FEEDBACKS = [
-  {
-    id: "1",
-    tableNumber: "4",
-    rating: 5,
-    tags: ["خدمة سريعة", "جودة ممتازة", "تعامل راقي"],
-    comment: "الأكل طازج وسريع جداً، والتعامل من الطاقم كان ممتاز. شكراً لكم!",
-    createdAt: "منذ 10 دقائق",
-  },
-  {
-    id: "2",
-    tableNumber: "12",
-    rating: 2,
-    tags: ["تأخير في الطلب", "المكان مزدحم"],
-    comment: "الطلب تأخر أكثر من 30 دقيقة رغم إن الطاولة كانت محجوزة.",
-    createdAt: "منذ 45 دقيقة",
-  },
-  {
-    id: "3",
-    tableNumber: "7",
-    rating: 4,
-    tags: ["جودة ممتازة"],
-    comment: "",
-    createdAt: "منذ ساعتين",
-  },
-];
-
 export function FeedbacksProvider({ children }) {
-  // 1. قراءة البيانات المجهزة مسبقاً من LocalStorage أو استخدام التقييمات الافتراضية
-  const [feedbacks, setFeedbacks] = useState(() => {
-    try {
-      const savedFeedbacks = localStorage.getItem(STORAGE_KEY);
-      return savedFeedbacks ? JSON.parse(savedFeedbacks) : INITIAL_FEEDBACKS;
-    } catch (error) {
-      console.error("خطأ في قراءة البيانات من LocalStorage:", error);
-      return INITIAL_FEEDBACKS;
-    }
-  });
-
-  // 2. حفظ التقييمات في LocalStorage في كل مرة تتغير فيها القائمة (عند الإضافة)
+  // جلب مصفوفة الاراء من قاعدة البيانات
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(feedbacks));
-    } catch (error) {
-      console.error("خطأ في حفظ البيانات في LocalStorage:", error);
-    }
-  }, [feedbacks]);
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase.from("feedbacks").select();
+
+        if (error) console.error("خطأ في جلب التقيمات:", error);
+
+        if (data) setFeedbacks(data);
+      } catch (err) {
+        console.error("فشل عام في جلب البيانات", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // حالة التقيمات
+  const [feedbacks, setFeedbacks] = useState([]);
 
   // دالة إضافة تقييم جديد
   const addFeedback = (newFeedback) => {

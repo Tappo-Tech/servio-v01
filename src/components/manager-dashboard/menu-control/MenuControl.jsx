@@ -368,7 +368,7 @@ function MenuControl() {
                   </Box>
                 }
               >
-                <ListItemText primary={cat.title} />
+                <ListItemText primary={cat.name} />
               </ListItem>
             ))}
           </List>

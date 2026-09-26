@@ -1,34 +1,38 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import supabase from "../supabase";
 
 const TablesContext = createContext();
 
 export function TablesProvider({ children }) {
-  const [tables, setTables] = useState(() => {
-    const savedTables = localStorage.getItem("tappo_tables");
-    if (savedTables) {
+  // جلب ارقام الطاولات و روابطها من قاعدة البيانات
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const parsed = JSON.parse(savedTables);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error("Error loading tables from localStorage", e);
+        const {data, error} = await supabase.from("table").select();
+
+        if (error) console.error("خطأ في جلب مصفوفة الطاولات:", error);
+
+        if (data) setTables(data);
+      } catch (err) {
+        console.error("فشل عام في جلب البيانات", err);
       }
     }
-    return []; // مصفوفة فارغة افتراضياً
-  });
 
-  useEffect(() => {
-    localStorage.setItem("tappo_tables", JSON.stringify(tables));
-  }, [tables]);
+    fetchData();
+  }, [])
+
+  // حالة الطاولات
+  const [tables, setTables] = useState([]);
 
   // توليد الطاولات بالكامل ومسح القديم
   const generateTables = (count) => {
     const parsedCount = parseInt(count, 10) || 0;
-    const baseUrl = window.location.origin; // يأخذ رابط الموقع تلقائياً سواء netlify أو localhost
+    const baseUrl = window.location.origin;
 
     const newTables = Array.from({ length: parsedCount }, (_, index) => ({
       id: index + 1,
-      tableNumber: index + 1,
-      qrValue: `${baseUrl}/menu/${index + 1}`,
+      table_number: index + 1,
+      qr_value: `${baseUrl}/menu/${index + 1}`,
     }));
 
     setTables(newTables);

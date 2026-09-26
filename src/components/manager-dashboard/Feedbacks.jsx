@@ -18,7 +18,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useFeedbacks } from "../../context/FeedbackContext";
 
 function Feedbacks() {
-  const { feedbacks } = useFeedbacks(); // جلب البيانات الديناميكية من الـ Context
+  const { feedbacks } = useFeedbacks();
 
   return (
     <Box
@@ -117,7 +117,7 @@ function Feedbacks() {
                       variant="subtitle1"
                       sx={{ fontWeight: "700", color: "text.primary" }}
                     >
-                      طاولة {item.tableNumber}
+                      طاولة {item.table_number}
                     </Typography>
                   </Stack>
 
@@ -131,7 +131,7 @@ function Feedbacks() {
                   >
                     <AccessTimeIcon sx={{ fontSize: 15 }} />
                     <Typography variant="caption" sx={{ fontWeight: "500" }}>
-                      {item.createdAt}
+                      {item.created_at}
                     </Typography>
                   </Stack>
                 </Box>

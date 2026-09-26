@@ -237,7 +237,7 @@ function QRCodeGenerate() {
                     }}
                   >
                     <Chip
-                      label={`طاولة ${table.tableNumber}`}
+                      label={`طاولة ${table.table_number}`}
                       color="primary"
                       sx={{
                         fontWeight: 700,
@@ -262,7 +262,7 @@ function QRCodeGenerate() {
                       }}
                     >
                       <QRCodeSVG
-                        value={table.qrValue}
+                        value={table.qr_value}
                         size={150}
                         includeMargin={false}
                       />
@@ -288,7 +288,7 @@ function QRCodeGenerate() {
                         px: 1,
                       }}
                     >
-                      {table.qrValue}
+                      {table.qr_value}
                     </Typography>
                   </CardContent>
 

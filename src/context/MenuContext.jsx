@@ -1,51 +1,47 @@
 import { useState, useContext, useMemo, createContext, useEffect } from "react";
-import { menuItems, categories } from "../data/mockData";
+import supabase from "../supabase";
 
 const MenuContext = createContext();
 
 export const MenuProvider = ({ children }) => {
   // 1. حالة عناصر المنيو (Items)
-  const [items, setItems] = useState(() => {
-    try {
-      const savedItems = localStorage.getItem("menu_items");
-      return savedItems ? JSON.parse(savedItems) : menuItems;
-    } catch (error) {
-      console.error("فشل في تحميل عناصر المنيو من local storage", error);
-      return [];
-    }
-  });
+  const [items, setItems] = useState([]);
+  // حالة التصنيفات (Categories) 
+  const [categoriesList, setCategoriesList] = useState([]);
 
-  // 2. حالة التصنيفات (Categories) مع دعم local storage
-  const [categoriesList, setCategoriesList] = useState(() => {
-    try {
-      const savedCategories = localStorage.getItem("menu_categories");
-      return savedCategories ? JSON.parse(savedCategories) : categories;
-    } catch (error) {
-      console.error("فشل في تحميل التصنيفات من local storage", error);
-      return categories;
-    }
-  });
+  /* 
+  1\ جلب عناصر المنيو من قاعدة البيانات 
+   و اضافتها ل (items)
+
+  2\ جلب مصفوفة التصنيفات من قاعدة البيانات 
+   و اضافتها ل (categoriesList)
+   
+  */
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from("menu_items")
+          .select();
+        const { data: categoriesData, error: catError } = await supabase
+          .from("categories")
+          .select();
+
+        if (itemsError) console.error("خطأ في جلب العناصر:", itemsError);
+        if (catError) console.error("خطأ في جلب التصنيفات:", catError);
+
+        if (itemsData) setItems(itemsData);
+        if (categoriesData) setCategoriesList(categoriesData);
+      } catch (err) {
+        console.error("فشل عام في جلب البيانات", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(["all"]);
-
-  // حفظ العناصر في local storage
-  useEffect(() => {
-    try {
-      localStorage.setItem("menu_items", JSON.stringify(items));
-    } catch (error) {
-      console.error("فشل في الحفظ لل local storage", error);
-    }
-  }, [items]);
-
-  // حفظ التصنيفات في local storage
-  useEffect(() => {
-    try {
-      localStorage.setItem("menu_categories", JSON.stringify(categoriesList));
-    } catch (error) {
-      console.error("فشل في حفظ التصنيفات لل local storage", error);
-    }
-  }, [categoriesList]);
 
   // دالة تبديل/تحديد الفلاتر
   const handleAlignment = (event, newCategories) => {
@@ -61,7 +57,7 @@ export const MenuProvider = ({ children }) => {
 
   const updateItem = (updatedItem) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item)),
     );
   };
 
@@ -72,8 +68,8 @@ export const MenuProvider = ({ children }) => {
   const toggleAvailable = (id) => {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, available: !item.available } : item
-      )
+        item.id === id ? { ...item, available: !item.available } : item,
+      ),
     );
   };
 
@@ -84,7 +80,9 @@ export const MenuProvider = ({ children }) => {
 
   const updateCategory = (updatedCategory) => {
     setCategoriesList((prev) =>
-      prev.map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
+      prev.map((cat) =>
+        cat.id === updatedCategory.id ? updatedCategory : cat,
+      ),
     );
   };
 
@@ -110,7 +108,8 @@ export const MenuProvider = ({ children }) => {
       const matchesSearch =
         lowerCaseQuery === "" ||
         item.name.toLowerCase().includes(lowerCaseQuery) ||
-        (item.description && item.description.toLowerCase().includes(lowerCaseQuery));
+        (item.description &&
+          item.description.toLowerCase().includes(lowerCaseQuery));
 
       return matchesCategory && matchesSearch;
     });

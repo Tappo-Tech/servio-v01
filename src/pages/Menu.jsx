@@ -42,14 +42,15 @@ function Menu() {
   const { tableNumber } = useParams();
 
   const isValidTable = tables.some(
-    (t) => String(t.tableNumber) === String(tableNumber)
+    (t) => String(t.table_number) === String(tableNumber)
   );
 
   useEffect(() => {
     if (isValidTable && tableNumber) {
       setTable(tableNumber);
     }
-  }, [tableNumber, isValidTable, setTable]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableNumber, isValidTable]);
 
   // دالة فتح قسم الاراء
   const handleReviewOpen = () => {

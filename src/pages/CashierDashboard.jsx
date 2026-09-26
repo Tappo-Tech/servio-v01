@@ -13,7 +13,6 @@ import Paper from "@mui/material/Paper";
 import { useState } from "react";
 
 function Dashboard() {
-  // استخدام اسم معبر للحالة (Boolean)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const handleNotificationOpen = () => setIsNotificationOpen(true);
