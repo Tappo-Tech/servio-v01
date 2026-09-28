@@ -136,7 +136,7 @@ function RecentOrdersCard() {
                           lineHeight: 1.2,
                         }}
                       >
-                        طاولة {order.tableNumber || order.table || "—"}
+                        طاولة {order.table_number || order.table || "—"}
                       </Typography>
                       {getStatusChip(order.status)}
                     </Box>
@@ -149,8 +149,8 @@ function RecentOrdersCard() {
                       }}
                     >
                       {order.items?.length || 0} عناصر •{" "}
-                      {order.createdAt
-                        ? new Date(order.createdAt).toLocaleTimeString(
+                      {order.created_at
+                        ? new Date(order.created_at).toLocaleTimeString(
                             "ar-SA",
                             { hour: "2-digit", minute: "2-digit" },
                           )
@@ -168,7 +168,7 @@ function RecentOrdersCard() {
                     letterSpacing: "-0.02em",
                   }}
                 >
-                  {(order.total || 0).toFixed(2)}{" "}
+                  {(order.total_price || 0).toFixed(2)}{" "}
                   <Typography
                     component="span"
                     sx={{

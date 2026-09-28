@@ -76,14 +76,14 @@ function MenuControl() {
 
     if (editingCategory) {
       if (updateCategory) {
-        updateCategory({ ...editingCategory, title: newCategoryTitle.trim() });
+        updateCategory({ ...editingCategory, name: newCategoryTitle.trim() });
       }
       setEditingCategory(null);
     } else {
       if (addCategory) {
         addCategory({
           id: uuidV4(),
-          title: newCategoryTitle.trim(),
+          name: newCategoryTitle.trim(),
         });
       }
     }
@@ -92,7 +92,7 @@ function MenuControl() {
 
   const handleStartEditCategory = (cat) => {
     setEditingCategory(cat);
-    setNewCategoryTitle(cat.title);
+    setNewCategoryTitle(cat.name);
   };
 
   const handleCancelCategoryEdit = () => {
@@ -342,7 +342,7 @@ function MenuControl() {
           <List disablePadding sx={{ maxHeight: 240, overflowY: "auto" }}>
             {categoriesList.map((cat) => (
               <ListItem
-                key={cat.id}
+                key={cat.id || cat.name}
                 sx={{
                   border: "1px solid",
                   borderColor: "divider",

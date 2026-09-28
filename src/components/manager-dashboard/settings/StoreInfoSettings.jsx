@@ -11,37 +11,61 @@ import Paper from "@mui/material/Paper";
 import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import IconButton from "@mui/material/IconButton";
 
 // MUI ICONS
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
+import LockIcon from "@mui/icons-material/Lock";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 
 // CONTEXT
 import { useStore } from "../../../context/StoreInfoContext";
 
 const CURRENCIES = [
   { value: "SAR", label: "ر.س (ريال سعودي)" },
-  { value: "SDG", label: "ج.س (جنيه سوداني)" },
   { value: "AED", label: "د.إ (درهم إماراتي)" },
   { value: "USD", label: "$ (دولار أمريكي)" },
 ];
 
+// دالة مساعدة لتوليد الـ Slug بشكل احترافي ومتوافق مع الروابط
+const generateSlug = (text) => {
+  return (
+    text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-") // استبدال المسافات بشرطات
+      // eslint-disable-next-line no-useless-escape
+      .replace(/[^\w\-]+/g, "") // إزالة الرموز الخاصة
+      // eslint-disable-next-line no-useless-escape
+      .replace(/\-\-+/g, "-")
+  ); // استبدال الشرطات المتعددة بشرطة واحدة
+};
+
 function StoreInfoSettings() {
   const { storeInfo, updateStoreInfo } = useStore();
 
+  // استخدام أسماء المتغيرات بطريقة Snake Case لتطابق قاعدة البيانات (Supabase)
   const [formData, setFormData] = useState({
-    storeName: "",
-    phone: "",
-    email: "",
-    taxNumber: "",
-    currency: "SAR",
-    address: "",
-    receiptFooter: "",
-    logoUrl: "",
-    ...storeInfo,
+    store_name: storeInfo.store_name,
+    store_slug: storeInfo.store_slug,
+    phone: storeInfo.phone,
+    email: storeInfo.email,
+    tax_number: storeInfo.tax_number,
+    currency: storeInfo.currency,
+    address: storeInfo.address,
+    receipt_footer: storeInfo.receipt_footer,
+    logo_url: storeInfo.logo_url,
   });
 
-  const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+  // حالة للتحكم هل الـ Slug يتم توليده تلقائياً أم تم تعديله يدوياً
+  const [isSlugLocked, setIsSlugLocked] = useState(true);
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
     if (storeInfo) {
@@ -51,10 +75,17 @@ function StoreInfoSettings() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    setFormData((prev) => {
+      const updatedData = { ...prev, [name]: value };
+
+      // إذا كان الحقل هو اسم الكافيه والـ Slug مقفل، قم بتوليده تلقائياً
+      if (name === "store_name" && isSlugLocked) {
+        updatedData.store_slug = generateSlug(value);
+      }
+
+      return updatedData;
+    });
   };
 
   const handleLogoUpload = (e) => {
@@ -64,7 +95,7 @@ function StoreInfoSettings() {
       reader.onloadend = () => {
         setFormData((prev) => ({
           ...prev,
-          logoUrl: reader.result,
+          logo_url: reader.result,
         }));
       };
       reader.readAsDataURL(file);
@@ -74,11 +105,19 @@ function StoreInfoSettings() {
   const handleSubmit = (e) => {
     e.preventDefault();
     updateStoreInfo(formData);
-    setToast({ open: true, message: "تم حفظ إعدادات الكافيه بنجاح!", severity: "success" });
+    setToast({
+      open: true,
+      message: "تم حفظ إعدادات الكافيه بنجاح!",
+      severity: "success",
+    });
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ pt: 1, maxWidth: 900, mx: "auto" }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ pt: 1, maxWidth: 900, mx: "auto" }}
+    >
       <Grid container spacing={{ xs: 2, sm: 2.5 }}>
         {/* Logo Upload Section */}
         <Grid size={{ xs: 12 }}>
@@ -95,8 +134,8 @@ function StoreInfoSettings() {
             }}
           >
             <Avatar
-              src={formData.logoUrl || "/logo-icon.png"}
-              alt={formData.storeName}
+              src={formData.logo_url || "/logo-icon.png"}
+              alt={formData.store_name}
               variant="rounded"
               sx={{
                 width: 100,
@@ -114,7 +153,10 @@ function StoreInfoSettings() {
                 flexGrow: 1,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "18px" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, fontSize: "18px" }}
+              >
                 شعار الكافيه / النشاط
               </Typography>
               <Typography
@@ -130,7 +172,6 @@ function StoreInfoSettings() {
                 component="label"
                 size="small"
                 startIcon={<CloudUploadIcon />}
-                fullWidth={{ xs: true, sm: false }}
                 sx={{ borderRadius: "8px", alignSelf: { sm: "flex-start" } }}
               >
                 تغيير الشعار
@@ -150,11 +191,49 @@ function StoreInfoSettings() {
           <TextField
             fullWidth
             label="اسم الكافيه / الفرع"
-            name="storeName"
-            value={formData.storeName || ""}
+            name="store_name"
+            value={formData.store_name || ""}
             onChange={handleInputChange}
             required
             size="small"
+          />
+        </Grid>
+
+        {/* Store Slug with Lock/Unlock Toggle */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <TextField
+            fullWidth
+            label="اسم امتداد الكافيه (Slug)"
+            name="store_slug"
+            value={formData.store_slug || ""}
+            onChange={handleInputChange}
+            disabled={isSlugLocked}
+            required
+            size="small"
+            helperText={
+              isSlugLocked
+                ? "يتم توليده تلقائياً من الاسم"
+                : "تمكين التعديل اليدوي"
+            }
+            InputProps={{
+              endAdornment: (
+                <IconButton
+                  size="small"
+                  onClick={() => setIsSlugLocked(!isSlugLocked)}
+                  title={
+                    isSlugLocked
+                      ? "فك القفل لتعديل الرابط يدوياً"
+                      : "قفل الرابط"
+                  }
+                >
+                  {isSlugLocked ? (
+                    <LockIcon fontSize="small" />
+                  ) : (
+                    <LockOpenIcon fontSize="small" color="primary" />
+                  )}
+                </IconButton>
+              ),
+            }}
           />
         </Grid>
 
@@ -188,8 +267,8 @@ function StoreInfoSettings() {
           <TextField
             fullWidth
             label="الرقم الضريبي (VAT)"
-            name="taxNumber"
-            value={formData.taxNumber || ""}
+            name="tax_number"
+            value={formData.tax_number || ""}
             onChange={handleInputChange}
             size="small"
             placeholder="مثال: 300000000000003"
@@ -233,8 +312,8 @@ function StoreInfoSettings() {
           <TextField
             fullWidth
             label="تذييل الفاتورة (رسالة الترحيب)"
-            name="receiptFooter"
-            value={formData.receiptFooter || ""}
+            name="receipt_footer"
+            value={formData.receipt_footer || ""}
             onChange={handleInputChange}
             multiline
             rows={2}
@@ -275,7 +354,11 @@ function StoreInfoSettings() {
         autoHideDuration={4000}
         onClose={() => setToast((prev) => ({ ...prev, open: false }))}
       >
-        <Alert severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
+        <Alert
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
           {toast.message}
         </Alert>
       </Snackbar>

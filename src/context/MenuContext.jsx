@@ -6,7 +6,7 @@ const MenuContext = createContext();
 export const MenuProvider = ({ children }) => {
   // 1. حالة عناصر المنيو (Items)
   const [items, setItems] = useState([]);
-  // حالة التصنيفات (Categories) 
+  // حالة التصنيفات (Categories)
   const [categoriesList, setCategoriesList] = useState([]);
 
   /* 
@@ -40,19 +40,31 @@ export const MenuProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState(["all"]);
-
-  // دالة تبديل/تحديد الفلاتر
-  const handleAlignment = (event, newCategories) => {
-    if (newCategories && newCategories.length > 0) {
-      setSelectedCategories(newCategories);
-    }
-  };
-
   // --- عمليات الأصناف (Items CRUD) ---
-  const addNewItem = (newItem) => {
-    setItems((prev) => [newItem, ...prev]);
+  const addNewItem = async (newItem) => {
+    try {
+      const {data, error} = await supabase.from("menu_items").insert([{
+        name: newItem.name,
+        price: newItem.price,
+        description: newItem.description,
+        image: newItem.image,
+        allergens: newItem.allergens,
+        tags: newItem.tags,
+        available: newItem.available,
+        category_id: newItem.category_id,
+      }]).select();
+
+      if (error) {
+        console.error("خطأ في إضافة الصنف:", error.message);
+        return;
+      }
+
+      if (data) {
+        setItems((prev) => [data[0], ...prev])
+      }
+    } catch (err) {
+      console.error("خطأ عام أثناء الإرسال:", err);
+    }
   };
 
   const updateItem = (updatedItem) => {
@@ -73,9 +85,32 @@ export const MenuProvider = ({ children }) => {
     );
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState(["all"]);
+
+  // دالة تبديل/تحديد الفلاتر
+  const handleAlignment = (event, newCategories) => {
+    if (newCategories && newCategories.length > 0) {
+      setSelectedCategories(newCategories);
+    }
+  };
+
   // --- عمليات التصنيفات (Categories CRUD) ---
-  const addCategory = (newCategory) => {
-    setCategoriesList((prev) => [...prev, newCategory]);
+  const addCategory = async (newCategory) => {
+    try {
+      const {data, error} = await supabase.from("categories").insert(newCategory).select();
+
+      if (error) {
+        console.error("خطاء اثناء ارسال التصنيف", error.message);
+        return;
+      }
+
+      if (data) {
+        setCategoriesList((prev) => [data[0], ...prev]);
+      }
+    } catch (err) {
+      console.error("خطاء عام في الارسال",err);
+    }
   };
 
   const updateCategory = (updatedCategory) => {
@@ -102,7 +137,7 @@ export const MenuProvider = ({ children }) => {
     return items.filter((item) => {
       const matchesCategory =
         selectedCategories.includes("all") ||
-        selectedCategories.includes(item.categoryId);
+        selectedCategories.includes(item.category_id);
 
       const lowerCaseQuery = searchQuery.trim().toLowerCase();
       const matchesSearch =

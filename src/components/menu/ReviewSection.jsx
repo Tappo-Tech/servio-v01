@@ -17,9 +17,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import StarIcon from "@mui/icons-material/Star";
 
-// OTHERS
-import { v4 as uuidV4 } from "uuid";
-
 // CONTEXTS
 import { useFeedbacks } from "../../context/FeedbackContext";
 
@@ -47,20 +44,12 @@ function ReviewSection({ open, close, tableNumber }) {
   const handleSubmit = () => {
     if (rating === 0) return;
 
-    const currentTime = new Date().toLocaleTimeString("ar-EG", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-
     // بناء كائن التقييم الجديد
     const newFeedback = {
-      id: uuidV4(),
-      tableNumber: tableNumber || "1",
+      table_number: tableNumber || "1",
       rating: rating,
       tags: selectedTags,
       comment: comment,
-      createdAt: currentTime,
     };
 
     // حفظ التقييم في Context

@@ -26,7 +26,7 @@ const COLUMNS = [
 function LiveOrders() {
   const { orders } = useOrders();
 
-  const activeOrders = orders.filter((order) => !order.isCompleted);
+  const activeOrders = orders.filter((order) => !order.is_completed);
 
   const getOrdersByStatus = (status) =>
     activeOrders.filter((order) => order.status === status);

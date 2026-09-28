@@ -106,11 +106,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
     const payload = {
       name: formData.name,
       price: parseFloat(formData.price),
-      categoryId: formData.categoryId || (categoriesList[0]?.id ?? "all"),
+      category_id: formData.category_id || (categoriesList[0]?.id ?? "all"),
       description: formData.description,
       image: formData.image || "/logo-icon.png",
       allergens: formData.allergens,
-      tags: formData.tags, // حفظ مصفوفة الوسوم
+      tags: formData.tags,
       available: formData.available,
     };
 
@@ -191,7 +191,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           select
           label="القسم / التصنيف"
           name="categoryId"
-          value={formData.categoryId}
+          value={formData.category_id}
           onChange={handleChange}
           size="small"
           fullWidth
@@ -199,7 +199,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         >
           {categoriesList.map((cat) => (
             <MenuItem key={cat.id} value={cat.id}>
-              {cat.title}
+              {cat.name}
             </MenuItem>
           ))}
         </TextField>

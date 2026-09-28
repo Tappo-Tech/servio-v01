@@ -73,13 +73,13 @@ function OrderRow({ order, currency }) {
         <TableCell component="th" scope="row" sx={{ fontWeight: 700 }}>
           #{order.id}
         </TableCell>
-        <TableCell align="center">طاولة {order.tableNumber}</TableCell>
+        <TableCell align="center">طاولة {order.table_number}</TableCell>
         <TableCell align="center">
-          {dayjs(order.createdAt).format("YYYY/MM/DD - hh:mm A")}
+          {dayjs(order.created_at).format("YYYY/MM/DD - hh:mm A")}
         </TableCell>
         <TableCell align="center">{renderStatusChip(order.status)}</TableCell>
         <TableCell align="center" sx={{ fontWeight: 700 }}>
-          {order.total} {currency}
+          {order.total_price} {currency}
         </TableCell>
       </TableRow>
 
@@ -161,17 +161,17 @@ function OrdersHistory() {
 
   const filteredOrders = useMemo(() => {
     return orders
-      .filter((order) => order.isCompleted)
+      .filter((order) => order.is_completed)
       .filter((order) => {
         const matchesSearch =
           String(order.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          String(order.tableNumber).includes(searchQuery);
+          String(order.table_number).includes(searchQuery);
 
         const matchesStatus =
           statusFilter === "all" ? true : order.status === statusFilter;
 
         const matchesDate = selectedDate
-          ? dayjs(order.createdAt).isSame(selectedDate, "day")
+          ? dayjs(order.created_at).isSame(selectedDate, "day")
           : true;
 
         return matchesSearch && matchesStatus && matchesDate;

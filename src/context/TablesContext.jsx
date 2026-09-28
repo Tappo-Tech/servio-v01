@@ -4,11 +4,14 @@ import supabase from "../supabase";
 const TablesContext = createContext();
 
 export function TablesProvider({ children }) {
+  // حالة الطاولات
+  const [tables, setTables] = useState([]);
+
   // جلب ارقام الطاولات و روابطها من قاعدة البيانات
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const {data, error} = await supabase.from("table").select();
+        const { data, error } = await supabase.from("table").select();
 
         if (error) console.error("خطأ في جلب مصفوفة الطاولات:", error);
 
@@ -16,26 +19,47 @@ export function TablesProvider({ children }) {
       } catch (err) {
         console.error("فشل عام في جلب البيانات", err);
       }
-    }
+    };
 
     fetchData();
-  }, [])
-
-  // حالة الطاولات
-  const [tables, setTables] = useState([]);
+  }, []);
 
   // توليد الطاولات بالكامل ومسح القديم
-  const generateTables = (count) => {
+  const generateTables = async (count) => {
     const parsedCount = parseInt(count, 10) || 0;
+    if (parsedCount <= 0) return;
+
     const baseUrl = window.location.origin;
 
-    const newTables = Array.from({ length: parsedCount }, (_, index) => ({
-      id: index + 1,
-      table_number: index + 1,
-      qr_value: `${baseUrl}/menu/${index + 1}`,
-    }));
+    const startingNumber = tables.length > 0 
+      ? Math.max(...tables.map((t) => t.table_number)) + 1 
+      : 1;
 
-    setTables(newTables);
+    const newTables = Array.from({ length: parsedCount }, (_, index) => {
+      const tableNum = startingNumber + index;
+      return {
+        table_number: tableNum,
+        qr_value: `${baseUrl}/menu/${tableNum}`,
+      };
+    });
+
+    try {
+      const { data, error } = await supabase
+        .from("table")
+        .insert(newTables)
+        .select();
+
+      if (error) {
+        console.error("خطأ في إضافة الطاولات:", error.message);
+        return;
+      }
+
+      if (data) {
+        setTables((prev) => [...prev, ...data]);
+      }
+    } catch (err) {
+      console.error("خطأ عام أثناء الإرسال:", err);
+    }
   };
 
   // مسح جميع الطاولات

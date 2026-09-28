@@ -32,14 +32,7 @@ function MenuHeader({ table }) {
             component="h1"
             sx={{ fontWeight: 800, letterSpacing: "-0.5px", mb: 0.5 }}
           >
-            {storeInfo?.storeName || "اسم المتجر"}
-          </Typography>
-          <Typography
-            variant="body2"
-            component="p"
-            sx={{ color: "text.secondary", fontWeight: 500 }}
-          >
-            {storeInfo?.storeDisc || "أهلاً بك، اختر طلبك من المنيو"}
+            {storeInfo?.store_name || "اسم المتجر"}
           </Typography>
         </Box>
 

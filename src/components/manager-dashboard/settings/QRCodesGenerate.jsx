@@ -32,6 +32,7 @@ function QRCodeGenerate() {
   const handleGenerate = (e) => {
     e.preventDefault();
     generateTables(tablesCount);
+    setTablesCount("");
   };
 
   // طباعة الكل أو طباعة طاولة محددة

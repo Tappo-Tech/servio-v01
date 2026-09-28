@@ -53,11 +53,11 @@ function InvoiceModal({ open, onClose, order }) {
 
       <DialogContent id="printable-invoice">
         <Box sx={{ textAlign: "center", mb: 2 }}>
-          {storeInfo.logoUrl && (
+          {storeInfo.logo_url && (
             <Box
               component="img"
-              src={storeInfo.logoUrl}
-              alt={storeInfo.storeName || "Logo"}
+              src={storeInfo.logo_url}
+              alt={storeInfo.store_name || "Logo"}
               sx={{
                 width: 80,
                 height: 80,
@@ -69,16 +69,16 @@ function InvoiceModal({ open, onClose, order }) {
             />
           )}
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            {storeInfo.storeName || "المتجر"}
+            {storeInfo.store_name || "المتجر"}
           </Typography>
 
-          {storeInfo.taxNumber && (
+          {storeInfo.tax_number && (
             <Typography
               variant="caption"
               display="block"
               color="text.secondary"
             >
-              الرقم الضريبي: {storeInfo.taxNumber}
+              الرقم الضريبي: {storeInfo.tax_number}
             </Typography>
           )}
 
@@ -90,7 +90,7 @@ function InvoiceModal({ open, onClose, order }) {
             فاتورة مبسطة
           </Typography>
           <Typography variant="caption" display="block">
-            {dayjs(order.createdAt).format("YYYY/MM/DD - hh:mm A")}
+            {dayjs(order.created_at).format("YYYY/MM/DD - hh:mm A")}
           </Typography>
         </Box>
 
@@ -101,7 +101,7 @@ function InvoiceModal({ open, onClose, order }) {
             رقم الطلب: #{order.id}
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            طاولة: {order.tableNumber}
+            طاولة: {order.table_number}
           </Typography>
         </Box>
 
@@ -147,7 +147,7 @@ function InvoiceModal({ open, onClose, order }) {
             المجموع الكلي:
           </Typography>
           <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            {order.total} {currency}
+            {order.total_price} {currency}
           </Typography>
         </Box>
 
@@ -180,7 +180,7 @@ function InvoiceModal({ open, onClose, order }) {
           display="block"
           sx={{ mt: 2, color: "text.secondary", fontWeight: 700 }}
         >
-          {storeInfo.receiptFooter || "شكراً لزيارتكم!"}
+          {storeInfo.receipt_footer || "شكراً لزيارتكم!"}
         </Typography>
       </DialogContent>
 

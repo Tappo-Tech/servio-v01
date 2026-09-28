@@ -1,29 +1,28 @@
 import { createContext, useContext, useState, useEffect } from "react";
-
-// Initial Mock / Default Store Data
-const defaultStoreData = {
-  storeName: "TAPPO CAFE",
-  storeDisc: "قهوة و حلويات تابو",
-  logoUrl: "/logo-icon.png",
-  phone: "+966 50 000 0000",
-  email: "info@tappo.app",
-  taxNumber: "300000000000003",
-  address: "الرياض، المملكة العربية السعودية",
-  currency: "ر.س",
-  receiptFooter: "شكراً لزيارتكم! ننتظركم مجدداً ",
-};
+import supabase from "../supabase";
 
 const StoreInfoContext = createContext();
 
 export function StoreInfoProvider({ children }) {
-  const [storeInfo, setStoreInfo] = useState(() => {
-    const localData = localStorage.getItem("tappo_store_info");
-    return localData ? JSON.parse(localData) : defaultStoreData;
-  });
+  // حالة بيانات المتجر
+  const [storeInfo, setStoreInfo] = useState({});
 
+  // جلب البيانات الخاصة بالمتجر من قاعدة البيانات
   useEffect(() => {
-    localStorage.setItem("tappo_store_info", JSON.stringify(storeInfo));
-  }, [storeInfo]);
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase.from("store").select();
+
+        if (error) console.error("خطأ في جلب بيانات المتجر:", error);
+
+        if (data) setStoreInfo(data);
+      } catch (err) {
+        console.error("فشل عام في جلب البيانات", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const updateStoreInfo = (newDetails) => {
     setStoreInfo((prev) => ({

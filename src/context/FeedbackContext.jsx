@@ -1,9 +1,12 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import supabase from "../supabase";
 
 const FeedbacksContext = createContext();
 
 export function FeedbacksProvider({ children }) {
+  // حالة التقيمات
+  const [feedbacks, setFeedbacks] = useState([]);
+  
   // جلب مصفوفة الاراء من قاعدة البيانات
   useEffect(() => {
     const fetchData = async () => {
@@ -21,12 +24,22 @@ export function FeedbacksProvider({ children }) {
     fetchData();
   }, []);
 
-  // حالة التقيمات
-  const [feedbacks, setFeedbacks] = useState([]);
-
   // دالة إضافة تقييم جديد
-  const addFeedback = (newFeedback) => {
-    setFeedbacks((prev) => [newFeedback, ...prev]);
+  const addFeedback = async (newFeedback) => {
+    try {
+      const {data, error} = await supabase.from("feedbacks").insert(newFeedback).select()
+
+      if (error) {
+        console.log("خطاء في جلب التقيمات", error.message);
+        return;
+      }
+
+      if (data) {
+        setFeedbacks((prev) => [data,...prev]);
+      }
+    } catch (err) {
+      console.error("خطأ عام أثناء الإرسال:", err);
+    }
   };
 
   const value = useMemo(() => ({ feedbacks, addFeedback }), [feedbacks]);

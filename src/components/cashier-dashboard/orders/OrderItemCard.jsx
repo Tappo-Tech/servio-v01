@@ -60,7 +60,7 @@ function OrderItemCard({ order }) {
             variant="subtitle1"
             sx={{ fontWeight: 800, color: "text.primary" }}
           >
-            طاولة {order.tableNumber}
+            طاولة {order.table_number}
           </Typography>
 
           <Typography
@@ -75,7 +75,7 @@ function OrderItemCard({ order }) {
               borderRadius: "6px",
             }}
           >
-            {formatTimeAgo(order.createdAt)}
+            {formatTimeAgo(order.created_at)}
           </Typography>
         </Box>
 

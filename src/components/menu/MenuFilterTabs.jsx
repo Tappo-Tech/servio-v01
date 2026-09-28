@@ -8,7 +8,7 @@ function MenuFilterTabs() {
   const { categoriesList = [], selectedCategories, handleAlignment } = useMenu();
 
   const filterTabs = categoriesList.map((category) => (
-    <ToggleButton key={category.id} value={category.name}>
+    <ToggleButton key={category.id} value={category.id}>
       {category.name}
     </ToggleButton>
   ));

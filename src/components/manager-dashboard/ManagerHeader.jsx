@@ -56,7 +56,7 @@ function ManagerHeader({ onDrawerToggle }) {
           variant="h6"
           sx={{ fontWeight: "700", color: "text.primary" }}
         >
-          {storeInfo?.storeName || "المتجر"}
+          {storeInfo?.store_name || "المتجر"}
         </Typography>
       </Box>
 

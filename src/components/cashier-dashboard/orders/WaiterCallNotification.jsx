@@ -21,6 +21,9 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 // CONTEXTS
 import { useWaiterCalls } from "../../../context/WaiterCallsContext";
 
+// OTHERS
+import { formatTimeAgo } from "../../../utils/helpers";
+
 function WaiterCallNotification({ open, close }) {
   const { calls, resolveCall } = useWaiterCalls(); 
 
@@ -97,12 +100,12 @@ function WaiterCallNotification({ open, close }) {
                     <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
                       <TableRestaurantIcon sx={{ color: "primary.main" }} />
                       <Typography variant="subtitle2" sx={{ fontWeight: "700" }}>
-                        طاولة {call.tableNumber}
+                        طاولة {call.table_number}
                       </Typography>
                     </Stack>
                     <Stack direction="row" sx={{ alignItems: "center", gap: 0.5, color: "text.secondary" }}>
                       <AccessTimeIcon sx={{ fontSize: 14 }} />
-                      <Typography variant="caption">{call.createdAt}</Typography>
+                      <Typography variant="caption">{formatTimeAgo(call.created_at)}</Typography>
                     </Stack>
                   </Box>
 
