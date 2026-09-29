@@ -6,24 +6,23 @@ const WaiterCallsContext = createContext();
 export function WaiterCallsProvider({ children }) {
   const [calls, setCalls] = useState([]);
 
-  // جلب النداءات المعلقة من سوبابيس عند تحميل التطبيق
+  // 1. جلب النداءات المعلقة (غير الملباة) فقط عند تحميل التطبيق
   useEffect(() => {
     const fetchCalls = async () => {
-      const { data, error } = await supabase
-        .from("waiter_calls")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("waiter_calls")
+          .select("*")
+          .eq("is_resolved", false)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("خطأ في جلب نداءات الجرسون:", error.message);
-      } else if (data) {
-        const formattedCalls = data.map((call) => ({
-          id: call.id,
-          table_number: call.table_number || "1",
-          reason: call.reason || "استدعاء عام",
-          created_at: new Date(call.created_at),
-        }));
-        setCalls(formattedCalls);
+        if (error) {
+          console.error("خطأ في جلب نداءات الجرسون:", error.message);
+        } else if (data) {
+          setCalls(data);
+        }
+      } catch (err) {
+        console.error("خطاء اثناء جلب البيانات", err);
       }
     };
 
@@ -31,24 +30,54 @@ export function WaiterCallsProvider({ children }) {
   }, []);
 
   // دالة إضافة نداء جديد من العميل
-  const addCall = (tableNumber, reason) => {
-    const newCall = {
-      id: Date.now().toString(),
-      tableNumber: tableNumber || "1",
-      reason: reason || "استدعاء عام",
-      createdAt: new Date().toLocaleTimeString("ar-SA", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      timestamp: Date.now(),
-    };
+  const addCall = async (tableNumber, reason) => {
+    try {
+      const { data, error } = await supabase
+        .from("waiter_calls")
+        .insert([
+          {
+            table_number: tableNumber || "1",
+            reason: reason || "استدعاء عام",
+            is_resolved: false,
+          },
+        ])
+        .select();
 
-    setCalls((prev) => [newCall, ...prev]);
+      if (error) {
+        console.error("خطأ أثناء إرسال النداء:", error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setCalls((prev) => [data[0], ...prev]);
+      }
+    } catch (err) {
+      console.error("خطأ عام أثناء الإرسال:", err);
+    }
   };
 
-  // دالة إكمال/تلبية النداء وحذفه من قائمة الكاشير
-  const resolveCall = (id) => {
+  // دالة إكمال/تلبية النداء وحذفه من القائمة
+  const resolveCall = async (id) => {
+    if (!id) return;
+
+    const previousCalls = calls;
+
     setCalls((prev) => prev.filter((call) => call.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from("waiter_calls")
+        .update({ is_resolved: true })
+        .eq("id", id);
+
+      if (error) {
+        console.error("خطأ في إرسال تلبية الطلب:", error.message);
+        setCalls(previousCalls);
+      }
+    } catch (err) {
+      console.error("خطأ أثناء الإرسال:", err);
+      setCalls(previousCalls);
+    }
   };
 
   return (
@@ -58,7 +87,6 @@ export function WaiterCallsProvider({ children }) {
   );
 }
 
-// Hook للاستخدام السريع
 export const useWaiterCalls = () => {
   const context = useContext(WaiterCallsContext);
   if (!context) {

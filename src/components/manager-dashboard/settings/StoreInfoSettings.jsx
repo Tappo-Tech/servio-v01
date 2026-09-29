@@ -12,12 +12,16 @@ import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Tooltip from "@mui/material/Tooltip";
 
 // MUI ICONS
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
+import KeyIcon from "@mui/icons-material/Key";
+import AutoRenewIcon from "@mui/icons-material/Autorenew";
 
 // CONTEXT
 import { useStore } from "../../../context/StoreInfoContext";
@@ -28,38 +32,34 @@ const CURRENCIES = [
   { value: "USD", label: "$ (دولار أمريكي)" },
 ];
 
-// دالة مساعدة لتوليد الـ Slug بشكل احترافي ومتوافق مع الروابط
 const generateSlug = (text) => {
-  return (
-    text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-") // استبدال المسافات بشرطات
-      // eslint-disable-next-line no-useless-escape
-      .replace(/[^\w\-]+/g, "") // إزالة الرموز الخاصة
-      // eslint-disable-next-line no-useless-escape
-      .replace(/\-\-+/g, "-")
-  ); // استبدال الشرطات المتعددة بشرطة واحدة
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    // eslint-disable-next-line no-useless-escape
+    .replace(/[^\w\-]+/g, "")
+    // eslint-disable-next-line no-useless-escape
+    .replace(/\-\-+/g, "-");
 };
 
 function StoreInfoSettings() {
   const { storeInfo, updateStoreInfo } = useStore();
 
-  // استخدام أسماء المتغيرات بطريقة Snake Case لتطابق قاعدة البيانات (Supabase)
   const [formData, setFormData] = useState({
-    store_name: storeInfo.store_name,
-    store_slug: storeInfo.store_slug,
-    phone: storeInfo.phone,
-    email: storeInfo.email,
-    tax_number: storeInfo.tax_number,
-    currency: storeInfo.currency,
-    address: storeInfo.address,
-    receipt_footer: storeInfo.receipt_footer,
-    logo_url: storeInfo.logo_url,
+    store_name: storeInfo?.store_name || "",
+    store_slug: storeInfo?.store_slug || "",
+    phone: storeInfo?.phone || "",
+    email: storeInfo?.email || "",
+    tax_number: storeInfo?.tax_number || "",
+    currency: storeInfo?.currency || "SAR",
+    address: storeInfo?.address || "",
+    receipt_footer: storeInfo?.receipt_footer || "",
+    logo_url: storeInfo?.logo_url || "",
+    cashier_pin: storeInfo?.cashier_pin || "1234",
   });
 
-  // حالة للتحكم هل الـ Slug يتم توليده تلقائياً أم تم تعديله يدوياً
   const [isSlugLocked, setIsSlugLocked] = useState(true);
   const [toast, setToast] = useState({
     open: false,
@@ -78,14 +78,17 @@ function StoreInfoSettings() {
 
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
-
-      // إذا كان الحقل هو اسم الكافيه والـ Slug مقفل، قم بتوليده تلقائياً
       if (name === "store_name" && isSlugLocked) {
         updatedData.store_slug = generateSlug(value);
       }
-
       return updatedData;
     });
+  };
+
+  // دالة عشوائية لتوليد رمز PIN للكاشير
+  const handleGeneratePin = () => {
+    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
+    setFormData((prev) => ({ ...prev, cashier_pin: randomPin }));
   };
 
   const handleLogoUpload = (e) => {
@@ -153,10 +156,7 @@ function StoreInfoSettings() {
                 flexGrow: 1,
               }}
             >
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, fontSize: "18px" }}
-              >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "18px" }}>
                 شعار الكافيه / النشاط
               </Typography>
               <Typography
@@ -211,9 +211,7 @@ function StoreInfoSettings() {
             required
             size="small"
             helperText={
-              isSlugLocked
-                ? "يتم توليده تلقائياً من الاسم"
-                : "تمكين التعديل اليدوي"
+              isSlugLocked ? "يتم توليده تلقائياً من الاسم" : "تمكين التعديل اليدوي"
             }
             InputProps={{
               endAdornment: (
@@ -221,9 +219,7 @@ function StoreInfoSettings() {
                   size="small"
                   onClick={() => setIsSlugLocked(!isSlugLocked)}
                   title={
-                    isSlugLocked
-                      ? "فك القفل لتعديل الرابط يدوياً"
-                      : "قفل الرابط"
+                    isSlugLocked ? "فك القفل لتعديل الرابط يدوياً" : "قفل الرابط"
                   }
                 >
                   {isSlugLocked ? (
@@ -263,7 +259,7 @@ function StoreInfoSettings() {
         </Grid>
 
         {/* Tax Number */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
             label="الرقم الضريبي (VAT)"
@@ -276,7 +272,7 @@ function StoreInfoSettings() {
         </Grid>
 
         {/* Currency Select */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             select
             fullWidth
@@ -294,8 +290,42 @@ function StoreInfoSettings() {
           </TextField>
         </Grid>
 
+        {/* Cashier PIN Management Section */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <TextField
+            fullWidth
+            label="رمز دخول الكاشير (PIN)"
+            name="cashier_pin"
+            value={formData.cashier_pin || ""}
+            onChange={handleInputChange}
+            size="small"
+            required
+            helperText="الرمز المستخدم لدخول لوحة الكاشير"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <KeyIcon fontSize="small" color="primary" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="توليد رمز تلقائي">
+                    <IconButton
+                      size="small"
+                      onClick={handleGeneratePin}
+                      color="primary"
+                    >
+                      <AutoRenewIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
         {/* Address */}
-        <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 8 }}>
           <TextField
             fullWidth
             label="العنوان"

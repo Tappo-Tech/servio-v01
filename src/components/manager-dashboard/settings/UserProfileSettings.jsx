@@ -9,9 +9,15 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
+
+// MUI ICONS
 import SaveIcon from "@mui/icons-material/Save";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
+import LockIcon from "@mui/icons-material/Lock";
 
 // CONTEXT
 import { useUser } from "../../../context/UserContext";
@@ -19,16 +25,18 @@ import { useUser } from "../../../context/UserContext";
 function UserProfileSettings() {
   const { user, updateUser } = useUser();
 
+  // استخدام Snake Case لتوحيد الحقول مع Supabase Auth & DB
   const [formData, setFormData] = useState({
-    name: "",
+    full_name: "",
     email: "",
     phone: "",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
 
   // مزامنة حالة النموذج عند تحميل بيانات المستخدم من الـ Context
@@ -36,7 +44,7 @@ function UserProfileSettings() {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        name: user.name || "",
+        full_name: user.full_name || user.name || "",
         email: user.email || "",
         phone: user.phone || "",
       }));
@@ -54,12 +62,12 @@ function UserProfileSettings() {
     e.preventDefault();
 
     // التحقق من تطابق كلمة المرور الجديدة
-    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+    if (formData.new_password && formData.new_password !== formData.confirm_password) {
       setToast({ open: true, message: "كلمتا المرور غير متطابقتين", severity: "error" });
       return;
     }
 
-    if (formData.newPassword && !formData.currentPassword) {
+    if (formData.new_password && !formData.current_password) {
       setToast({ open: true, message: "يرجى إدخال كلمة المرور الحالية للتأكيد", severity: "error" });
       return;
     }
@@ -67,7 +75,7 @@ function UserProfileSettings() {
     // تحديث البيانات الأساسية (للمدير فقط)
     if (!isCashier) {
       updateUser({
-        name: formData.name,
+        full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
       });
@@ -78,27 +86,34 @@ function UserProfileSettings() {
     // إعادة إعداد حقول كلمات المرور
     setFormData((prev) => ({
       ...prev,
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
     }));
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 800, mx: "auto", p: 1 }}>
       <Grid container spacing={2.5}>
-        {/* Name */}
+        {/* Full Name */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            label="الاسم"
-            name="name"
-            value={formData.name}
+            label="الاسم بالكامل"
+            name="full_name"
+            value={formData.full_name}
             onChange={handleInputChange}
-            disabled={isCashier} // الكاشير لا يمكنه تغيير اسمه
+            disabled={isCashier}
             required
             size="small"
-            helperText={isCashier ? "يمكن للمدير فقط تغيير الاسم" : ""}
+            helperText={isCashier ? "يمكن للمدير فقط تعديل البيانات الشخصية" : ""}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PersonIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -113,6 +128,13 @@ function UserProfileSettings() {
             onChange={handleInputChange}
             disabled={isCashier}
             size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -126,6 +148,13 @@ function UserProfileSettings() {
             onChange={handleInputChange}
             disabled={isCashier}
             size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PhoneIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -133,12 +162,30 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            type={showPassword ? "text" : "password"}
+            type={showCurrentPassword ? "text" : "password"}
             label="كلمة المرور الحالية"
-            name="currentPassword"
-            value={formData.currentPassword}
+            name="current_password"
+            value={formData.current_password}
             onChange={handleInputChange}
             size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowCurrentPassword((prev) => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -146,12 +193,19 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            type={showPassword ? "text" : "password"}
+            type={showNewPassword ? "text" : "password"}
             label="كلمة المرور الجديدة"
-            name="newPassword"
-            value={formData.newPassword}
+            name="new_password"
+            value={formData.new_password}
             onChange={handleInputChange}
             size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -159,21 +213,26 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            type={showPassword ? "text" : "password"}
+            type={showNewPassword ? "text" : "password"}
             label="تأكيد كلمة المرور الجديدة"
-            name="confirmPassword"
-            value={formData.confirmPassword}
+            name="confirm_password"
+            value={formData.confirm_password}
             onChange={handleInputChange}
             size="small"
             InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon fontSize="small" />
+                </InputAdornment>
+              ),
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    onClick={() => setShowPassword((prev) => !prev)}
+                    onClick={() => setShowNewPassword((prev) => !prev)}
                     edge="end"
                     size="small"
                   >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -194,6 +253,7 @@ function UserProfileSettings() {
             type="submit"
             variant="contained"
             startIcon={<SaveIcon />}
+            fullWidth={{ xs: true, sm: false }}
             sx={{ px: 4, py: 1, borderRadius: "8px", fontWeight: 700 }}
           >
             حفظ التغييرات
@@ -201,7 +261,7 @@ function UserProfileSettings() {
         </Grid>
       </Grid>
 
-      {/* التنبيهات (بديل لـ alert العادية) */}
+      {/* Snackbar Alert */}
       <Snackbar
         open={toast.open}
         autoHideDuration={4000}

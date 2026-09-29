@@ -19,9 +19,6 @@ import { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 
-// OTHERS
-import { v4 as uuidV4 } from "uuid";
-
 function CartDrawer({ open, close }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
@@ -36,10 +33,9 @@ function CartDrawer({ open, close }) {
     if (cartItems.length === 0) return;
 
     const newOrder = {
-      id: uuidV4(),
       items: cartItems,
-      total: totalPrice,
-      tableNumber: tableNumber || "غير محدد",
+      total_price: totalPrice,
+      table_number: tableNumber || "غير محدد",
       notes: notes,
     };
 

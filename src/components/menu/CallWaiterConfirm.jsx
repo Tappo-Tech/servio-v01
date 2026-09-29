@@ -32,7 +32,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
   const [isSent, setIsSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { addCall } = useWaiterCalls(); // <-- استخدام دالة إضافة النداء
+  const { addCall } = useWaiterCalls(); 
 
   const handleReasonToggle = (reason) => {
     setSelectedReason((prev) => (prev === reason ? "" : reason));

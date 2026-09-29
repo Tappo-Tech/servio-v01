@@ -31,9 +31,10 @@ export function TablesProvider({ children }) {
 
     const baseUrl = window.location.origin;
 
-    const startingNumber = tables.length > 0 
-      ? Math.max(...tables.map((t) => t.table_number)) + 1 
-      : 1;
+    const startingNumber =
+      tables.length > 0
+        ? Math.max(...tables.map((t) => t.table_number)) + 1
+        : 1;
 
     const newTables = Array.from({ length: parsedCount }, (_, index) => {
       const tableNum = startingNumber + index;
@@ -63,9 +64,22 @@ export function TablesProvider({ children }) {
   };
 
   // مسح جميع الطاولات
-  const clearTables = () => {
+  const clearTables = async () => {
     setTables([]);
-    localStorage.removeItem("tappo_tables");
+
+    try {
+      const { error } = await supabase
+        .from("table")
+        .delete()
+        .neq("table_number", 0);
+
+      if (error) {
+        console.error("خطاء اثناء الحذف", error.message);
+        return;
+      }
+    } catch (err) {
+      console.error("خطاء اثناء الارسال", err);
+    }
   };
 
   return (

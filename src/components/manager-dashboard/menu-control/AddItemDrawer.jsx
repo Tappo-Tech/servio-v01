@@ -29,7 +29,6 @@ const COMMON_ALLERGENS = [
   "سمسم",
 ];
 
-// وسوم الاقتراحات والتوافق المحددة مسبقاً
 const SUGGESTION_TAGS = [
   "يناسب المشروبات الساخنة",
   "يناسب المشروبات الباردة",
@@ -54,11 +53,11 @@ const VisuallyHiddenInput = styled("input")({
 const INITIAL_FORM_STATE = {
   name: "",
   price: "",
-  categoryId: "",
+  category_id: "",
   description: "",
   image: "",
   allergens: [],
-  tags: [], // إضافة مصفوفة الوسوم
+  tags: [],
   available: true,
 };
 
@@ -71,11 +70,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       setFormData({
         name: itemToEdit.name || "",
         price: itemToEdit.price || "",
-        categoryId: itemToEdit.categoryId || "",
+        category_id: itemToEdit.category_id || "",
         description: itemToEdit.description || "",
         image: itemToEdit.image || "",
         allergens: itemToEdit.allergens || [],
-        tags: itemToEdit.tags || [], // تحميل الوسوم المسجلة
+        tags: itemToEdit.tags || [],
         available: itemToEdit.available ?? true,
       });
     } else {
@@ -190,7 +189,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         <TextField
           select
           label="القسم / التصنيف"
-          name="categoryId"
+          name="category_id"
           value={formData.category_id}
           onChange={handleChange}
           size="small"
@@ -236,7 +235,6 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           )}
         </Box>
 
-        {/* وسوم الاقتراحات والتوافق */}
         <Autocomplete
           multiple
           freeSolo
@@ -271,7 +269,6 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           fullWidth
         />
 
-        {/* المواد المسببة للحساسية */}
         <Autocomplete
           multiple
           options={COMMON_ALLERGENS}

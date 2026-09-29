@@ -15,7 +15,7 @@ export function StoreInfoProvider({ children }) {
 
         if (error) console.error("خطأ في جلب بيانات المتجر:", error);
 
-        if (data) setStoreInfo(data);
+        if (data) setStoreInfo(data[0]);
       } catch (err) {
         console.error("فشل عام في جلب البيانات", err);
       }
@@ -24,11 +24,22 @@ export function StoreInfoProvider({ children }) {
     fetchData();
   }, []);
 
-  const updateStoreInfo = (newDetails) => {
+  const updateStoreInfo = async (newDetails) => {
     setStoreInfo((prev) => ({
       ...prev,
       ...newDetails,
     }));
+
+    try {
+      const {error} = await supabase.from("store").update({newDetails})
+
+      if (error) {
+        console.error("خطاء اثناء تعديل البيانات", error.message);
+        return;
+      }
+    } catch (err) {
+      console.error("خطاء اثناء الارسال", err);
+    }
   };
 
   return (
