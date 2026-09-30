@@ -60,7 +60,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
 
   return (
     <SwipeableDrawer
-      anchor="right"
+      anchor="bottom"
       open={open}
       onClose={close}
       onOpen={() => {}}
@@ -70,10 +70,8 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
           dir: "rtl",
           sx: {
             borderTopLeftRadius: "24px",
-            borderBottomLeftRadius: "24px",
-            width: { xs: "100%", sm: 430 },
-            maxWidth: "100%",
-            height: "100dvh",
+            borderTopRightRadius: "24px",
+            maxHeight: "80dvh",
             backgroundColor: "background.paper",
           },
         },
@@ -81,7 +79,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
     >
       <Box
         sx={{
-          p: { xs: 2.2, sm: 3 },
+          p: 3,
           display: "flex",
           flexDirection: "column",
           boxSizing: "border-box",
@@ -90,7 +88,13 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
       >
         <Box
           sx={{
-            display: "none",
+            width: "45px",
+            height: "4px",
+            backgroundColor: "grey.300",
+            borderRadius: "2px",
+            mx: "auto",
+            mb: 2,
+            flexShrink: 0,
           }}
         />
 
