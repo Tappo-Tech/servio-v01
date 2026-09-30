@@ -12,7 +12,6 @@ import Feedbacks from "../components/manager-dashboard/Feedbacks";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 
 function ManagerDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
