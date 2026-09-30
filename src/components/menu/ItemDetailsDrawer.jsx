@@ -30,7 +30,7 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
 
   return (
     <SwipeableDrawer
-      anchor="bottom"
+      anchor="right"
       open={open}
       onClose={onClose}
       onOpen={() => {}}
@@ -39,8 +39,10 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
         paper: {
           sx: {
             borderTopLeftRadius: "24px",
-            borderTopRightRadius: "24px",
-            maxHeight: "90dvh",
+            borderBottomLeftRadius: "24px",
+            width: { xs: "100%", sm: 480 },
+            maxWidth: "100%",
+            height: "100dvh",
             backgroundColor: "background.paper",
             overflow: "hidden",
           },
@@ -49,22 +51,15 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
     >
       <Box
         sx={{
-          maxHeight: `calc(90dvh - ${bottomBarHeight})`,
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
           position: "relative",
         }}
       >
         <Box
           sx={{
-            position: "absolute",
-            top: 8,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "40px",
-            height: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.7)",
-            borderRadius: "2px",
-            zIndex: 11,
+            display: "none",
           }}
         />
 
@@ -141,7 +136,7 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
 
       <Box
         sx={{
-          height: bottomBarHeight,
+          minHeight: bottomBarHeight,
           p: 2,
           backgroundColor: "background.paper",
           borderTop: "1px solid",
