@@ -91,7 +91,18 @@ function OrderRow({ order, currency }) {
         </TableCell>
         <TableCell align="center">طاولة {order.table_number}</TableCell>
         <TableCell align="center">
-          {dayjs(order.created_at).format("YYYY/MM/DD - hh:mm A")}
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 700, color: "text.secondary", whiteSpace: "nowrap" }}
+          >
+            {dayjs(order.created_at).format("DD/MM/YY")}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: "text.disabled", fontWeight: 700, display: "block" }}
+          >
+            {dayjs(order.created_at).format("hh:mm A")}
+          </Typography>
         </TableCell>
         <TableCell align="center">{renderStatusChip(order.status)}</TableCell>
         <TableCell align="center" sx={{ fontWeight: 700 }}>
