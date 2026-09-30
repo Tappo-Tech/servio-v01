@@ -69,7 +69,7 @@ function ReviewSection({ open, close, tableNumber }) {
 
   return (
     <SwipeableDrawer
-      anchor="right"
+      anchor="bottom"
       open={open}
       onClose={close}
       onOpen={() => {}}
@@ -79,10 +79,8 @@ function ReviewSection({ open, close, tableNumber }) {
           dir: "rtl",
           sx: {
             borderTopLeftRadius: "24px",
-            borderBottomLeftRadius: "24px",
-            width: { xs: "100%", sm: 460 },
-            maxWidth: "100%",
-            height: "100dvh",
+            borderTopRightRadius: "24px",
+            maxHeight: "85dvh",
             backgroundColor: "background.paper",
           },
         },
@@ -90,7 +88,7 @@ function ReviewSection({ open, close, tableNumber }) {
     >
       <Box
         sx={{
-          p: { xs: 2.2, sm: 3 },
+          p: 3,
           display: "flex",
           flexDirection: "column",
           boxSizing: "border-box",
