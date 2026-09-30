@@ -28,9 +28,17 @@ function Menu() {
   if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
   if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="الرابط لا يشير إلى كافيه مسجل في TAPPO." /></Container>;
   if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="طاولة غير صالحة" message="عذراً، لم نتمكن من التعرف على رقم الطاولة." /></Container>;
-  return <Box sx={{ minHeight: "100vh", backgroundColor: "background.default", pb: 2 }}>
-    <Box sx={{ backgroundColor: "background.paper", px: 2, pt: 2, pb: 1, borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px", boxShadow: "0px 4px 20px rgba(0,0,0,0.03)", mb: 2 }}><Container maxWidth="md" disableGutters><MenuHeader table={tableNumber} /><MenuFilterTabs /></Container></Box>
-    <Container maxWidth="md"><MenuItemsList /></Container>
+  return (
+    <Box sx={{ minHeight: "100vh", background: "radial-gradient(circle at 100% 0%, rgba(244,121,32,.08), transparent 28%), linear-gradient(180deg, #fafbfc 0%, #f6f7f9 100%)", pb: 3 }}>
+      <Box sx={{ px: { xs: 1.2, sm: 2 }, pt: { xs: 1, sm: 1.5 } }}>
+        <Box sx={{ maxWidth: 760, mx: "auto", background: "rgba(255,255,255,.78)", border: "1px solid rgba(255,255,255,.75)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderRadius: { xs: 3.5, sm: 4 }, boxShadow: "0 16px 45px rgba(23,26,47,.07)", px: { xs: 1.2, sm: 2 }, pt: 1.3, pb: 0.3 }}>
+          <MenuHeader table={tableNumber} />
+          <MenuFilterTabs />
+        </Box>
+      </Box>
+      <Container maxWidth="md" sx={{ pt: 1.5 }}>
+        <MenuItemsList />
+      </Container>
     <FloatingActions handleReview={() => setReviewOpen(true)} handleCallWaiter={() => setCallingWaiterConfirmation(true)} />
     <SuggestionBanner /><FloatingCartBar handleCartOpen={() => setCartOpen(true)} />
     <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} />
