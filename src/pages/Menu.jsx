@@ -44,6 +44,7 @@ function Menu() {
     <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} />
     <ReviewSection open={reviewOpen} close={() => setReviewOpen(false)} tableNumber={tableNumber} />
     <CallWaiterConfirm open={callingWaiterConfirmation} close={() => setCallingWaiterConfirmation(false)} tableNumber={tableNumber} />
-  </Box>;
+    </Box>
+  );
 }
 export default Menu;
