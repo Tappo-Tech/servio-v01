@@ -99,7 +99,7 @@ function InvoiceModal({ open, onClose, order }) {
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            رقم الطلب: #{order.id}
+            رقم الطلب: #{shortOrderId}
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
             طاولة: {order.table_number}
