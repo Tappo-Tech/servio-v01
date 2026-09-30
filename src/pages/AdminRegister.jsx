@@ -31,9 +31,9 @@ function AdminRegister() {
     e.preventDefault();
     if (!formData.email || !formData.password || !formData.store_name || !formData.store_slug || !formData.full_name) return setErrorMsg("يرجى ملء كافة الحقول الإلزامية");
     setLoading(true); setErrorMsg("");
-    const { data: tenantId, error: tenantError } = await supabase.rpc("create_tenant_for_registration", { p_name: formData.store_name, p_slug: formData.store_slug });
+    const { data: tenantId, error: tenantError } = await supabase.rpc("create_tenant_for_registration", { p_name: formData.store_name, p_slug: formData.store_slug, p_phone: formData.phone || null, p_email: formData.email.trim().toLowerCase(), p_tax_number: formData.tax_number || null, p_currency: formData.currency || "SAR" });
     if (tenantError) { setLoading(false); return setErrorMsg(tenantError.message.includes("duplicate") ? "الـ slug مستخدم بالفعل" : tenantError.message); }
-    const { data, error } = await supabase.auth.signUp({ email: formData.email.trim().toLowerCase(), password: formData.password, options: { emailRedirectTo: `${window.location.origin}/login`, data: { tenant_id: tenantId, full_name: formData.full_name, role: "admin" } } });
+    const { data, error } = await supabase.auth.signUp({ email: formData.email.trim().toLowerCase(), password: formData.password, options: { emailRedirectTo: `${window.location.origin}/auth/callback`, data: { tenant_id: tenantId, full_name: formData.full_name, role: "admin" } } });
     if (error) setErrorMsg(error.message.includes("already registered") ? "هذا البريد مسجل بالفعل" : error.message);
     else if (data.session) navigate("/manager");
     else setEmailSent(true);
@@ -41,7 +41,7 @@ function AdminRegister() {
   };
   const resendConfirmation = async () => {
     setLoading(true); setResendMessage("");
-    const { error } = await supabase.auth.resend({ type: "signup", email: formData.email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/login` } });
+    const { error } = await supabase.auth.resend({ type: "signup", email: formData.email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
     setResendMessage(error ? error.message : "تمت إعادة إرسال رابط التفعيل إلى بريدك الإلكتروني.");
     setLoading(false);
   };

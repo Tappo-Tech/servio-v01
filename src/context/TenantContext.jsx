@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import supabase from "../supabase";
 
 const TenantContext = createContext(null);
-const RESERVED_ROUTES = new Set(["login", "register", "dashboard", "manager", "menu"]);
+const RESERVED_ROUTES = new Set(["login", "register", "dashboard", "manager", "menu", "cashier", "auth"]);
 
 function getRouteContext(pathname) {
   const parts = pathname.split("/").filter(Boolean);
@@ -37,6 +37,7 @@ export function TenantProvider({ children }) {
         } else {
           const { data: authData } = await supabase.auth.getUser();
           if (authData.user) {
+            await supabase.rpc("ensure_profile_for_current_user");
             const { data } = await supabase.from("profiles").select("id, tenant_id, full_name, role").eq("id", authData.user.id).maybeSingle();
             if (!cancelled && data) {
               setProfile(data);

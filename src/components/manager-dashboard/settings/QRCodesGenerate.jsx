@@ -27,14 +27,15 @@ import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
-  const { tables, generateTables, clearTables } = useTables();
+  const { tables, error: tablesError, generateTables, clearTables } = useTables();
   const { slug } = useTenant();
   const [tablesCount, setTablesCount] = useState(tables.length || 5);
 
   const handleGenerate = (e) => {
     e.preventDefault();
-    generateTables(tablesCount);
-    setTablesCount("");
+    generateTables(tablesCount).then((result) => {
+      if (!result?.error) setTablesCount("");
+    });
   };
 
   // طباعة الكل أو طباعة طاولة محددة
@@ -44,13 +45,17 @@ function QRCodeGenerate() {
       if (singleCard) {
         singleCard.classList.add("print-single-target");
         document.body.classList.add("printing-single");
-        window.print();
-        document.body.classList.remove("printing-single");
-        singleCard.classList.remove("print-single-target");
+        const cleanup = () => {
+          document.body.classList.remove("printing-single");
+          singleCard.classList.remove("print-single-target");
+          window.removeEventListener("afterprint", cleanup);
+        };
+        window.addEventListener("afterprint", cleanup);
+        requestAnimationFrame(() => window.print());
         return;
       }
     }
-    window.print();
+    requestAnimationFrame(() => window.print());
   };
 
   return (
@@ -183,6 +188,8 @@ function QRCodeGenerate() {
           </Grid>
         </Box>
       </Paper>
+
+      {tablesError && <Typography className="no-print" color="error" sx={{ mb: 2 }}>{tablesError}</Typography>}
 
       {/* Generated Tables List */}
       {tables.length > 0 && (
