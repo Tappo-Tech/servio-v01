@@ -9,6 +9,7 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import TextField from "@mui/material/TextField";
 import Card from "@mui/material/Card";
 import CardMedia from "@mui/material/CardMedia";
@@ -41,6 +42,7 @@ function MenuControl() {
   // حالات إدارة التصنيفات/الفلاتر
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
 
   const {
@@ -71,22 +73,21 @@ function MenuControl() {
   };
 
   // معالجة حفظ تصنيف جديد أو تعديله
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!newCategoryTitle.trim()) return;
+    setCategoryError("");
 
+    let result;
     if (editingCategory) {
-      if (updateCategory) {
-        updateCategory({ ...editingCategory, name: newCategoryTitle.trim() });
-      }
-      setEditingCategory(null);
+      result = updateCategory ? await updateCategory({ ...editingCategory, name: newCategoryTitle.trim() }) : null;
     } else {
-      if (addCategory) {
-        addCategory({
-          id: uuidV4(),
-          name: newCategoryTitle.trim(),
-        });
-      }
+      result = addCategory ? await addCategory({ id: uuidV4(), name: newCategoryTitle.trim() }) : null;
     }
+    if (result?.error) {
+      setCategoryError(result.error.message || "تعذر حفظ التصنيف");
+      return;
+    }
+    setEditingCategory(null);
     setNewCategoryTitle("");
   };
 
@@ -311,6 +312,7 @@ function MenuControl() {
         </DialogTitle>
 
         <DialogContent dividers>
+          {categoryError && <Alert severity="error" sx={{ mb: 2 }}>{categoryError}</Alert>}
           {/* حقل إضافة / تعديل تصنيف */}
           <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
             <TextField

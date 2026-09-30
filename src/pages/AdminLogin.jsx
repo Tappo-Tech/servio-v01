@@ -58,10 +58,13 @@ function AdminLogin({ cashierSlug: routeSlug }) {
     e.preventDefault(); setErrorMsg("");
     if (!cashierData.slug || !cashierData.username || pin.length < 4) return setErrorMsg("أدخل اسم المستخدم ورمز PIN صحيح");
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("cashier-login", { body: { slug: cashierData.slug, username: cashierData.username, pin } });
-    if (error || !data?.email) setErrorMsg(data?.error || "بيانات الكاشير غير صحيحة");
-    else {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email: data.email, password: pin });
+    const { data, error } = await supabase.functions.invoke("cashier-login", { body: { slug: cashierData.slug.trim().toLowerCase(), username: cashierData.username.trim().toLowerCase(), pin } });
+    if (error || !data?.email || !data?.password) {
+      let serverMessage = data?.error;
+      if (!serverMessage && error?.context && typeof error.context.json === "function") serverMessage = (await error.context.json().catch(() => null))?.error;
+      setErrorMsg(serverMessage || "بيانات الكاشير غير صحيحة");
+    } else {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
       if (authError) setErrorMsg(authErrorMessage(authError.message));
       else { localStorage.setItem("tappo_cashier", JSON.stringify({ slug: cashierData.slug, username: cashierData.username })); navigate("/dashboard"); }
     }

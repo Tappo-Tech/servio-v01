@@ -12,9 +12,9 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import LocalCafeIcon from "@mui/icons-material/LocalCafe";
 import supabase from "../supabase";
+import { slugifyName, withSlugSuffix } from "../utils/slug";
 
 const CURRENCIES = [{ value: "SAR", label: "ر.س (ريال سعودي)" }, { value: "AED", label: "د.إ (درهم إماراتي)" }, { value: "USD", label: "$ (دولار أمريكي)" }];
-const generateSlug = (text) => text.toString().toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
 
 function AdminRegister() {
   const navigate = useNavigate();
@@ -26,13 +26,20 @@ function AdminRegister() {
   const [emailSent, setEmailSent] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
 
-  const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => { const next = { ...prev, [name]: value }; if (name === "store_name" && isSlugLocked) next.store_slug = generateSlug(value); return next; }); };
+  const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => { const next = { ...prev, [name]: value }; if (name === "store_name" && isSlugLocked) next.store_slug = slugifyName(value); return next; }); };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password || !formData.store_name || !formData.store_slug || !formData.full_name) return setErrorMsg("يرجى ملء كافة الحقول الإلزامية");
     setLoading(true); setErrorMsg("");
-    const { data: tenantId, error: tenantError } = await supabase.rpc("create_tenant_for_registration", { p_name: formData.store_name, p_slug: formData.store_slug, p_phone: formData.phone || null, p_email: formData.email.trim().toLowerCase(), p_tax_number: formData.tax_number || null, p_currency: formData.currency || "SAR" });
-    if (tenantError) { setLoading(false); return setErrorMsg(tenantError.message.includes("duplicate") ? "الـ slug مستخدم بالفعل" : tenantError.message); }
+    let slug = formData.store_slug; let tenantId = null; let tenantError = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const result = await supabase.rpc("create_tenant_for_registration", { p_name: formData.store_name, p_slug: slug, p_phone: formData.phone || null, p_email: formData.email.trim().toLowerCase(), p_tax_number: formData.tax_number || null, p_currency: formData.currency || "SAR" });
+      tenantId = result.data; tenantError = result.error;
+      const duplicate = tenantError && (tenantError.code === "23505" || String(tenantError.message).includes("duplicate"));
+      if (!duplicate || !isSlugLocked) break;
+      slug = withSlugSuffix(formData.store_slug); // auto-generated slug already taken: try a variant
+    }
+    if (tenantError) { setLoading(false); return setErrorMsg(String(tenantError.message).includes("duplicate") ? "الـ slug مستخدم بالفعل" : tenantError.message); }
     const { data, error } = await supabase.auth.signUp({ email: formData.email.trim().toLowerCase(), password: formData.password, options: { emailRedirectTo: `${window.location.origin}/auth/callback`, data: { tenant_id: tenantId, full_name: formData.full_name, role: "admin" } } });
     if (error) setErrorMsg(error.message.includes("already registered") ? "هذا البريد مسجل بالفعل" : error.message);
     else if (data.session) navigate("/manager");

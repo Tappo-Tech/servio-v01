@@ -12,38 +12,23 @@ import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import Tooltip from "@mui/material/Tooltip";
 
 // MUI ICONS
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import KeyIcon from "@mui/icons-material/Key";
-import AutoRenewIcon from "@mui/icons-material/Autorenew";
 
 // CONTEXT
 import { useStore } from "../../../context/StoreInfoContext";
 import { compressImage } from "../../../utils/compressImage";
+import { slugifyName } from "../../../utils/slug";
 
 const CURRENCIES = [
   { value: "SAR", label: "ر.س (ريال سعودي)" },
   { value: "AED", label: "د.إ (درهم إماراتي)" },
   { value: "USD", label: "$ (دولار أمريكي)" },
 ];
-
-const generateSlug = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    // eslint-disable-next-line no-useless-escape
-    .replace(/[^\w\-]+/g, "")
-    // eslint-disable-next-line no-useless-escape
-    .replace(/\-\-+/g, "-");
-};
 
 function StoreInfoSettings() {
   const { storeInfo, updateStoreInfo } = useStore();
@@ -58,7 +43,6 @@ function StoreInfoSettings() {
     address: storeInfo?.address || "",
     receipt_footer: storeInfo?.receipt_footer || "",
     logo_url: storeInfo?.logo_url || "",
-    cashier_pin: storeInfo?.cashier_pin || "1234",
   });
 
   const [isSlugLocked, setIsSlugLocked] = useState(true);
@@ -80,16 +64,10 @@ function StoreInfoSettings() {
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
       if (name === "store_name" && isSlugLocked) {
-        updatedData.store_slug = generateSlug(value);
+        updatedData.store_slug = slugifyName(value);
       }
       return updatedData;
     });
-  };
-
-  // دالة عشوائية لتوليد رمز PIN للكاشير
-  const handleGeneratePin = () => {
-    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
-    setFormData((prev) => ({ ...prev, cashier_pin: randomPin }));
   };
 
   const handleLogoUpload = async (e) => {
@@ -294,40 +272,6 @@ function StoreInfoSettings() {
               </MenuItem>
             ))}
           </TextField>
-        </Grid>
-
-        {/* Cashier PIN Management Section */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            fullWidth
-            label="رمز دخول الكاشير (PIN)"
-            name="cashier_pin"
-            value={formData.cashier_pin || ""}
-            onChange={handleInputChange}
-            size="small"
-            required
-            helperText="الرمز المستخدم لدخول لوحة الكاشير"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <KeyIcon fontSize="small" color="primary" />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="توليد رمز تلقائي">
-                    <IconButton
-                      size="small"
-                      onClick={handleGeneratePin}
-                      color="primary"
-                    >
-                      <AutoRenewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
         </Grid>
 
         {/* Address */}

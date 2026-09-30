@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Divider, List, ListItem, ListItemText, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Box, Button, Chip, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import supabase from "../../../supabase";
+import { useStore } from "../../../context/StoreInfoContext";
+
+const emptyForm = { full_name: "", username: "", pin: "" };
 
 function CashierManagement() {
+  const { storeInfo } = useStore();
   const [cashiers, setCashiers] = useState([]);
-  const [form, setForm] = useState({ full_name: "", username: "", pin: "" });
+  const [form, setForm] = useState(emptyForm);
+  const [showPin, setShowPin] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const loginLink = storeInfo?.store_slug ? `${window.location.origin}/cashier/${storeInfo.store_slug}` : "";
 
   const loadCashiers = async () => {
     const { data, error: loadError } = await supabase.from("cashiers").select("id, full_name, username, created_at").order("created_at", { ascending: false });
@@ -17,17 +29,77 @@ function CashierManagement() {
   };
   useEffect(() => { loadCashiers(); }, []);
 
+  const generatePin = () => setForm((prev) => ({ ...prev, pin: String(Math.floor(1000 + Math.random() * 9000)) }));
+
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(loginLink); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* clipboard unavailable */ }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage(""); setError("");
-    if (!form.full_name || !form.username || !/^\d{4,6}$/.test(form.pin)) return setError("أدخل الاسم واسم المستخدم وPIN من 4 إلى 6 أرقام");
+    const username = form.username.trim().toLowerCase();
+    if (!form.full_name.trim() || !username || !/^\d{4,6}$/.test(form.pin)) return setError("أدخل الاسم واسم المستخدم ورمز PIN من 4 إلى 6 أرقام");
     setLoading(true);
-    const { data, error: createError } = await supabase.rpc("create_cashier", { p_full_name: form.full_name, p_username: form.username, p_pin: form.pin });
+    const { error: createError } = await supabase.rpc("create_cashier", { p_full_name: form.full_name.trim(), p_username: username, p_pin: form.pin });
     if (createError) setError(createError.message.includes("duplicate") ? "اسم المستخدم مستخدم بالفعل داخل هذا الكافيه" : createError.message);
-    else { setMessage("تم إنشاء الكاشير بنجاح"); setForm({ full_name: "", username: "", pin: "" }); if (data) await loadCashiers(); }
+    else { setMessage(`تم إنشاء الكاشير. اسم المستخدم: ${username} — رمز PIN: ${form.pin} (سجّله الآن، لن يظهر مرة أخرى)`); setForm(emptyForm); await loadCashiers(); }
     setLoading(false);
   };
 
-  return <Box sx={{ maxWidth: 760, mx: "auto" }}><Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>إدارة الكاشير</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>أنشئ حسابات كاشير مستقلة لكل فرع مع PIN مشفّر ومستخدم داخل نطاق الكافيه فقط.</Typography>{message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}{error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}<Paper component="form" onSubmit={handleSubmit} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}><TextField size="small" fullWidth label="الاسم بالكامل" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /><TextField size="small" fullWidth label="اسم المستخدم" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })} /><TextField size="small" fullWidth label="PIN" type="password" inputProps={{ inputMode: "numeric", maxLength: 6 }} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "") })} /><Button type="submit" variant="contained" disabled={loading} startIcon={<PersonAddAltIcon />} sx={{ minWidth: 140, fontWeight: 700 }}>{loading ? "جاري الحفظ" : "إضافة كاشير"}</Button></Stack></Paper><Divider sx={{ mb: 1 }} /><List disablePadding>{cashiers.map((cashier) => <ListItem key={cashier.id} sx={{ px: 1, borderBottom: "1px solid", borderColor: "divider" }}><ListItemText primary={cashier.full_name} secondary={`@${cashier.username}`} /><Typography variant="caption" color="text.secondary">PIN مشفّر</Typography></ListItem>)}{cashiers.length === 0 && <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>لا يوجد كاشير مسجل حتى الآن.</Typography>}</List></Box>;
+  return (
+    <Box sx={{ maxWidth: 760, mx: "auto" }}>
+      <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>إدارة الكاشير</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>أنشئ حساب كاشير بسم مستخدم ورمز PIN. الرمز مشفّر ولا يمكن عرضه بعد الحفظ.</Typography>
+
+      {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {loginLink && (
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary">رابط دخول الكاشير</Typography>
+            <Typography variant="body2" sx={{ direction: "ltr", textAlign: "right", overflowWrap: "anywhere", fontWeight: 600 }}>{loginLink}</Typography>
+          </Box>
+          <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={copyLink}>{copied ? "تم النسخ" : "نسخ"}</Button>
+        </Paper>
+      )}
+
+      <Paper component="form" onSubmit={handleSubmit} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>إضافة كاشير جديد</Typography>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
+          <TextField size="small" fullWidth label="الاسم بالكامل" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+          <TextField size="small" fullWidth label="اسم المستخدم" helperText="حروف إنجليزية وأرقام، بدون مسافات" inputProps={{ dir: "ltr" }} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s/g, "") })} />
+          <TextField
+            size="small" fullWidth label="رمز PIN (4 إلى 6 أرقام)" type={showPin ? "text" : "password"}
+            inputProps={{ inputMode: "numeric", maxLength: 6, dir: "ltr" }} value={form.pin}
+            onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "") })}
+            InputProps={{ endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="توليد رمز تلقائي"><IconButton size="small" onClick={generatePin} color="primary"><AutorenewIcon fontSize="small" /></IconButton></Tooltip>
+                <IconButton size="small" onClick={() => setShowPin((v) => !v)}>{showPin ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}</IconButton>
+              </InputAdornment>
+            ) }}
+          />
+          <Button type="submit" variant="contained" disabled={loading} startIcon={<PersonAddAltIcon />} sx={{ fontWeight: 700, py: 1 }}>{loading ? "جاري الحفظ..." : "إضافة الكاشير"}</Button>
+        </Box>
+      </Paper>
+
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>الكاشير المسجلون ({cashiers.length})</Typography>
+      <Stack spacing={1}>
+        {cashiers.map((cashier) => (
+          <Paper key={cashier.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar sx={{ bgcolor: "primary.main" }}>{(cashier.full_name || "?").trim().charAt(0)}</Avatar>
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 700 }} noWrap>{cashier.full_name}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ direction: "ltr", textAlign: "right" }} noWrap>@{cashier.username}</Typography>
+            </Box>
+            <Chip size="small" label="PIN مشفّر" />
+          </Paper>
+        ))}
+        {cashiers.length === 0 && <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>لا يوجد كاشير مسجل حتى الآن.</Typography>}
+      </Stack>
+    </Box>
+  );
 }
 export default CashierManagement;

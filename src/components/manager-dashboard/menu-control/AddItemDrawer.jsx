@@ -10,6 +10,7 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import CloseIcon from "@mui/icons-material/Close";
@@ -99,9 +100,12 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const [submitError, setSubmitError] = useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price) return;
+    setSubmitError("");
 
     const payload = {
       name: formData.name,
@@ -114,19 +118,13 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       available: formData.available,
     };
 
-    if (itemToEdit) {
-      updateItem({
-        ...itemToEdit,
-        ...payload,
-      });
-    } else {
-      addNewItem({
-        id: uuidV4(),
-        ...payload,
-        quantity: 1,
-      });
+    const result = itemToEdit
+      ? await updateItem({ ...itemToEdit, ...payload })
+      : await addNewItem({ id: uuidV4(), ...payload });
+    if (result?.error) {
+      setSubmitError(result.error.message || "تعذر حفظ الصنف");
+      return;
     }
-
     onClose();
   };
 
@@ -165,6 +163,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         onSubmit={handleSubmit}
         sx={{ display: "flex", flexDirection: "column", gap: 2 }}
       >
+        {submitError && <Alert severity="error">{submitError}</Alert>}
         <TextField
           label="اسم الصنف"
           name="name"
