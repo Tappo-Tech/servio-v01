@@ -76,8 +76,18 @@ function OrderRow({ order, currency }) {
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell component="th" scope="row" sx={{ fontWeight: 700 }}>
-          #{order.id}
+        <TableCell component="th" scope="row">
+          <Chip
+            label={`#${shortOrderId}`}
+            size="small"
+            sx={{
+              borderRadius: 2,
+              fontWeight: 900,
+              bgcolor: "rgba(244,121,32,.08)",
+              color: "primary.dark",
+              letterSpacing: ".04em",
+            }}
+          />
         </TableCell>
         <TableCell align="center">طاولة {order.table_number}</TableCell>
         <TableCell align="center">
