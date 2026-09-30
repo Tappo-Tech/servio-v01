@@ -61,10 +61,16 @@ const renderStatusChip = (status) => {
 function OrderRow({ order, currency }) {
   const [open, setOpen] = useState(false);
   const [openInvoice, setOpenInvoice] = useState(false);
+  const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
 
   return (
     <>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow
+        sx={{
+          "& > *": { borderBottom: "unset" },
+          "&:hover": { bgcolor: "rgba(244,121,32,.025)" },
+        }}
+      >
         <TableCell width={50}>
           <IconButton size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
