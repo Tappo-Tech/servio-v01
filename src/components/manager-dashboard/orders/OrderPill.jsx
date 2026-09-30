@@ -28,6 +28,7 @@ function InvoiceModal({ open, onClose, order }) {
   };
 
   const currency = storeInfo.currency || "ر.س";
+  const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
