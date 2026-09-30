@@ -60,11 +60,12 @@ const INITIAL_FORM_STATE = {
   image: "",
   allergens: [],
   tags: [],
+  recommendation_item_ids: [],
   available: true,
 };
 
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
-  const { addNewItem, updateItem, categoriesList = [] } = useMenu();
+  const { addNewItem, updateItem, categoriesList = [], items = [] } = useMenu();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         image: itemToEdit.image || "",
         allergens: itemToEdit.allergens || [],
         tags: itemToEdit.tags || [],
+        recommendation_item_ids: itemToEdit.recommendation_item_ids || [],
         available: itemToEdit.available ?? true,
       });
     } else {
@@ -115,6 +117,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       image: formData.image || "/logo-icon.webp",
       allergens: formData.allergens,
       tags: formData.tags,
+      recommendation_item_ids: formData.recommendation_item_ids,
       available: formData.available,
     };
 
@@ -264,6 +267,44 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
               size="small"
               label="وسوم الاقتراحات والتوافق"
               placeholder="اختر أو اكتب وسم..."
+            />
+          )}
+          fullWidth
+        />
+
+        <Autocomplete
+          multiple
+          options={items.filter((item) => item.id !== itemToEdit?.id && item.available)}
+          getOptionLabel={(option) => option?.name || ""}
+          value={items.filter((item) => formData.recommendation_item_ids.includes(item.id))}
+          onChange={(_, newValue) => {
+            setFormData((prev) => ({
+              ...prev,
+              recommendation_item_ids: newValue.map((item) => item.id),
+            }));
+          }}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => {
+              const { key, ...tagProps } = getTagProps({ index });
+              return (
+                <Chip
+                  key={key}
+                  label={option.name}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  {...tagProps}
+                />
+              );
+            })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              size="small"
+              label="يتوافق مع / اقترح معه"
+              placeholder="اختر الأصناف المناسبة..."
+              helperText="هذه الأصناف ستظهر كاقتراحات عند اختيار هذا الصنف"
             />
           )}
           fullWidth
