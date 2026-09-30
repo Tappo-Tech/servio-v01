@@ -317,11 +317,10 @@ Mujahid leads marketing direction, brand development, and go-to-market preparati
 - Primary market: Saudi Arabia
 - Product website: Coming soon
 - Support and general contact: [tappo.app.sa@gmail.com](mailto:tappo.app.sa@gmail.com)
-- Company LinkedIn: Coming soon
+- Company LinkedIn: [TAPPO Tech](https://www.linkedin.com/company/tappo-tech)
 - Company X: [@tappoApp](https://x.com/tappoApp)
 - Repository: [Tappo-Tech/tappo-v01](https://github.com/Tappo-Tech/tappo-v01)
 
-The company LinkedIn page is not publicly available yet. It should be added here once the official page is created or linked from a founder profile.
 
 ## Commercial and licensing status
 
