@@ -50,7 +50,7 @@ function CartDrawer({ open, close }) {
 
   return (
     <SwipeableDrawer
-      anchor="bottom"
+      anchor="right"
       open={open}
       onClose={close}
       onOpen={() => {}}
@@ -59,8 +59,10 @@ function CartDrawer({ open, close }) {
         paper: {
           sx: {
             borderTopLeftRadius: "24px",
-            borderTopRightRadius: "24px",
-            maxHeight: "90dvh",
+            borderBottomLeftRadius: "24px",
+            width: { xs: "100%", sm: 440 },
+            maxWidth: "100%",
+            height: "100dvh",
             backgroundColor: "background.paper",
             overflow: "hidden",
           },
@@ -69,7 +71,8 @@ function CartDrawer({ open, close }) {
     >
       <Box
         sx={{
-          maxHeight: `calc(90dvh - ${bottomBarHeight})`,
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
           p: 2,
         }}
