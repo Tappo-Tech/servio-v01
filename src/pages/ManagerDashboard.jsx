@@ -47,19 +47,29 @@ function ManagerDashboard() {
         <Box
           sx={{
             position: "sticky",
-            top: 0,
+            top: { xs: 8, md: 12 },
             zIndex: (theme) => theme.zIndex.appBar,
-            backgroundColor: "background.paper",
+            px: { xs: 1.25, sm: 2.5, lg: 3 },
+            pt: { xs: 1, md: 1.5 },
           }}
         >
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: 1 }}>
+          <Box
+            sx={{
+              border: "1px solid",
+              borderColor: "rgba(255,255,255,.65)",
+              background: "rgba(255,255,255,.74)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              borderRadius: { xs: 3, md: 4 },
+              boxShadow: "0 12px 40px rgba(23,26,47,.06)",
+            }}
+          >
             <ManagerHeader onDrawerToggle={handleDrawerToggle} />
           </Box>
-          <Divider />
         </Box>
 
         {/* عرض الصفحة بناءً على التبويب المحدد */}
-        <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 1.25, sm: 2.5, lg: 3 }, pt: { xs: 2, md: 2.5 } }}>
           {activeTab === "manager" && <Analytics />}
           {activeTab === "history" && <OrdersHistory />}
           {activeTab === "menu" && <MenuControl />}
