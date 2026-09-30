@@ -131,7 +131,7 @@ function Feedbacks() {
                   >
                     <AccessTimeIcon sx={{ fontSize: 15 }} />
                     <Typography variant="caption" sx={{ fontWeight: "500" }}>
-                      {item.created_at}
+                      {item.created_at ? new Date(item.created_at).toLocaleDateString("ar-SA", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}
                     </Typography>
                   </Stack>
                 </Box>
