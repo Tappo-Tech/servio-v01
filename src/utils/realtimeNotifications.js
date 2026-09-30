@@ -3,18 +3,29 @@ export function playRealtimeNotification(kind = "order") {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
+
     const context = new AudioContext();
-    const oscillator = context.createOscillator();
+    const isWaiter = kind === "waiter";
+    const notes = isWaiter ? [660, 880, 660] : [880, 1046.5, 1318.5];
     const gain = context.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.value = kind === "waiter" ? 660 : 880;
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.32);
+    const oscillator = context.createOscillator();
+
+    oscillator.type = isWaiter ? "triangle" : "sine";
     oscillator.connect(gain);
     gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.34);
+
+    const now = context.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+
+    notes.forEach((frequency, index) => {
+      const start = now + index * 0.14;
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.exponentialRampToValueAtTime(0.34, start + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+    });
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.52);
     oscillator.addEventListener("ended", () => context.close());
   } catch (error) {
     console.debug("تعذر تشغيل صوت الإشعار:", error);
