@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 
 const CartContext = createContext();
 
@@ -23,9 +23,9 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems]);
 
-  const setTable = (number) => {
+  const setTable = useCallback((number) => {
     setTableNumber(number);
-  };
+  }, []);
 
   const addToCart = (item, quantityToAdd = 1) => {
     setCartItems((prevCartItems) => {

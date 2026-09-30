@@ -10,6 +10,7 @@ import CallWaiterConfirm from "../components/menu/CallWaiterConfirm";
 import SuggestionBanner from "../components/menu/SuggestionBanner";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useCart } from "../context/CartContext";
 import { useTables } from "../context/TablesContext";
 import { useTenant } from "../context/TenantContext";
@@ -19,11 +20,12 @@ function Menu() {
   const [isCartOpen, setCartOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [callingWaiterConfirmation, setCallingWaiterConfirmation] = useState(false);
-  const { tables } = useTables();
+  const { tables, loaded: tablesLoaded } = useTables();
   const { setTable } = useCart();
-  const { tableNumber, tenant } = useTenant();
+  const { tableNumber, tenant, loading: tenantLoading } = useTenant();
   const isValidTable = tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true;
   useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
+  if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
   if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="الرابط لا يشير إلى كافيه مسجل في TAPPO." /></Container>;
   if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="طاولة غير صالحة" message="عذراً، لم نتمكن من التعرف على رقم الطاولة." /></Container>;
   return <Box sx={{ minHeight: "100vh", backgroundColor: "background.default", pb: 2 }}>

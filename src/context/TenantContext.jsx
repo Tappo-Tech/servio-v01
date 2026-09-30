@@ -25,10 +25,12 @@ export function TenantProvider({ children }) {
   // Re-resolve the tenant whenever the auth session changes (login, logout, token refresh after reload).
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      // Public menu pages don't depend on the session; skip them so tab-focus SIGNED_IN events never reload the menu.
+      if (route.slug) return;
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setAuthVersion((v) => v + 1);
     });
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [route.slug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +60,7 @@ export function TenantProvider({ children }) {
           }
           if (cancelled) return;
           if (!profileData) { setProfile(null); return; }
-          setProfile(profileData);
+          setProfile((prev) => (prev && prev.id === profileData.id && prev.role === profileData.role && prev.tenant_id === profileData.tenant_id && prev.full_name === profileData.full_name ? prev : profileData));
           const [{ data: tenantData }, { data: storeData }] = await Promise.all([
             supabase.from("tenants").select("*").eq("id", profileData.tenant_id).maybeSingle(),
             supabase.from("store").select("*").eq("tenant_id", profileData.tenant_id).maybeSingle(),
