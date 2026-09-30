@@ -1,4 +1,12 @@
-import { Box, Button, Card, Container, Grid, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  Container,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import QrCode2RoundedIcon from "@mui/icons-material/QrCode2Rounded";
 import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
@@ -7,11 +15,300 @@ import LocalCafeRoundedIcon from "@mui/icons-material/LocalCafeRounded";
 import { Link as RouterLink } from "react-router-dom";
 
 const features = [
-  { icon: <QrCode2RoundedIcon />, title: "طلب ذكي عبر QR", text: "دع عملاءك يتصفحون المنيو ويطلبون من طاولتهم بدون تحميل تطبيق." },
-  { icon: <NotificationsActiveRoundedIcon />, title: "تشغيل لحظي", text: "استقبل الطلبات ونداءات الويتر فوراً في لوحة واحدة للكاشير والإدارة." },
-  { icon: <InsightsRoundedIcon />, title: "قرارات أفضل", text: "اجمع الملاحظات وافهم تجربة عملائك وحسّن أداء الكافيه باستمرار." },
+  {
+    icon: <QrCode2RoundedIcon />,
+    title: "طلب ذكي عبر QR",
+    text: "دع عملاءك يتصفحون المنيو ويطلبون من طاولتهم بدون تحميل تطبيق.",
+  },
+  {
+    icon: <NotificationsActiveRoundedIcon />,
+    title: "تشغيل لحظي",
+    text: "استقبل الطلبات ونداءات الويتر فوراً في لوحة واحدة للكاشير والإدارة.",
+  },
+  {
+    icon: <InsightsRoundedIcon />,
+    title: "قرارات أفضل",
+    text: "اجمع الملاحظات وافهم تجربة عملائك وحسّن أداء الكافيه باستمرار.",
+  },
 ];
 
 export default function Home() {
-  return <Box sx={{ minHeight: "100vh", bgcolor: "background.default", overflow: "hidden" }}><Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(circle at 85% 10%, rgba(255,96,46,.13), transparent 34%), radial-gradient(circle at 10% 55%, rgba(31,122,109,.10), transparent 30%)" }} /><Container maxWidth="lg" sx={{ position: "relative", py: { xs: 3, md: 5 } }}><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: { xs: 7, md: 12 } }}><Stack direction="row" sx={{ alignItems: "center", gap: 1 }}><Box component="img" src="/logo-icon.webp" alt="TAPPO" sx={{ width: 42, height: 42, objectFit: "contain" }} /><Typography variant="h5" fontWeight={900} color="primary">TAPPO</Typography></Stack><Stack direction="row" sx={{ alignItems: "center", gap: 1 }}><Button component={RouterLink} to="/login" variant="text" sx={{ fontWeight: 700 }}>تسجيل الدخول</Button><Button component={RouterLink} to="/register" variant="outlined" sx={{ fontWeight: 700, borderRadius: 2 }}>ابدأ الآن</Button></Stack></Stack><Grid container spacing={{ xs: 5, md: 9 }} sx={{ alignItems: "center", mb: { xs: 9, md: 13 } }}><Grid size={{ xs: 12, md: 7 }}><Typography variant="overline" color="primary" sx={{ fontWeight: 900, letterSpacing: 1.5 }}>حلول الضيافة الذكية</Typography><Typography component="h1" sx={{ mt: 1, fontSize: { xs: "2.5rem", sm: "3.5rem", md: "4.5rem" }, lineHeight: 1.08, fontWeight: 900, letterSpacing: "-0.05em", maxWidth: 720 }}>خلّي كل طاولة<br /><Box component="span" sx={{ color: "primary.main" }}>تشتغل لصالحك.</Box></Typography><Typography sx={{ mt: 3, maxWidth: 620, color: "text.secondary", fontSize: { xs: "1.05rem", md: "1.2rem" }, lineHeight: 1.9 }}>TAPPO منصة سعودية للكافيهات والمطاعم تساعدك تسرّع الطلب، ترفع كفاءة الفريق، وتقدم تجربة أسهل لعملائك باستخدام QR.</Typography><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1.5, mt: 4, alignItems: { xs: "stretch", sm: "center" } }}><Button component={RouterLink} to="/register" variant="contained" size="large" endIcon={<ArrowBackRoundedIcon />} sx={{ borderRadius: 2, px: 3, py: 1.4, fontWeight: 800 }}>أنشئ حساب الكافيه</Button><Button component={RouterLink} to="/login" variant="text" size="large" sx={{ fontWeight: 800 }}>لديك حساب؟ ادخل من هنا</Button></Stack></Grid><Grid size={{ xs: 12, md: 5 }}><Card elevation={0} sx={{ borderRadius: 5, p: { xs: 3, md: 4 }, bgcolor: "#173b3a", color: "#fff", transform: { md: "rotate(-2deg)" }, boxShadow: "0 24px 70px rgba(23,59,58,.22)" }}><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 5 }}><Stack direction="row" sx={{ alignItems: "center", gap: 1 }}><LocalCafeRoundedIcon /><Typography fontWeight={800}>لوحة TAPPO</Typography></Stack><Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#65d6a6", boxShadow: "0 0 0 5px rgba(101,214,166,.15)" }} /></Stack><Typography variant="body2" sx={{ opacity: .72, mb: 1 }}>طلبات اليوم</Typography><Typography sx={{ fontSize: "3.5rem", fontWeight: 900, lineHeight: 1 }}>128</Typography><Stack sx={{ mt: 4, gap: 1.2 }}>{["طلب جديد من الطاولة 12", "نداء ويتر — الطاولة 4", "تم تجهيز الطلب #1048"].map((item, index) => <Box key={item} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(255,255,255,.08)" }}><Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: index === 1 ? "#ffb454" : "#65d6a6" }} /><Typography variant="body2" sx={{ opacity: .9 }}>{item}</Typography></Box>)}</Stack></Card></Grid></Grid><Typography component="h2" variant="h4" fontWeight={900} textAlign="center" sx={{ mb: 1 }}>كل ما يحتاجه فريقك في مكان واحد</Typography><Typography color="text.secondary" textAlign="center" sx={{ mb: 5 }}>من أول مسح الـQR إلى آخر طلب في اليوم.</Typography><Grid container spacing={2.5}>{features.map((feature) => <Grid size={{ xs: 12, md: 4 }} key={feature.title}><Card elevation={0} sx={{ height: "100%", p: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}><Box sx={{ display: "grid", placeItems: "center", width: 48, height: 48, borderRadius: 2, color: "primary.main", bgcolor: "primary.light", mb: 2 }}>{feature.icon}</Box><Typography variant="h6" fontWeight={800} mb={1}>{feature.title}</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>{feature.text}</Typography></Card></Grid>)}</Grid><Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: "center", justifyContent: "space-between", gap: 2, mt: 8, pt: 3, borderTop: "1px solid", borderColor: "divider" }}><Typography variant="body2" color="text.secondary">TAPPO — حلول ضيافة أذكى من السعودية</Typography><Typography variant="body2" color="text.secondary">نسخة تجريبية أولية</Typography></Stack></Container></Box>;
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 85% 10%, rgba(255,96,46,.13), transparent 34%), radial-gradient(circle at 10% 55%, rgba(31,122,109,.10), transparent 30%)",
+        }}
+      />
+      <Container
+        maxWidth="lg"
+        sx={{ position: "relative", py: { xs: 3, md: 5 } }}
+      >
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: { xs: 7, md: 12 },
+          }}
+        >
+          <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+            <Box
+              component="img"
+              src="/logo-icon.webp"
+              alt="TAPPO"
+              sx={{ width: 42, height: 42, objectFit: "contain" }}
+            />
+            <Typography variant="h5" fontWeight={900} color="primary">
+              TAPPO
+            </Typography>
+          </Stack>
+          <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="text"
+              sx={{ fontWeight: 700 }}
+            >
+              تسجيل الدخول
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/register"
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              ابدأ الآن
+            </Button>
+          </Stack>
+        </Stack>
+        <Grid
+          container
+          spacing={{ xs: 5, md: 9 }}
+          sx={{ alignItems: "center", mb: { xs: 9, md: 13 } }}
+        >
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Typography
+              variant="overline"
+              color="primary"
+              sx={{ fontWeight: 900, letterSpacing: 1.5 }}
+            >
+              حلول الضيافة الذكية
+            </Typography>
+            <Typography
+              component="h1"
+              sx={{
+                mt: 1,
+                fontSize: { xs: "2.5rem", sm: "3.5rem", md: "4.5rem" },
+                lineHeight: 1.08,
+                fontWeight: 900,
+                letterSpacing: "-0.05em",
+                maxWidth: 720,
+              }}
+            >
+              خلّي كل طاولة
+              <br />
+              <Box component="span" sx={{ color: "primary.main" }}>
+                تشتغل لصالحك.
+              </Box>
+            </Typography>
+            <Typography
+              sx={{
+                mt: 3,
+                maxWidth: 620,
+                color: "text.secondary",
+                fontSize: { xs: "1.05rem", md: "1.2rem" },
+                lineHeight: 1.9,
+              }}
+            >
+              TAPPO منصة سعودية للكافيهات والمطاعم تساعدك تسرّع الطلب، ترفع
+              كفاءة الفريق، وتقدم تجربة أسهل لعملائك باستخدام QR.
+            </Typography>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              sx={{
+                gap: 1.5,
+                mt: 4,
+                alignItems: { xs: "stretch", sm: "center" },
+              }}
+            >
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant="contained"
+                size="large"
+                endIcon={<ArrowBackRoundedIcon />}
+                sx={{ borderRadius: 2, px: 3, py: 1.4, fontWeight: 800 }}
+              >
+                أنشئ حساب الكافيه
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="text"
+                size="large"
+                sx={{ fontWeight: 800 }}
+              >
+                لديك حساب؟ ادخل من هنا
+              </Button>
+            </Stack>
+          </Grid>
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Card
+              elevation={0}
+              sx={{
+                borderRadius: 5,
+                p: { xs: 3, md: 4 },
+                bgcolor: "#173b3a",
+                color: "#fff",
+                transform: { md: "rotate(-2deg)" },
+                boxShadow: "0 24px 70px rgba(23,59,58,.22)",
+              }}
+            >
+              <Stack
+                direction="row"
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 5,
+                }}
+              >
+                <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+                  <LocalCafeRoundedIcon />
+                  <Typography fontWeight={800}>لوحة TAPPO</Typography>
+                </Stack>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    bgcolor: "#65d6a6",
+                    boxShadow: "0 0 0 5px rgba(101,214,166,.15)",
+                  }}
+                />
+              </Stack>
+              <Typography variant="body2" sx={{ opacity: 0.72, mb: 1 }}>
+                طلبات اليوم
+              </Typography>
+              <Typography
+                sx={{ fontSize: "3.5rem", fontWeight: 900, lineHeight: 1 }}
+              >
+                128
+              </Typography>
+              <Stack sx={{ mt: 4, gap: 1.2 }}>
+                {[
+                  "طلب جديد من الطاولة 12",
+                  "نداء ويتر — الطاولة 4",
+                  "تم تجهيز الطلب #1048",
+                ].map((item, index) => (
+                  <Box
+                    key={item}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      p: 1.5,
+                      borderRadius: 2,
+                      bgcolor: "rgba(255,255,255,.08)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        bgcolor: index === 1 ? "#ffb454" : "#65d6a6",
+                      }}
+                    />
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      {item}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Card>
+          </Grid>
+        </Grid>
+        <Typography
+          component="h2"
+          variant="h4"
+          fontWeight={900}
+          textAlign="center"
+          sx={{ mb: 1 }}
+        >
+          كل ما يحتاجه فريقك في مكان واحد
+        </Typography>
+        <Typography color="text.secondary" textAlign="center" sx={{ mb: 5 }}>
+          من أول مسح الـQR إلى آخر طلب في اليوم.
+        </Typography>
+        <Grid container spacing={2.5}>
+          {features.map((feature) => (
+            <Grid size={{ xs: 12, md: 4 }} key={feature.title}>
+              <Card
+                elevation={0}
+                sx={{
+                  height: "100%",
+                  p: 3,
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "background.paper",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "grid",
+                    placeItems: "center",
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    color: "primary.main",
+                    bgcolor: "primary.light",
+                    mb: 2,
+                  }}
+                >
+                  {feature.icon}
+                </Box>
+                <Typography variant="h6" fontWeight={800} mb={1}>
+                  {feature.title}
+                </Typography>
+                <Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>
+                  {feature.text}
+                </Typography>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            mt: 8,
+            pt: 3,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            TAPPO — حلول ضيافة أذكى من السعودية
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            نسخة تجريبية أولية
+          </Typography>
+        </Stack>
+      </Container>
+    </Box>
+  );
 }
