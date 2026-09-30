@@ -71,8 +71,8 @@ function OrderItemCard({ order }) {
             sx={{
               color: "text.secondary",
               fontWeight: 600,
-              fontSize: "0.78rem",
-              bgcolor: "#f1f5f9",
+              fontSize: "0.74rem",
+              bgcolor: "rgba(244,121,32,.07)",
               px: 1,
               py: 0.3,
               borderRadius: "6px",
