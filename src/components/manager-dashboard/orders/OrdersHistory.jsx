@@ -269,7 +269,7 @@ function OrdersHistory() {
         </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 1 }}>
+      <TableContainer component={Paper} sx={{ borderRadius: { xs: 2.5, md: 3.5 }, boxShadow: "0 14px 40px rgba(23,26,47,.055)", border: "1px solid rgba(255,255,255,.75)", overflow: "hidden" }}>
         <Table>
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
