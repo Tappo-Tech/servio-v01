@@ -1,12 +1,44 @@
-# TAPPO
+# <img src="public/logo-icon.webp" alt="TAPPO" width="42" /> TAPPO
 
-> **TAPPO is a Saudi FoodTech platform that helps cafés and restaurants serve faster, operate smarter, and grow through QR-powered ordering.**
+> ## **Serve faster. Operate smarter. Grow with every table.**
+>
+> TAPPO is a Saudi FoodTech platform that helps cafés and restaurants modernize table ordering and daily operations through QR-powered experiences.
 
-TAPPO is an early-stage Saudi FoodTech product built to modernize the café and restaurant experience. It connects guests, service teams, and managers through QR-based table ordering, real-time operations, and practical business insights.
+<p align="left">
+  <img src="https://img.shields.io/badge/status-pre--incubation%20MVP-f59e0b?style=flat-square" alt="Pre-incubation MVP" />
+  <img src="https://img.shields.io/badge/market-Saudi%20Arabia-0b6e4f?style=flat-square" alt="Saudi Arabia" />
+  <img src="https://img.shields.io/badge/product-FoodTech-2563eb?style=flat-square" alt="FoodTech" />
+  <img src="https://img.shields.io/badge/license-proprietary-111827?style=flat-square" alt="Proprietary" />
+</p>
 
-Guests scan a table QR code, browse the menu, place an order, request a waiter, and leave feedback — without downloading an app. Managers and cashiers receive live updates through a focused Arabic-first dashboard built for daily hospitality operations.
+TAPPO connects guests, service teams, and managers through QR-based table ordering, real-time operations, and practical business insights. A guest scans a table QR code, browses the menu, places an order, requests a waiter, and leaves feedback — without downloading an app. Managers and cashiers receive live updates through a focused Arabic-first dashboard built for hospitality operations.
 
-TAPPO is currently validating the problem, product demand, and market fit in Saudi Arabia ahead of formal company registration and incubation applications.
+> **Current focus:** validating the need, demand, and market fit in Saudi Arabia before formal company registration and incubation applications.
+
+## At a glance
+
+| | |
+|---|---|
+| **Category** | Saudi FoodTech / Hospitality SaaS |
+| **Stage** | Initial experimental MVP · Pre-incubation |
+| **Primary market** | Saudi Arabia |
+| **Experience** | Arabic-first · RTL · Responsive |
+| **Access model** | Guest QR access + manager/cashier dashboards |
+| **Commercial status** | Private product · Proprietary |
+
+## Contents
+
+- [Why TAPPO](#why-tappo)
+- [Product experience](#product-experience)
+- [Product capabilities](#product-capabilities)
+- [Technical architecture](#technical-architecture)
+- [Local development](#local-development)
+- [Email verification](#email-verification)
+- [Security and performance](#security-and-performance)
+- [Roadmap](#roadmap)
+- [Team](#team)
+- [Contact](#contact-and-links)
+- [Commercial and licensing status](#commercial-and-licensing-status)
 
 ---
 
@@ -21,6 +53,14 @@ TAPPO brings the core workflow into one system:
 - **Clearer operations:** managers and cashiers work from tenant-scoped dashboards.
 - **More useful feedback:** customer reviews are collected and surfaced to management.
 - **Lower friction:** no customer account or mobile app is required.
+
+## Product experience
+
+```text
+Guest scans QR → Browses menu → Orders from table → Team receives live alert
+                                                          ↓
+                                      Manager tracks operations and improves service
+```
 
 ## Product capabilities
 
@@ -209,7 +249,7 @@ npm run build      # Create a production build
 npm test           # Run the test runner
 ```
 
-## Security principles
+## Security and performance
 
 - Every business record is associated with a tenant.
 - RLS policies restrict authenticated access to the current tenant.
@@ -267,9 +307,9 @@ Amin is a co-founder responsible for operations, execution, and helping shape TA
 - LinkedIn: [Amin Bakhit](https://www.linkedin.com/in/amin-tappo-3a9249438)
 - Email: [amintappo@gmail.com](mailto:amintappo@gmail.com)
 
-### Mujahid Abbas Alhassan Alamin — Co-founder
+### Mujahid Abbas Alhassan Alamin — Co-founder & CMO
 
-Mujahid is a member of the founding team. His public profile and contact details will be added after confirmation.
+Mujahid leads marketing direction, brand development, and go-to-market preparation as TAPPO validates its position in the Saudi hospitality market. His public profile and contact details will be added after confirmation.
 
 ## Contact and links
 
