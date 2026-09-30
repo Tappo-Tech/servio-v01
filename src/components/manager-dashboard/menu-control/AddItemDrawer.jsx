@@ -17,6 +17,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 // OTHERS
 import { v4 as uuidV4 } from "uuid";
+import { compressImage } from "../../../utils/compressImage";
 
 const COMMON_ALLERGENS = [
   "حليب / ألبان",
@@ -87,14 +88,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const image = await compressImage(file);
+      setFormData((prev) => ({ ...prev, image }));
+    } catch (error) {
+      console.error("تعذر ضغط الصورة:", error);
     }
   };
 
@@ -107,7 +108,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       price: parseFloat(formData.price),
       category_id: formData.category_id || (categoriesList[0]?.id ?? "all"),
       description: formData.description,
-      image: formData.image || "/logo-icon.png",
+      image: formData.image || "/logo-icon.webp",
       allergens: formData.allergens,
       tags: formData.tags,
       available: formData.available,

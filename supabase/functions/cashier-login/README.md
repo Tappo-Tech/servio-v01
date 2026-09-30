@@ -1,0 +1,1 @@
+The deployed `cashier-login` Edge Function is defined in `index.ts` and creates or refreshes a synthetic Supabase Auth user for a verified tenant-scoped cashier PIN. It then allows the client to establish a normal Supabase Auth session with `signInWithPassword`, so RLS policies continue to apply.

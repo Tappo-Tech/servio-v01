@@ -171,7 +171,7 @@ function MenuControl() {
               <CardMedia
                 component="img"
                 height="140"
-                image={product.image || "/logo-icon.png"}
+                image={product.image || "/logo-icon.webp"}
                 alt={product.name}
               />
 

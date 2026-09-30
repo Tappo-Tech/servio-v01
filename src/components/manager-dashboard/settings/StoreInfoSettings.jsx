@@ -25,6 +25,7 @@ import AutoRenewIcon from "@mui/icons-material/Autorenew";
 
 // CONTEXT
 import { useStore } from "../../../context/StoreInfoContext";
+import { compressImage } from "../../../utils/compressImage";
 
 const CURRENCIES = [
   { value: "SAR", label: "ر.س (ريال سعودي)" },
@@ -91,23 +92,28 @@ function StoreInfoSettings() {
     setFormData((prev) => ({ ...prev, cashier_pin: randomPin }));
   };
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          logo_url: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const logo_url = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.8 });
+      setFormData((prev) => ({ ...prev, logo_url }));
+    } catch (error) {
+      console.error("تعذر ضغط الشعار:", error);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    updateStoreInfo(formData);
+    const result = await updateStoreInfo(formData);
+    if (result?.error) {
+      setToast({
+        open: true,
+        message: result.error.message?.includes("duplicate") ? "الـ slug مستخدم بالفعل" : result.error.message || "تعذر حفظ الإعدادات",
+        severity: "error",
+      });
+      return;
+    }
     setToast({
       open: true,
       message: "تم حفظ إعدادات الكافيه بنجاح!",
@@ -137,7 +143,7 @@ function StoreInfoSettings() {
             }}
           >
             <Avatar
-              src={formData.logo_url || "/logo-icon.png"}
+              src={formData.logo_url || "/logo-icon.webp"}
               alt={formData.store_name}
               variant="rounded"
               sx={{

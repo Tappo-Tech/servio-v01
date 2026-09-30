@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 // Context
 import { useTables } from "../../../context/TablesContext";
+import { useTenant } from "../../../context/TenantContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -27,6 +28,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
   const { tables, generateTables, clearTables } = useTables();
+  const { slug } = useTenant();
   const [tablesCount, setTablesCount] = useState(tables.length || 5);
 
   const handleGenerate = (e) => {
@@ -41,7 +43,9 @@ function QRCodeGenerate() {
       const singleCard = document.getElementById(`table-card-${tableId}`);
       if (singleCard) {
         singleCard.classList.add("print-single-target");
+        document.body.classList.add("printing-single");
         window.print();
+        document.body.classList.remove("printing-single");
         singleCard.classList.remove("print-single-target");
         return;
       }
@@ -208,7 +212,9 @@ function QRCodeGenerate() {
           </Box>
 
           <Grid container spacing={2.5}>
-            {tables.map((table) => (
+            {tables.map((table) => {
+              const qrValue = `${window.location.origin}/menu/${slug || "cafe"}/${table.table_number}`;
+              return (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={table.id}>
                 <Card
                   id={`table-card-${table.id}`}
@@ -263,9 +269,10 @@ function QRCodeGenerate() {
                       }}
                     >
                       <QRCodeSVG
-                        value={table.qr_value}
-                        size={150}
-                        includeMargin={false}
+                        value={qrValue}
+                        size={180}
+                        level="H"
+                        includeMargin
                       />
                     </Box>
 
@@ -289,7 +296,7 @@ function QRCodeGenerate() {
                         px: 1,
                       }}
                     >
-                      {table.qr_value}
+                      {qrValue}
                     </Typography>
                   </CardContent>
 
@@ -310,7 +317,8 @@ function QRCodeGenerate() {
                   </CardActions>
                 </Card>
               </Grid>
-            ))}
+            );
+            })}
           </Grid>
         </Box>
       )}

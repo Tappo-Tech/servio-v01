@@ -1,0 +1,18 @@
+revoke all on function public.broadcast_tenant_changes() from public, anon, authenticated;
+revoke all on function public.create_cashier(text, text, text) from public, anon, authenticated;
+grant execute on function public.create_cashier(text, text, text) to authenticated;
+revoke all on function public.current_tenant_id() from public, anon;
+grant execute on function public.current_tenant_id() to authenticated;
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke all on function public.tenant_match(uuid) from public, anon;
+grant execute on function public.tenant_match(uuid) to authenticated;
+revoke all on function public.verify_cashier_login(text, text, text) from public, anon, authenticated;
+grant execute on function public.verify_cashier_login(text, text, text) to service_role;
+revoke all on function public.create_tenant_for_registration(text, text), public.get_public_tenant(text), public.get_public_store(text), public.get_public_categories(text), public.get_public_menu_items(text), public.get_public_tables(text), public.create_public_order(text, jsonb, numeric, text, text), public.create_public_waiter_call(text, text, text), public.create_public_feedback(text, text, numeric, text[], text) from public, anon, authenticated;
+grant execute on function public.create_tenant_for_registration(text, text), public.get_public_tenant(text), public.get_public_store(text), public.get_public_categories(text), public.get_public_menu_items(text), public.get_public_tables(text), public.create_public_order(text, jsonb, numeric, text, text), public.create_public_waiter_call(text, text, text), public.create_public_feedback(text, text, numeric, text[], text) to anon, authenticated;
+create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists order_items_menu_item_id_idx on public.order_items(menu_item_id);
+drop policy if exists profiles_self_select on public.profiles;
+create policy profiles_self_select on public.profiles for select to authenticated using (id = (select auth.uid()));
+drop policy if exists profiles_self_update on public.profiles;
+create policy profiles_self_update on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));

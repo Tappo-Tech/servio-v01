@@ -48,7 +48,7 @@ function SuggestionBanner() {
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, overflow: "hidden" }}>
         <Box
           component="img"
-          src={currentSuggestion.image || "/logo-icon.png"}
+          src={currentSuggestion.image || "/logo-icon.webp"}
           alt={currentSuggestion.name}
           sx={{
             width: 38,

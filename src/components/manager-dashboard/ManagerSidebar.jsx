@@ -96,7 +96,7 @@ function ManagerSidebar({
         >
           <Box
             component="img"
-            src="/logo-icon.png"
+            src="/logo-icon.webp"
             alt="TAPPO Logo"
             sx={{ width: 35, height: 35, borderRadius: 0.8 }}
           />
