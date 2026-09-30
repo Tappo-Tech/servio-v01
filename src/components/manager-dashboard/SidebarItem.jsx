@@ -11,9 +11,9 @@ function SidebarItem({ navItem, isSelected, onSelect }) {
         selected={isSelected}
         onClick={onSelect}
         sx={{
-          borderRadius: "8px",
-          py: 1.2,
-          px: 2,
+          borderRadius: "14px",
+          py: 1.25,
+          px: 1.75,
           gap: 1.5,
           justifyContent: "flex-start",
           transition: "all 0.2s ease-in-out",
