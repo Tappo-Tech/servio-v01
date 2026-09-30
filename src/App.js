@@ -3,6 +3,7 @@ import CashierDashboard from "./pages/CashierDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import AdminRegister from "./pages/AdminRegister";
+import Home from "./pages/Home";
 import NotFound from "./components/NotFound";
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
@@ -11,6 +12,7 @@ function App() {
   return (
     <div className="App" dir="rtl">
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<AdminLogin />} />
         <Route path="/register" element={<AdminRegister />} />
         <Route path="/menu/:slug/:tableNumber?" element={<Menu />} />
