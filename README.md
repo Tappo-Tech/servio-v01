@@ -1,10 +1,12 @@
 # TAPPO
 
-> **Smart ordering and operations for modern cafés and restaurants.**
+> **TAPPO is a Saudi FoodTech platform that helps cafés and restaurants serve faster, operate smarter, and grow through QR-powered ordering.**
 
-TAPPO is a multi-tenant SaaS platform that connects guests, service teams, and café managers through QR-based table ordering, real-time operations, and actionable business insights.
+TAPPO is an early-stage Saudi FoodTech product built to modernize the café and restaurant experience. It connects guests, service teams, and managers through QR-based table ordering, real-time operations, and practical business insights.
 
 Guests scan a table QR code, browse the menu, place an order, request a waiter, and leave feedback — without downloading an app. Managers and cashiers receive live updates through a focused Arabic-first dashboard built for daily hospitality operations.
+
+TAPPO is currently validating the problem, product demand, and market fit in Saudi Arabia ahead of formal company registration and incubation applications.
 
 ---
 
@@ -58,9 +60,11 @@ QR cards use high error correction and can be printed individually or in bulk.
 
 ## Product status
 
-**Current stage:** MVP / early product build.
+**Current stage:** Initial experimental MVP / pre-incubation validation.
 
-The current repository includes the core ordering, tenant isolation, authentication, realtime operations, QR, RTL, and manager workflow foundations. Production launch still requires environment configuration, email delivery configuration, deployment setup, and a full end-to-end acceptance test with real café users.
+TAPPO is not yet formally registered as a company. The team is currently validating the need, user demand, and market fit in Saudi Arabia before applying to an incubator and proceeding with formal registration.
+
+The current repository includes the core ordering, tenant isolation, authentication, realtime operations, QR, RTL, and manager workflow foundations. A public production launch still requires environment configuration, reliable email delivery, deployment setup, legal/commercial decisions, and full end-to-end acceptance testing with real cafés and restaurants.
 
 ## Technical architecture
 
@@ -244,21 +248,49 @@ npm test           # Run the test runner
 4. Run `npm run build` before opening a pull request.
 5. Describe the user impact and database impact of each change.
 
-## Product information to finalize
+## Team
 
-The following details should be supplied by the TAPPO team before publishing this as the final public company README:
+### Mohamed Elhag Mohamed Eshag — Founder, CEO & Tech Lead
 
-- Official one-line positioning statement.
-- Company legal name and country of registration.
-- Public product URL.
-- Product support email.
-- Website and social links.
-- Target launch market and supported currencies.
-- Current pricing or a statement that pricing is private/beta.
-- License and repository visibility policy.
-- Brand assets and official screenshots.
-- Named founders/team, if they should appear publicly.
+Mohamed is TAPPO's principal founder and leads product direction, technical strategy, and frontend engineering.
+
+- GitHub: [codemo-dev](https://github.com/codemo-dev)
+- LinkedIn: [Mohamed Eshag](https://www.linkedin.com/in/codemo-dev)
+- Portfolio: [codemo-dev.netlify.app](https://codemo-dev.netlify.app/)
+- X: [@MohamedEshagx](https://x.com/MohamedEshagx)
+- Email: [mohamed.eshagx@gmail.com](mailto:mohamed.eshagx@gmail.com)
+
+### Amin Ehab Ahmed Bakhit — Co-founder & COO
+
+Amin is a co-founder responsible for operations, execution, and helping shape TAPPO's path from product validation to market readiness.
+
+- LinkedIn: [Amin Bakhit](https://www.linkedin.com/in/amin-tappo-3a9249438)
+- Email: [amintappo@gmail.com](mailto:amintappo@gmail.com)
+
+### Mujahid Abbas Alhassan Alamin — Co-founder
+
+Mujahid is a member of the founding team. His public profile and contact details will be added after confirmation.
+
+## Contact and links
+
+- Product stage: Initial experimental MVP / pre-incubation
+- Primary market: Saudi Arabia
+- Product website: Coming soon
+- Support and general contact: [tappo.app.sa@gmail.com](mailto:tappo.app.sa@gmail.com)
+- Company LinkedIn: Coming soon
+- Company X: [@tappoApp](https://x.com/tappoApp)
+- Repository: [Tappo-Tech/tappo-v01](https://github.com/Tappo-Tech/tappo-v01)
+
+The company LinkedIn page is not publicly available yet. It should be added here once the official page is created or linked from a founder profile.
+
+## Commercial and licensing status
+
+TAPPO is **not open source** at this stage. The repository is a private product codebase intended for the founding team and authorized collaborators. Until the company is formally registered and its intellectual-property ownership is documented, the safest practical position is to keep the repository private and use a **proprietary / all-rights-reserved** notice.
+
+This README is product documentation, not legal advice. Before public launch or onboarding external contributors, the team should confirm ownership, founder IP assignment, contributor agreements, privacy terms, customer terms, and the final commercial license with a qualified lawyer in Saudi Arabia.
 
 ## License
 
-License: **To be confirmed by TAPPO Tech**.
+**Proprietary — All rights reserved.**
+
+No permission is granted to copy, modify, distribute, sublicense, or use this software commercially without written permission from TAPPO's authorized owners. This notice should be reviewed and formalized when the company is registered.
