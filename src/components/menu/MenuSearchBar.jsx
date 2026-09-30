@@ -16,7 +16,9 @@ function MenuSearchBar() {
       placeholder="ابحث عن قهوتك أو حلاك المفضل..."
       variant="outlined"
       sx={{
-        backgroundColor: "background.default",
+        background: "rgba(248,249,250,.72)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
         "& .MuiOutlinedInput-root": {
           "& fieldset": {
             borderColor: "divider",
