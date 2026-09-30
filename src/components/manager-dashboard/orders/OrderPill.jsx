@@ -91,7 +91,7 @@ function InvoiceModal({ open, onClose, order }) {
             فاتورة مبسطة
           </Typography>
           <Typography variant="caption" display="block">
-            {dayjs(order.created_at).format("YYYY/MM/DD - hh:mm A")}
+            {dayjs(order.created_at).format("DD/MM/YY · hh:mm A")}
           </Typography>
         </Box>
 
