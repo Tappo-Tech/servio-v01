@@ -33,12 +33,15 @@ function MenuItemCard({ itemDetails }) {
           display: "flex",
           justifyContent: "space-between",
           p: 1.5,
-          mb: 2,
-          borderRadius: "16px",
-          boxShadow: "0px 2px 12px rgba(0,0,0,0.04)",
+          mb: 1.6,
+          borderRadius: "20px",
+          boxShadow: "0 12px 32px rgba(23,26,47,.055)",
           border: "1px solid",
-          borderColor: "divider",
-          backgroundColor: "background.paper",
+          borderColor: "rgba(255,255,255,.78)",
+          background: "rgba(255,255,255,.9)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          transition: "transform .2s ease, box-shadow .2s ease",
         }}
       >
         <Box
