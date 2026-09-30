@@ -13,6 +13,100 @@ import { logout } from "../../utils/logout";
 function stringAvatar(name) { if (!name) return { children: "M" }; const parts = name.trim().split(" "); return { children: (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0]).toUpperCase() }; }
 function ManagerHeader({ onDrawerToggle }) {
   const { storeInfo } = useStore(); const { user } = useUser(); const navigate = useNavigate(); const userName = user?.name || "Manager";
-  return <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", direction: "rtl", py: 1.5, px: { xs: 1, sm: 2 } }}><Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}><IconButton aria-label="فتح القائمة" edge="start" onClick={onDrawerToggle} sx={{ display: { md: "none" }, color: "text.primary" }}><MenuIcon /></IconButton><Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>{storeInfo?.store_name || "المتجر"}</Typography></Box><Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}><Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", display: { xs: "none", sm: "block" } }}>{userName}</Typography><Avatar {...stringAvatar(userName)} sx={{ width: 38, height: 38, fontSize: "0.9rem", fontWeight: 700, bgcolor: "#ff602e", color: "#ffffff" }} /><Tooltip title="تسجيل الخروج"><IconButton aria-label="تسجيل الخروج" onClick={() => logout(navigate)} sx={{ color: "text.secondary", border: "1px solid", borderColor: "divider" }}><LogoutIcon fontSize="small" /></IconButton></Tooltip></Box></Stack>;
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        justifyContent: "space-between",
+        alignItems: "center",
+        direction: "rtl",
+        py: { xs: 1.1, md: 1.35 },
+        px: { xs: 1, sm: 1.5 },
+        gap: 2,
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+        <IconButton
+          aria-label="فتح القائمة"
+          edge="start"
+          onClick={onDrawerToggle}
+          sx={{
+            display: { md: "none" },
+            color: "text.primary",
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2.5,
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="overline"
+            sx={{ color: "primary.main", fontWeight: 900, letterSpacing: 1.3 }}
+          >
+            الإدارة
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 900,
+              color: "text.primary",
+              lineHeight: 1.15,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: { xs: 180, sm: 360, md: 520 },
+            }}
+          >
+            {storeInfo?.store_name || "المتجر"}
+          </Typography>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.75, sm: 1.1 } }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            color: "text.secondary",
+            display: { xs: "none", sm: "block" },
+          }}
+        >
+          {userName}
+        </Typography>
+        <Avatar
+          {...stringAvatar(userName)}
+          sx={{
+            width: { xs: 38, sm: 42 },
+            height: { xs: 38, sm: 42 },
+            fontSize: "0.9rem",
+            fontWeight: 800,
+            bgcolor: "primary.main",
+            color: "#fff",
+            boxShadow: "0 8px 20px rgba(244,121,32,.16)",
+          }}
+        />
+        <Tooltip title="تسجيل الخروج">
+          <IconButton
+            aria-label="تسجيل الخروج"
+            onClick={() => logout(navigate)}
+            sx={{
+              color: "text.secondary",
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2.5,
+              "&:hover": {
+                color: "primary.main",
+                borderColor: "primary.light",
+                backgroundColor: "rgba(244,121,32,.06)",
+              },
+            }}
+          >
+            <LogoutIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Stack>
+  );
 }
 export default ManagerHeader;
