@@ -42,12 +42,15 @@ function LiveOrders() {
             <Paper
               elevation={0}
               sx={{
-                p: 1.5,
-                mb: 2.5,
-                borderRadius: "14px",
+                p: { xs: 1.35, md: 1.55 },
+                mb: 1.7,
+                borderRadius: "15px",
                 border: "1px solid",
-                borderColor: "divider",
-                backgroundColor: "#f8fafc",
+                borderColor: "rgba(255,255,255,.7)",
+                background: "rgba(248,250,252,.72)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                boxShadow: "0 10px 26px rgba(23,26,47,.04)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
