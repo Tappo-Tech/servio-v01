@@ -65,10 +65,13 @@ function Feedbacks() {
             <Card
               elevation={0}
               sx={{
-                borderRadius: "16px",
+                borderRadius: "20px",
                 border: "1px solid",
-                borderColor: "#e2e8f0",
-                backgroundColor: "#ffffff",
+                borderColor: "rgba(255,255,255,.75)",
+                background: "rgba(255,255,255,.86)",
+                backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
+                boxShadow: "0 14px 38px rgba(23,26,47,.055)",
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
