@@ -52,8 +52,8 @@ function OrderItemCard({ order }) {
         {/* هيدر الكارت */}
         <Box
           sx={{
-            p: 2,
-            pb: 1.5,
+            p: { xs: 1.5, md: 2 },
+            pb: { xs: 1.25, md: 1.5 },
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
