@@ -29,33 +29,35 @@ function Dashboard() {
       }}
     >
       <Container maxWidth="xl" disableGutters>
-        <Stack spacing={{ xs: 2.5, md: 3.5 }}>
-          {/* كارت الهيدر */}
+        <Stack spacing={{ xs: 1.5, md: 2.25 }}>
           <Paper
             elevation={0}
             sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: "20px",
+              p: { xs: 1.5, sm: 2, md: 2.5 },
+              borderRadius: { xs: 3, md: 4 },
               border: "1px solid",
-              borderColor: "divider",
-              backgroundColor: "#ffffff",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)",
+              borderColor: "rgba(255,255,255,.72)",
+              background: "rgba(255,255,255,.78)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              boxShadow: "0 14px 42px rgba(23,26,47,.06)",
             }}
           >
             <DashboardHeader handleNotificationOpen={handleNotificationOpen} />
           </Paper>
 
-          {/* منطقة الطلبات الحية */}
           <Paper
             elevation={0}
             sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: "20px",
+              p: { xs: 1.25, sm: 2, md: 2.5 },
+              borderRadius: { xs: 3, md: 4 },
               border: "1px solid",
-              borderColor: "divider",
-              backgroundColor: "#ffffff",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)",
-              minHeight: "calc(100vh - 180px)",
+              borderColor: "rgba(255,255,255,.68)",
+              background: "rgba(255,255,255,.72)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              boxShadow: "0 16px 48px rgba(23,26,47,.06)",
+              minHeight: "calc(100vh - 168px)",
             }}
           >
             <LiveOrders />
