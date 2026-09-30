@@ -28,7 +28,8 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
   const { tables, error: tablesError, generateTables, clearTables } = useTables();
-  const { slug } = useTenant();
+  const { slug: routeSlug, tenant } = useTenant();
+  const resolvedSlug = tenant?.slug || routeSlug;
   const [tablesCount, setTablesCount] = useState(tables.length || 5);
 
   const handleGenerate = (e) => {
@@ -220,7 +221,9 @@ function QRCodeGenerate() {
 
           <Grid container spacing={2.5}>
             {tables.map((table) => {
-              const qrValue = `${window.location.origin}/menu/${slug || "cafe"}/${table.table_number}`;
+              const qrValue = resolvedSlug
+                ? `${window.location.origin}/menu/${resolvedSlug}/${table.table_number}`
+                : "";
               return (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={table.id}>
                 <Card
