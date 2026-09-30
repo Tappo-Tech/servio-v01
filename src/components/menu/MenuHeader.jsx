@@ -15,7 +15,7 @@ function MenuHeader({ table }) {
   const { storeInfo } = useStore();
 
   return (
-    <Box sx={{ pb: 1 }}>
+    <Box sx={{ pb: 0.7 }}>
       {/* TITLE & TABLE NUMBER */}
       <Stack
         direction="row"
