@@ -74,10 +74,12 @@ function ManagerSidebar({
         "& .MuiDrawer-paper": {
           width: 273,
           boxSizing: "border-box",
-          backgroundColor: "secondary.main",
+          background:
+            "linear-gradient(180deg, rgba(23,26,47,.99) 0%, rgba(28,32,56,.98) 100%)",
           color: "secondary.contrastText",
           borderLeft: "1px solid",
-          borderColor: "divider",
+          borderColor: "rgba(255,255,255,.08)",
+          boxShadow: "-12px 0 42px rgba(23,26,47,.12)",
         },
       }}
     >
