@@ -19,9 +19,9 @@ import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const COLUMNS = [
-  { key: "pending", title: t("newOrder"), color: "warning" },
-  { key: "preparing", title: t("preparing"), color: "info" },
-  { key: "ready", title: t("ready"), color: "success" },
+  { key: "pending", title: "newOrder", color: "warning" },
+  { key: "preparing", title: "preparing", color: "info" },
+  { key: "ready", title: "ready", color: "success" },
 ];
 
 function LiveOrders() {
@@ -64,7 +64,7 @@ function LiveOrders() {
                   sx={{ color: `${col.color}.main`, fontSize: 14 }}
                 />
                 <Typography variant="subtitle1" fontWeight={700}>
-                  {col.title}
+                  {t(col.title)}
                 </Typography>
               </Box>
 
