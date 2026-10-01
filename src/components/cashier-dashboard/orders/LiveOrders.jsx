@@ -16,15 +16,17 @@ import { useOrders } from "../../../context/OrdersContext";
 
 // ICONS
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const COLUMNS = [
-  { key: "pending", title: "جديد", color: "warning" },
-  { key: "preparing", title: "جاري التحضير", color: "info" },
-  { key: "ready", title: "جاهز للتسليم", color: "success" },
+  { key: "pending", title: t("newOrder"), color: "warning" },
+  { key: "preparing", title: t("preparing"), color: "info" },
+  { key: "ready", title: t("ready"), color: "success" },
 ];
 
 function LiveOrders() {
   const { orders } = useOrders();
+  const { t } = useLanguage();
 
   const activeOrders = orders.filter((order) => !order.is_completed);
 
