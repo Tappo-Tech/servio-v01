@@ -17,10 +17,8 @@ import { TablesProvider } from "./context/TablesContext";
 import { FeedbacksProvider } from "./context/FeedbackContext";
 import { WaiterCallsProvider } from "./context/WaiterCallsContext";
 import { SuggestionsProvider } from "./context/SuggestionsContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import ErrorBoundary from "./components/ErrorBoundary";
-
-document.documentElement.dir = "rtl";
-document.documentElement.lang = "ar";
 
 autoRoot();
 
@@ -29,6 +27,7 @@ function autoRoot() {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
+      <LanguageProvider>
       <BrowserRouter>
         <TenantProvider>
           <MenuProvider>
@@ -59,6 +58,7 @@ function autoRoot() {
           </MenuProvider>
         </TenantProvider>
       </BrowserRouter>
+      </LanguageProvider>
       </ErrorBoundary>
     </React.StrictMode>,
   );
