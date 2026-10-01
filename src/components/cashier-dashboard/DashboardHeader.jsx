@@ -93,7 +93,7 @@ function DashboardHeader({ handleNotificationOpen }) {
               boxShadow: "0 8px 20px rgba(244,121,32,.16)",
             }}
           />
-          <Tooltip title="تسجيل الخروج">
+          <Tooltip title={t("logout")}>
             <IconButton
               aria-label={t("logout")}
               onClick={() => logout(navigate)}
