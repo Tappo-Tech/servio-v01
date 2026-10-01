@@ -7,6 +7,8 @@ import Badge from "@mui/material/Badge";
 import Tooltip from "@mui/material/Tooltip";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LanguageToggle from "../LanguageToggle";
+import { useLanguage } from "../../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useWaiterCalls } from "../../context/WaiterCallsContext";
@@ -15,7 +17,7 @@ import { logout } from "../../utils/logout";
 const currentDate = new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 function stringAvatar(name) { if (!name) return { children: "C" }; const parts = name.trim().split(" "); return { children: (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0]).toUpperCase() }; }
 function DashboardHeader({ handleNotificationOpen }) {
-  const { user } = useUser(); const { calls } = useWaiterCalls(); const navigate = useNavigate(); const userName = user?.name || "Cashier";
+  const { user } = useUser(); const { calls } = useWaiterCalls(); const navigate = useNavigate(); const userName = user?.name || "Cashier"; const { t } = useLanguage();
   return (
     <Box sx={{ width: "100%" }}>
       <Stack
@@ -32,7 +34,7 @@ function DashboardHeader({ handleNotificationOpen }) {
             variant="overline"
             sx={{ color: "primary.main", fontWeight: 900, letterSpacing: 1.2 }}
           >
-            LIVE OPERATIONS
+            {t("liveOperations")}
           </Typography>
           <Typography
             variant="h5"
@@ -45,7 +47,7 @@ function DashboardHeader({ handleNotificationOpen }) {
               lineHeight: 1.15,
             }}
           >
-            الطلبات الحالية
+            {t("currentOrders")}
           </Typography>
           <Typography
             variant="body2"
@@ -56,10 +58,11 @@ function DashboardHeader({ handleNotificationOpen }) {
               mt: 0.45,
             }}
           >
-            {currentDate} · شاشة الكاشير والمطبخ
+            {currentDate} · {t("cashierKitchen")}
           </Typography>
         </Box>
         <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.65, sm: 0.9 } }}>
+          <LanguageToggle compact />
           <IconButton
             onClick={handleNotificationOpen}
             sx={{
@@ -92,7 +95,7 @@ function DashboardHeader({ handleNotificationOpen }) {
           />
           <Tooltip title="تسجيل الخروج">
             <IconButton
-              aria-label="تسجيل الخروج"
+              aria-label={t("logout")}
               onClick={() => logout(navigate)}
               sx={{
                 color: "text.secondary",
