@@ -20,25 +20,27 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 // CONTEXTS
 import { useWaiterCalls } from "../../../context/WaiterCallsContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // OTHERS
 import { formatTimeAgo } from "../../../utils/helpers";
 
 function WaiterCallNotification({ open, close }) {
   const { calls, resolveCall } = useWaiterCalls(); 
+  const { language } = useLanguage();
 
   return (
     <Drawer
-      anchor="right"
+      anchor={language === "ar" ? "right" : "left"}
       open={open}
       onClose={close}
       slotProps={{
         paper: {
           dir: "rtl",
           sx: {
-            width: { xs: "100%", sm: "450px" },
-            p: 3,
-            backgroundColor: "#f8fafc",
+            width: { xs: "100%", sm: 520 },
+            p: { xs: 2, sm: 3 },
+            background: "linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)",
           },
         },
       }}

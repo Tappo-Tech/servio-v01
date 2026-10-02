@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -12,15 +14,18 @@ import { motion } from "framer-motion";
 
 // ICONS
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 
 // HELPERS
 import { formatTimeAgo } from "../../../utils/helpers";
 
 // CONTEXTS
 import { useOrders } from "../../../context/OrdersContext";
+import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 
 function OrderItemCard({ order }) {
   const { updateOrderStatus } = useOrders();
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   return (
     <motion.div
@@ -147,6 +152,13 @@ function OrderItemCard({ order }) {
           )}
         </CardContent>
 
+        {/* زر الطباعة متاح من أول لحظة حتى يخرج رقم الطاولة والأصناف قبل بدء التحضير. */}
+        <CardActions sx={{ p: 1.5, pt: 0.5, pb: 0 }}>
+          <Button size="small" variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} sx={{ borderRadius: "10px", fontWeight: 800 }}>
+            طباعة الفاتورة
+          </Button>
+        </CardActions>
+
         {/* أزرار الإجراءات */}
         <CardActions sx={{ p: 1.5, pt: 0.5 }}>
           {order.status === "pending" && (
@@ -219,6 +231,7 @@ function OrderItemCard({ order }) {
           )}
         </CardActions>
       </Card>
+      <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} />
     </motion.div>
   );
 }
