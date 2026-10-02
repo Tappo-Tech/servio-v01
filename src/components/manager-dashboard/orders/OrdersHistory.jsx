@@ -6,6 +6,7 @@ import InvoiceModal from "./OrderPill";
 // CONTEXTS
 import { useOrders } from "../../../context/OrdersContext";
 import { useStore } from "../../../context/StoreInfoContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -38,11 +39,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-const renderStatusChip = (status) => {
+const renderStatusChip = (status, t) => {
   const statusMap = {
-    served: { label: "تم التسليم", color: "success" },
-    unclaimed: { label: "غير مستلم", color: "warning" },
-    cancelled: { label: "ملغى", color: "error" },
+    served: { label: t("managerServed"), color: "success" },
+    unclaimed: { label: t("managerUnclaimed"), color: "warning" },
+    cancelled: { label: t("managerCancelled"), color: "error" },
   };
 
   const config = statusMap[status] || { label: status, color: "default" };
@@ -58,7 +59,7 @@ const renderStatusChip = (status) => {
   );
 };
 
-function OrderRow({ order, currency }) {
+function OrderRow({ order, currency, t }) {
   const [open, setOpen] = useState(false);
   const [openInvoice, setOpenInvoice] = useState(false);
   const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
@@ -89,7 +90,7 @@ function OrderRow({ order, currency }) {
             }}
           />
         </TableCell>
-        <TableCell align="center">طاولة {order.table_number}</TableCell>
+        <TableCell align="center">{t("managerTable")} {order.table_number}</TableCell>
         <TableCell align="center">
           <Typography
             variant="body2"
@@ -104,7 +105,7 @@ function OrderRow({ order, currency }) {
             {dayjs(order.created_at).format("hh:mm A")}
           </Typography>
         </TableCell>
-        <TableCell align="center">{renderStatusChip(order.status)}</TableCell>
+        <TableCell align="center">{renderStatusChip(order.status, t)}</TableCell>
         <TableCell align="center" sx={{ fontWeight: 700 }}>
           {order.total_price} {currency}
         </TableCell>
@@ -123,7 +124,7 @@ function OrderRow({ order, currency }) {
                 }}
               >
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  عناصر الطلب:
+                  {t("managerItems")}
                 </Typography>
 
                 <Button
@@ -160,7 +161,7 @@ function OrderRow({ order, currency }) {
               </Stack>
               {order.notes && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  ملاحظات: {order.notes}
+                  {t("managerNotes")}: {order.notes}
                 </Typography>
               )}
             </Box>
@@ -178,9 +179,10 @@ function OrderRow({ order, currency }) {
 }
 
 function OrdersHistory() {
+  const { t } = useLanguage();
   const { orders = [] } = useOrders();
   const { storeInfo } = useStore();
-  const currency = storeInfo?.currency || "ر.س";
+  const currency = storeInfo?.currency || t("currencySar");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -218,7 +220,7 @@ function OrdersHistory() {
         }}
       >
         <TextField
-          placeholder="ابحث برقم الطلب أو رقم الطاولة..."
+          placeholder={t("managerHistorySearch")}
           size="small"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -234,23 +236,23 @@ function OrdersHistory() {
           }}
         >
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="status-filter-label">حالة الطلب</InputLabel>
+            <InputLabel id="status-filter-label">{t("managerStatus")}</InputLabel>
             <Select
               labelId="status-filter-label"
               value={statusFilter}
-              label="حالة الطلب"
+              label={t("managerStatus")}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <MenuItem value="all">كل الحالات</MenuItem>
-              <MenuItem value="served">تم التسليم</MenuItem>
-              <MenuItem value="unclaimed">غير مستلم</MenuItem>
-              <MenuItem value="cancelled">ملغى</MenuItem>
+              <MenuItem value="all">{t("managerAllStatuses")}</MenuItem>
+              <MenuItem value="served">{t("managerServed")}</MenuItem>
+              <MenuItem value="unclaimed">{t("managerUnclaimed")}</MenuItem>
+              <MenuItem value="cancelled">{t("managerCancelled")}</MenuItem>
             </Select>
           </FormControl>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              label="تاريخ الطلبات"
+              label={t("managerDate")}
               value={selectedDate}
               onChange={(newValue) => setSelectedDate(newValue)}
               format="YYYY/MM/DD"
@@ -274,12 +276,12 @@ function OrdersHistory() {
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
               <TableCell width={50} />
-              <TableCell sx={{ fontWeight: 700 }}>رقم الطلب</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>{t("managerOrderNumber")}</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
                 الطاولة
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
-                التاريخ والتوقيت
+                {t("managerDateTime")}
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
                 الحالة
@@ -292,13 +294,13 @@ function OrdersHistory() {
           <TableBody>
             {filteredOrders.length > 0 ? (
               filteredOrders.map((order) => (
-                <OrderRow key={order.id} order={order} currency={currency} />
+                <OrderRow key={order.id} order={order} currency={currency} t={t} />
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">
-                    لا توجد طلبات مطابقة للفلترة الحالية
+                    {t("managerNoMatches")}
                   </Typography>
                 </TableCell>
               </TableRow>

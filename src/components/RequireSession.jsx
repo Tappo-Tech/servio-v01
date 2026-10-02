@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { Navigate } from "react-router-dom";
 import supabase from "../supabase";
 
 export default function RequireSession({ role, children }) {
+  const { t } = useLanguage();
   const [state, setState] = useState({ loading: true, allowed: false });
   useEffect(() => {
     let active = true;
@@ -18,7 +20,7 @@ export default function RequireSession({ role, children }) {
     const { data: listener } = supabase.auth.onAuthStateChange(() => check());
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [role]);
-  if (state.loading) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /><Typography sx={{ position: "absolute", mt: 10 }}>جاري التحقق من الجلسة...</Typography></Box>;
+  if (state.loading) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /><Typography sx={{ position: "absolute", mt: 10 }}>{t("loadingSession")}</Typography></Box>;
   if (!state.allowed) return <Navigate to="/login" replace />;
   return children;
 }

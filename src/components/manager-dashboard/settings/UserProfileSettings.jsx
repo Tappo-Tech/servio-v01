@@ -21,8 +21,10 @@ import LockIcon from "@mui/icons-material/Lock";
 
 // CONTEXT
 import { useUser } from "../../../context/UserContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function UserProfileSettings() {
+  const { t } = useLanguage();
   const { user, updateUser } = useUser();
 
   // استخدام Snake Case لتوحيد الحقول مع Supabase Auth & DB
@@ -63,12 +65,12 @@ function UserProfileSettings() {
 
     // التحقق من تطابق كلمة المرور الجديدة
     if (formData.new_password && formData.new_password !== formData.confirm_password) {
-      setToast({ open: true, message: "كلمتا المرور غير متطابقتين", severity: "error" });
+      setToast({ open: true, message: t("managerPasswordMismatch"), severity: "error" });
       return;
     }
 
     if (formData.new_password && !formData.current_password) {
-      setToast({ open: true, message: "يرجى إدخال كلمة المرور الحالية للتأكيد", severity: "error" });
+      setToast({ open: true, message: t("managerCurrentPasswordRequired"), severity: "error" });
       return;
     }
 
@@ -81,7 +83,7 @@ function UserProfileSettings() {
       });
     }
 
-    setToast({ open: true, message: "تم حفظ التغييرات بنجاح", severity: "success" });
+    setToast({ open: true, message: t("managerSaved"), severity: "success" });
 
     // إعادة إعداد حقول كلمات المرور
     setFormData((prev) => ({
@@ -99,14 +101,14 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            label="الاسم بالكامل"
+            label={t("managerFullName")}
             name="full_name"
             value={formData.full_name}
             onChange={handleInputChange}
             disabled={isCashier}
             required
             size="small"
-            helperText={isCashier ? "يمكن للمدير فقط تعديل البيانات الشخصية" : ""}
+            helperText={isCashier ? t("managerManagerOnly") : ""}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -121,7 +123,7 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            label="البريد الإلكتروني"
+            label={t("email")}
             name="email"
             type="email"
             value={formData.email}
@@ -142,7 +144,7 @@ function UserProfileSettings() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
-            label="رقم الجوال"
+            label={t("managerPhone")}
             name="phone"
             value={formData.phone}
             onChange={handleInputChange}
@@ -163,7 +165,7 @@ function UserProfileSettings() {
           <TextField
             fullWidth
             type={showCurrentPassword ? "text" : "password"}
-            label="كلمة المرور الحالية"
+            label={t("managerCurrentPassword")}
             name="current_password"
             value={formData.current_password}
             onChange={handleInputChange}
@@ -194,7 +196,7 @@ function UserProfileSettings() {
           <TextField
             fullWidth
             type={showNewPassword ? "text" : "password"}
-            label="كلمة المرور الجديدة"
+            label={t("managerNewPassword")}
             name="new_password"
             value={formData.new_password}
             onChange={handleInputChange}
@@ -214,7 +216,7 @@ function UserProfileSettings() {
           <TextField
             fullWidth
             type={showNewPassword ? "text" : "password"}
-            label="تأكيد كلمة المرور الجديدة"
+            label={t("managerConfirmPassword")}
             name="confirm_password"
             value={formData.confirm_password}
             onChange={handleInputChange}

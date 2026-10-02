@@ -112,7 +112,7 @@ function AnalyticsOverview() {
                   variant="body2"
                   sx={{ fontWeight: 700 }}
                 >
-                  ر.س
+                  {t("currencySar")}
                 </Typography>
               </Typography>
               {renderGrowthChip(salesGrowth)}
@@ -156,7 +156,7 @@ function AnalyticsOverview() {
                   variant="body2"
                   sx={{ fontWeight: 700 }}
                 >
-                  ر.س
+                  {t("currencySar")}
                 </Typography>
               </Typography>
               {renderGrowthChip(aovGrowth)}
@@ -184,7 +184,7 @@ function AnalyticsOverview() {
                 textAlign: "start",
               }}
             >
-              عدد الطلبات الكلي اليوم
+              {t("managerOrdersTodayCount")}
             </Typography>
             <Box
               sx={{

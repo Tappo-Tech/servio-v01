@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 // COMPONENTS
 import ManagerSidebar from "../components/manager-dashboard/ManagerSidebar";
@@ -14,6 +15,7 @@ import Feedbacks from "../components/manager-dashboard/Feedbacks";
 import Box from "@mui/material/Box";
 
 function ManagerDashboard() {
+  const { language } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("manager");
 
@@ -22,7 +24,7 @@ function ManagerDashboard() {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box data-language={language} sx={{ display: "flex", minHeight: "100vh" }}>
       {/* الشريط الجانبي */}
       <ManagerSidebar
         mobileOpen={mobileOpen}

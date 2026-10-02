@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 // Context
 import { useTables } from "../../../context/TablesContext";
 import { useTenant } from "../../../context/TenantContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -27,6 +28,7 @@ import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
+  const { t } = useLanguage();
   const { tables, error: tablesError, generateTables, clearTables } = useTables();
   const { slug: routeSlug, tenant } = useTenant();
   const resolvedSlug = tenant?.slug || routeSlug;
@@ -122,7 +124,7 @@ function QRCodeGenerate() {
                 textAlign: "start",
               }}
             >
-              توليد رموز QR للطاولات
+              {t("managerQrTitle")}
             </Typography>
             <Typography
               variant="body1"
@@ -132,7 +134,7 @@ function QRCodeGenerate() {
                 textAlign: "start",
               }}
             >
-              حدّد عدد الطاولات لتوليد كود المنيو الخاص بكل طاولة تلقائياً
+              {t("managerQrHint")}
             </Typography>
           </Box>
         </Box>
@@ -145,7 +147,7 @@ function QRCodeGenerate() {
               <TextField
                 fullWidth
                 type="number"
-                label="إجمالي عدد الطاولات"
+                label={t("managerTableCount")}
                 value={tablesCount}
                 onChange={(e) => setTablesCount(e.target.value)}
                 size="small"
@@ -205,7 +207,7 @@ function QRCodeGenerate() {
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              الطاولات المُنشأة ({tables.length})
+              {t("managerCreatedTables")} ({tables.length})
             </Typography>
             <Button
               variant="contained"
@@ -254,7 +256,7 @@ function QRCodeGenerate() {
                     }}
                   >
                     <Chip
-                      label={`طاولة ${table.table_number}`}
+                      label={`${t("managerTable")} ${table.table_number}`}
                       color="primary"
                       sx={{
                         fontWeight: 700,
@@ -290,7 +292,7 @@ function QRCodeGenerate() {
                       variant="body2"
                       sx={{ fontWeight: 700, mt: 2, color: "text.primary" }}
                     >
-                      امسح الرمز لطلب المنيو
+                      {t("managerScanMenu")}
                     </Typography>
 
                     <Typography

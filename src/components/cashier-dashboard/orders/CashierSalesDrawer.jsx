@@ -17,7 +17,7 @@ function CashierSalesDrawer({ open, onClose }) {
   const { language, t } = useLanguage();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const currency = storeInfo.currency || "ر.س";
+  const currency = storeInfo.currency || (language === "ar" ? "ر.س" : "SAR");
   // الجهة القائدة تكون يمينًا في العربية ويسارًا في الإنجليزية.
   const anchor = language === "ar" ? "right" : "left";
 

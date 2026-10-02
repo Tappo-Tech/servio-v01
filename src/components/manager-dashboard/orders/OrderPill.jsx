@@ -17,8 +17,10 @@ import dayjs from "dayjs";
 
 // CONTEXTS
 import { useStore } from "../../../context/StoreInfoContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function InvoiceModal({ open, onClose, order }) {
+  const { t } = useLanguage();
   const { storeInfo = {} } = useStore();
 
   if (!order) return null;
@@ -27,7 +29,7 @@ function InvoiceModal({ open, onClose, order }) {
     window.print();
   };
 
-  const currency = storeInfo.currency || "ر.س";
+  const currency = storeInfo.currency || t("currencySar");
   const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
 
   return (
@@ -70,7 +72,7 @@ function InvoiceModal({ open, onClose, order }) {
             />
           )}
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            {storeInfo.store_name || "المتجر"}
+            {storeInfo.store_name || t("storeFallback")}
           </Typography>
 
           {storeInfo.tax_number && (
@@ -79,7 +81,7 @@ function InvoiceModal({ open, onClose, order }) {
               display="block"
               color="text.secondary"
             >
-              الرقم الضريبي: {storeInfo.tax_number}
+              {t("managerTax")}: {storeInfo.tax_number}
             </Typography>
           )}
 
@@ -88,7 +90,7 @@ function InvoiceModal({ open, onClose, order }) {
             color="text.secondary"
             display="block"
           >
-            فاتورة مبسطة
+            {t("invoiceSimple")}
           </Typography>
           <Typography variant="caption" display="block">
             {dayjs(order.created_at).format("DD/MM/YY · hh:mm A")}
@@ -99,10 +101,10 @@ function InvoiceModal({ open, onClose, order }) {
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            رقم الطلب: #{shortOrderId}
+            {t("managerOrderNumber")}: #{shortOrderId}
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            طاولة: {order.table_number}
+            {t("managerTable")}: {order.table_number}
           </Typography>
         </Box>
 
@@ -132,7 +134,7 @@ function InvoiceModal({ open, onClose, order }) {
 
         {order.notes && (
           <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-            ملاحظات: {order.notes}
+            {t("managerNotes")}: {order.notes}
           </Typography>
         )}
 
@@ -145,7 +147,7 @@ function InvoiceModal({ open, onClose, order }) {
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            المجموع الكلي:
+            {t("managerTotal")}:
           </Typography>
           <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
             {order.total_price} {currency}
@@ -165,12 +167,12 @@ function InvoiceModal({ open, onClose, order }) {
         >
           {storeInfo.phone && (
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              هاتف: {storeInfo.phone}
+              {t("phone")}: {storeInfo.phone}
             </Typography>
           )}
           {storeInfo.email && (
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              البريد: {storeInfo.email}
+              {t("email")}: {storeInfo.email}
             </Typography>
           )}
         </Box>
@@ -181,7 +183,7 @@ function InvoiceModal({ open, onClose, order }) {
           display="block"
           sx={{ mt: 2, color: "text.secondary", fontWeight: 700 }}
         >
-          {storeInfo.receipt_footer || "شكراً لزيارتكم!"}
+          {storeInfo.receipt_footer || t("receiptThanks")}
         </Typography>
       </DialogContent>
 

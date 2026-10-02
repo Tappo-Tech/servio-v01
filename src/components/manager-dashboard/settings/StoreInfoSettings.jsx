@@ -21,16 +21,18 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 
 // CONTEXT
 import { useStore } from "../../../context/StoreInfoContext";
+import { useLanguage } from "../../../context/LanguageContext";
 import { compressImage } from "../../../utils/compressImage";
 import { slugifyName } from "../../../utils/slug";
 
 const CURRENCIES = [
-  { value: "SAR", label: "ر.س (ريال سعودي)" },
-  { value: "AED", label: "د.إ (درهم إماراتي)" },
-  { value: "USD", label: "$ (دولار أمريكي)" },
+  { value: "SAR", labelKey: "currencySar" },
+  { value: "AED", labelKey: "currencyAed" },
+  { value: "USD", labelKey: "currencyUsd" },
 ];
 
 function StoreInfoSettings() {
+  const { t } = useLanguage();
   const { storeInfo, updateStoreInfo } = useStore();
 
   const [formData, setFormData] = useState({
@@ -77,7 +79,7 @@ function StoreInfoSettings() {
       const logo_url = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.8 });
       setFormData((prev) => ({ ...prev, logo_url }));
     } catch (error) {
-      console.error("تعذر ضغط الشعار:", error);
+      console.error(t("managerLogoError"), error);
     }
   };
 
@@ -87,14 +89,14 @@ function StoreInfoSettings() {
     if (result?.error) {
       setToast({
         open: true,
-        message: result.error.message?.includes("duplicate") ? "الـ slug مستخدم بالفعل" : result.error.message || "تعذر حفظ الإعدادات",
+        message: result.error.message?.includes("duplicate") ? t("slugName") : result.error.message || t("genericLoginError"),
         severity: "error",
       });
       return;
     }
     setToast({
       open: true,
-      message: "تم حفظ إعدادات الكافيه بنجاح!",
+      message: t("managerSaved"),
       severity: "success",
     });
   };
@@ -149,7 +151,7 @@ function StoreInfoSettings() {
                 display="block"
                 sx={{ mb: 1.5, fontSize: "14px" }}
               >
-                يظهر الشعار في أعلى الفواتير المطبوعة وعلى تطبيق المنيو الرقمي
+                {t("managerLogoHint")}
               </Typography>
               <Button
                 variant="outlined"
@@ -174,7 +176,7 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
-            label="اسم الكافيه / الفرع"
+            label={t("managerStoreName")}
             name="store_name"
             value={formData.store_name || ""}
             onChange={handleInputChange}
@@ -187,7 +189,7 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
-            label="اسم امتداد الكافيه (Slug)"
+            label={t("managerSlug")}
             name="store_slug"
             value={formData.store_slug || ""}
             onChange={handleInputChange}
@@ -195,7 +197,7 @@ function StoreInfoSettings() {
             required
             size="small"
             helperText={
-              isSlugLocked ? "يتم توليده تلقائياً من الاسم" : "تمكين التعديل اليدوي"
+              isSlugLocked ? t("managerAutoSlug") : t("managerEditSlug")
             }
             InputProps={{
               endAdornment: (
@@ -203,7 +205,7 @@ function StoreInfoSettings() {
                   size="small"
                   onClick={() => setIsSlugLocked(!isSlugLocked)}
                   title={
-                    isSlugLocked ? "فك القفل لتعديل الرابط يدوياً" : "قفل الرابط"
+                    isSlugLocked ? t("managerUnlockSlug") : t("managerLockSlug")
                   }
                 >
                   {isSlugLocked ? (
@@ -221,7 +223,7 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
-            label="رقم الهاتف"
+            label={t("phone")}
             name="phone"
             value={formData.phone || ""}
             onChange={handleInputChange}
@@ -233,7 +235,7 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
-            label="البريد الإلكتروني"
+            label={t("email")}
             name="email"
             type="email"
             value={formData.email || ""}
@@ -246,12 +248,12 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
-            label="الرقم الضريبي (VAT)"
+            label={t("managerTax")}
             name="tax_number"
             value={formData.tax_number || ""}
             onChange={handleInputChange}
             size="small"
-            placeholder="مثال: 300000000000003"
+            placeholder={t("taxExample")}
           />
         </Grid>
 
@@ -260,7 +262,7 @@ function StoreInfoSettings() {
           <TextField
             select
             fullWidth
-            label="العملة"
+            label={t("managerCurrency")}
             name="currency"
             value={formData.currency || "SAR"}
             onChange={handleInputChange}
@@ -268,7 +270,7 @@ function StoreInfoSettings() {
           >
             {CURRENCIES.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -278,12 +280,12 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12, sm: 6, md: 8 }}>
           <TextField
             fullWidth
-            label="العنوان"
+            label={t("managerAddress")}
             name="address"
             value={formData.address || ""}
             onChange={handleInputChange}
             size="small"
-            placeholder="مثال: الرياض - حي الملقا - طريق الملك فهد"
+            placeholder={t("addressExample")}
           />
         </Grid>
 
@@ -291,14 +293,14 @@ function StoreInfoSettings() {
         <Grid size={{ xs: 12 }}>
           <TextField
             fullWidth
-            label="تذييل الفاتورة (رسالة الترحيب)"
+            label={t("managerReceiptFooter")}
             name="receipt_footer"
             value={formData.receipt_footer || ""}
             onChange={handleInputChange}
             multiline
             rows={2}
             size="small"
-            placeholder="مثال: شكراً لزيارتكم! نتمنى لكم يوماً سعيداً."
+            placeholder={t("receiptExample")}
           />
         </Grid>
 

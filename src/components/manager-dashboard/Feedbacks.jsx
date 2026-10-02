@@ -16,9 +16,11 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 // CONTEXTS
 import { useFeedbacks } from "../../context/FeedbackContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 function Feedbacks() {
   const { feedbacks } = useFeedbacks();
+  const { t, language } = useLanguage();
 
   return (
     <Box
@@ -49,13 +51,13 @@ function Feedbacks() {
             textAlign: "start",
           }}
         >
-          آراء وتقييمات العملاء
+          {t("managerFeedbackTitle")}
         </Typography>
         <Typography
           variant="subtitle1"
           sx={{ color: "text.secondary", fontWeight: 600, textAlign: "start" }}
         >
-          إجمالي التقييمات المستقبلة: {feedbacks.length}
+          {t("managerFeedbackTotal")}: {feedbacks.length}
         </Typography>
       </Box>
 
@@ -120,7 +122,7 @@ function Feedbacks() {
                       variant="subtitle1"
                       sx={{ fontWeight: "700", color: "text.primary" }}
                     >
-                      طاولة {item.table_number}
+                      {t("managerTable")} {item.table_number}
                     </Typography>
                   </Stack>
 
@@ -134,7 +136,7 @@ function Feedbacks() {
                   >
                     <AccessTimeIcon sx={{ fontSize: 15 }} />
                     <Typography variant="caption" sx={{ fontWeight: "500" }}>
-                      {item.created_at ? new Date(item.created_at).toLocaleDateString("ar-SA", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}
+                      {item.created_at ? new Date(item.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}
                     </Typography>
                   </Stack>
                 </Box>

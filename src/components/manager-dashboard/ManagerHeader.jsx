@@ -29,7 +29,7 @@ function ManagerHeader({ onDrawerToggle }) {
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
         <IconButton
-          aria-label="فتح القائمة"
+          aria-label={t("openMenu")}
           edge="start"
           onClick={onDrawerToggle}
           sx={{

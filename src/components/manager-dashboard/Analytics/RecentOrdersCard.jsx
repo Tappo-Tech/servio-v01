@@ -150,13 +150,13 @@ function RecentOrdersCard() {
                         fontSize: "0.8rem",
                       }}
                     >
-                      {order.items?.length || 0} عناصر •{" "}
+                      {order.items?.length || 0} {t("managerItemCount")} •{" "}
                       {order.created_at
                         ? new Date(order.created_at).toLocaleTimeString(
                             language === "ar" ? "ar-SA" : "en-US",
                             { hour: "2-digit", minute: "2-digit" },
                           )
-                        : "الآن"}
+                        : t("managerNow")}
                     </Typography>
                   </Box>
                 </Box>
