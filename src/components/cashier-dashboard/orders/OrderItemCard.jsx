@@ -21,10 +21,12 @@ import { formatTimeAgo } from "../../../utils/helpers";
 
 // CONTEXTS
 import { useOrders } from "../../../context/OrdersContext";
+import { useLanguage } from "../../../context/LanguageContext";
 import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 
 function OrderItemCard({ order }) {
   const { updateOrderStatus } = useOrders();
+  const { t } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   return (
@@ -152,13 +154,6 @@ function OrderItemCard({ order }) {
           )}
         </CardContent>
 
-        {/* زر الطباعة متاح من أول لحظة حتى يخرج رقم الطاولة والأصناف قبل بدء التحضير. */}
-        <CardActions sx={{ p: 1.5, pt: 0.5, pb: 0 }}>
-          <Button size="small" variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} sx={{ borderRadius: "10px", fontWeight: 800 }}>
-            طباعة الفاتورة
-          </Button>
-        </CardActions>
-
         {/* أزرار الإجراءات */}
         <CardActions sx={{ p: 1.5, pt: 0.5 }}>
           {order.status === "pending" && (
@@ -172,7 +167,16 @@ function OrderItemCard({ order }) {
                 onClick={() => updateOrderStatus(order.id, "preparing")}
                 sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
-                بدء التحضير
+                {t("startPreparing")}
+              </Button>
+              <Button
+                size="medium"
+                variant="outlined"
+                startIcon={<PrintRoundedIcon />}
+                onClick={() => setIsInvoiceOpen(true)}
+                sx={{ borderRadius: "10px", fontWeight: 800, minWidth: "fit-content" }}
+              >
+                {t("printInvoice")}
               </Button>
               <Button
                 color="error"
@@ -181,7 +185,7 @@ function OrderItemCard({ order }) {
                 onClick={() => updateOrderStatus(order.id, "cancelled")}
                 sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "75px" }}
               >
-                إلغاء
+                {t("cancel")}
               </Button>
             </Box>
           )}
@@ -201,7 +205,7 @@ function OrderItemCard({ order }) {
                 color: "white",
               }}
             >
-              جاهز للتسليم
+              {t("ready")}
             </Button>
           )}
 
@@ -216,7 +220,7 @@ function OrderItemCard({ order }) {
                 onClick={() => updateOrderStatus(order.id, "served")}
                 sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
-                تم الاستلام
+                {t("received")}
               </Button>
               <Button
                 color="warning"
@@ -225,7 +229,7 @@ function OrderItemCard({ order }) {
                 onClick={() => updateOrderStatus(order.id, "unclaimed")}
                 sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "90px" }}
               >
-                لم يُستلم
+                {t("unclaimed")}
               </Button>
             </Box>
           )}

@@ -125,7 +125,6 @@ export default function Home() {
         position: "relative",
       }}
     >
-      <Box sx={{ position: "absolute", top: 20, insetInlineEnd: { xs: 16, sm: 28 }, zIndex: 5 }}><LanguageToggle compact /></Box>
       <Box
         sx={{
           position: "absolute",
@@ -215,6 +214,7 @@ export default function Home() {
                   gap: { xs: 0.5, sm: 1 },
                 }}
               >
+                <LanguageToggle compact />
                 <Button
                   component={RouterLink}
                   to="/login"

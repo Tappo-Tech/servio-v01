@@ -27,8 +27,8 @@ function autoRoot() {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-      <LanguageProvider>
       <BrowserRouter>
+      <LanguageProvider>
         <TenantProvider>
           <MenuProvider>
             <CartProvider>
@@ -57,8 +57,8 @@ function autoRoot() {
             </CartProvider>
           </MenuProvider>
         </TenantProvider>
-      </BrowserRouter>
       </LanguageProvider>
+      </BrowserRouter>
       </ErrorBoundary>
     </React.StrictMode>,
   );

@@ -11,16 +11,17 @@ import { useStore } from "../../context/StoreInfoContext";
 import { useUser } from "../../context/UserContext";
 import { logout } from "../../utils/logout";
 import LanguageToggle from "../LanguageToggle";
+import { useLanguage } from "../../context/LanguageContext";
 function stringAvatar(name) { if (!name) return { children: "M" }; const parts = name.trim().split(" "); return { children: (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0]).toUpperCase() }; }
 function ManagerHeader({ onDrawerToggle }) {
-  const { storeInfo } = useStore(); const { user } = useUser(); const navigate = useNavigate(); const userName = user?.name || "Manager";
+  const { storeInfo } = useStore(); const { user } = useUser(); const navigate = useNavigate(); const userName = user?.name || "Manager"; const { language, t } = useLanguage();
   return (
     <Stack
       direction="row"
       sx={{
         justifyContent: "space-between",
         alignItems: "center",
-        direction: "rtl",
+        direction: language === "ar" ? "rtl" : "ltr",
         py: { xs: 1.1, md: 1.35 },
         px: { xs: 1, sm: 1.5 },
         gap: 2,
@@ -88,9 +89,9 @@ function ManagerHeader({ onDrawerToggle }) {
             boxShadow: "0 8px 20px rgba(244,121,32,.16)",
           }}
         />
-        <Tooltip title="تسجيل الخروج">
+        <Tooltip title={t("logout")}>
           <IconButton
-            aria-label="تسجيل الخروج"
+            aria-label={t("logout")}
             onClick={() => logout(navigate)}
             sx={{
               color: "text.secondary",

@@ -1,66 +1,20 @@
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import TranslateRoundedIcon from "@mui/icons-material/TranslateRounded";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useLanguage } from "../context/LanguageContext";
 
-/** زر لغة موحد؛ اتجاهه ثابت حتى لا ينقلب مع RTL/LTR. */
+/** زر لغة بسيط؛ الإعداد العام للهوم مستقل عن إعداد الكاشير والمدير. */
 export default function LanguageToggle({ compact = false }) {
-  const { language, setLanguage } = useLanguage();
-
+  const { language, setLanguage, t } = useLanguage();
   return (
     <ToggleButtonGroup
       exclusive
       value={language}
       onChange={(_, value) => value && setLanguage(value)}
       size="small"
-      aria-label="Language"
-      sx={{
-        direction: "ltr",
-        borderRadius: 99,
-        overflow: "hidden",
-        border: "1px solid rgba(23,26,47,.10)",
-        background: "linear-gradient(135deg, rgba(255,255,255,.96), rgba(247,249,252,.82))",
-        boxShadow: "0 8px 22px rgba(23,26,47,.08)",
-        backdropFilter: "blur(12px)",
-        p: 0.35,
-      }}
+      aria-label={t("language")}
+      sx={{ direction: "ltr", border: "1px solid rgba(23,26,47,.14)", borderRadius: 99, p: "2px", backgroundColor: "rgba(255,255,255,.82)" }}
     >
-      <Box sx={{ display: "grid", placeItems: "center", width: compact ? 25 : 29, color: "primary.main" }}>
-        <TranslateRoundedIcon sx={{ fontSize: compact ? 16 : 18 }} />
-      </Box>
-      <ToggleButton
-        value="ar"
-        aria-label="العربية"
-        sx={{
-          px: compact ? 0.8 : 1.05,
-          py: 0.5,
-          border: 0,
-          borderRadius: 99,
-          fontWeight: 900,
-          fontSize: ".73rem",
-          minWidth: compact ? 26 : 42,
-          color: "text.secondary",
-          "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", boxShadow: "0 4px 12px rgba(244,121,32,.28)" },
-        }}
-      >
-        {compact ? "ع" : "عربي"}
-      </ToggleButton>
-      <ToggleButton
-        value="en"
-        aria-label="English"
-        sx={{
-          px: compact ? 0.8 : 1.05,
-          py: 0.5,
-          border: 0,
-          borderRadius: 99,
-          fontWeight: 900,
-          fontSize: ".73rem",
-          minWidth: compact ? 26 : 42,
-          color: "text.secondary",
-          "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", boxShadow: "0 4px 12px rgba(244,121,32,.28)" },
-        }}
-      >
-        {compact ? "E" : "EN"}
-      </ToggleButton>
+      <ToggleButton value="ar" aria-label="العربية" sx={{ border: 0, borderRadius: 99, minWidth: compact ? 27 : 38, px: compact ? .7 : 1, py: .35, fontSize: ".7rem", fontWeight: 800, color: "text.secondary", "&.Mui-selected": { bgcolor: "secondary.main", color: "#fff" } }}>ع</ToggleButton>
+      <ToggleButton value="en" aria-label="English" sx={{ border: 0, borderRadius: 99, minWidth: compact ? 27 : 38, px: compact ? .7 : 1, py: .35, fontSize: ".7rem", fontWeight: 800, color: "text.secondary", "&.Mui-selected": { bgcolor: "secondary.main", color: "#fff" } }}>EN</ToggleButton>
     </ToggleButtonGroup>
   );
 }

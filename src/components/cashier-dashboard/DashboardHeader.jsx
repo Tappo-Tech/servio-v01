@@ -14,10 +14,10 @@ import { useUser } from "../../context/UserContext";
 import { useWaiterCalls } from "../../context/WaiterCallsContext";
 import { logout } from "../../utils/logout";
 
-const currentDate = new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 function stringAvatar(name) { if (!name) return { children: "C" }; const parts = name.trim().split(" "); return { children: (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0]).toUpperCase() }; }
 function DashboardHeader({ handleNotificationOpen }) {
-  const { user } = useUser(); const { calls } = useWaiterCalls(); const navigate = useNavigate(); const userName = user?.name || "Cashier"; const { t } = useLanguage();
+  const { user } = useUser(); const { calls } = useWaiterCalls(); const navigate = useNavigate(); const userName = user?.name || "Cashier"; const { language, t } = useLanguage();
+  const currentDate = new Date().toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   return (
     <Box sx={{ width: "100%" }}>
       <Stack
