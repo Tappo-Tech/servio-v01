@@ -35,7 +35,7 @@ function CashierSalesDrawer({ open, onClose }) {
 
   return (
     <>
-      <Drawer anchor={anchor} open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100vw", sm: "88vw", md: "40vw", lg: "40vw", xl: "40vw" }, flex: { xs: "1 1 100%", sm: "0 0 88%", md: "0 0 40%", lg: "0 0 40%", xl: "0 0 40%" }, minWidth: { md: 480 }, maxWidth: "100%", flexShrink: 0, p: { xs: 2, sm: 3, md: 3.5 }, direction: language === "ar" ? "rtl" : "ltr", background: "linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)" } }}>
+      <Drawer anchor={anchor} open={open} onClose={onClose} slotProps={{ paper: { sx: { width: { xs: "100vw !important", sm: "88vw !important", md: "clamp(480px, 40vw, 720px) !important" }, minWidth: { md: "480px !important" }, maxWidth: "100vw !important", flex: { xs: "1 1 100%", md: "0 0 clamp(480px, 40vw, 720px)" }, boxSizing: "border-box", flexShrink: 0, p: { xs: 2, sm: 3, md: 3.5 }, direction: language === "ar" ? "rtl" : "ltr", background: "linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)", "&.MuiDrawer-paper": { width: { xs: "100vw !important", sm: "88vw !important", md: "clamp(480px, 40vw, 720px) !important" } } } } }}>
         <Stack spacing={2.2} sx={{ height: "100%", width: "100%", minWidth: 0 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Box><Typography variant="h5" fontWeight={950}>{t("orderHistory")}</Typography><Typography variant="body2" color="text.secondary">{t("orderHistoryHint")}</Typography></Box>
