@@ -27,7 +27,7 @@ import { formatTimeAgo } from "../../../utils/helpers";
 
 function WaiterCallNotification({ open, close }) {
   const { calls, resolveCall } = useWaiterCalls(); 
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   return (
     <Drawer
@@ -56,10 +56,10 @@ function WaiterCallNotification({ open, close }) {
       >
         <Box>
           <Typography variant="h6" sx={{ fontWeight: "900", color: "text.primary" }}>
-            إشعارات نداء الجرسون
+            {t("waiterHeader")}
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: "700", color: "text.secondary" }}>
-            النداءات المعلقة: {calls.length}
+            {t("waiterPending")}: {calls.length}
           </Typography>
         </Box>
         <IconButton onClick={() => close()} sx={{ backgroundColor: "#ffffff" }}>
@@ -82,7 +82,7 @@ function WaiterCallNotification({ open, close }) {
         >
           <CheckCircleIcon sx={{ fontSize: 48, color: "success", mb: 1 }} />
           <Typography variant="subtitle1" fontWeight="bold" color="secondary">
-            لا توجد نداءات معلقة
+            {t("waiterEmpty")}
           </Typography>
         </Card>
       ) : (
@@ -102,12 +102,12 @@ function WaiterCallNotification({ open, close }) {
                     <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
                       <TableRestaurantIcon sx={{ color: "primary.main" }} />
                       <Typography variant="subtitle2" sx={{ fontWeight: "700" }}>
-                        طاولة {call.table_number}
+                        {t("table")} {call.table_number}
                       </Typography>
                     </Stack>
                     <Stack direction="row" sx={{ alignItems: "center", gap: 0.5, color: "text.secondary" }}>
                       <AccessTimeIcon sx={{ fontSize: 14 }} />
-                      <Typography variant="caption">{formatTimeAgo(call.created_at)}</Typography>
+                      <Typography variant="caption">{formatTimeAgo(call.created_at, language, t)}</Typography>
                     </Stack>
                   </Box>
 
@@ -126,7 +126,7 @@ function WaiterCallNotification({ open, close }) {
                       "&:hover": { backgroundColor: "success" },
                     }}
                   >
-                    تم التلبية
+                    {t("waiterFulfilled")}
                   </Button>
                 </CardContent>
               </Card>

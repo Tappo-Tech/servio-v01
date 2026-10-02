@@ -143,7 +143,7 @@ function StoreInfoSettings() {
               }}
             >
               <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "18px" }}>
-                شعار الكافيه / النشاط
+                {t("managerLogoTitle")}
               </Typography>
               <Typography
                 variant="caption"
@@ -160,7 +160,7 @@ function StoreInfoSettings() {
                 startIcon={<CloudUploadIcon />}
                 sx={{ borderRadius: "8px", alignSelf: { sm: "flex-start" } }}
               >
-                تغيير الشعار
+                {t("managerChangeLogo")}
                 <input
                   type="file"
                   hidden
@@ -325,7 +325,7 @@ function StoreInfoSettings() {
               fontWeight: 700,
             }}
           >
-            حفظ التغييرات
+            {t("managerSave")}
           </Button>
         </Grid>
       </Grid>

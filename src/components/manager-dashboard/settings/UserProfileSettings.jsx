@@ -258,7 +258,7 @@ function UserProfileSettings() {
             fullWidth={{ xs: true, sm: false }}
             sx={{ px: 4, py: 1, borderRadius: "8px", fontWeight: 700 }}
           >
-            حفظ التغييرات
+            {t("managerSave")}
           </Button>
         </Grid>
       </Grid>

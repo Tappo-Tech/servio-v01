@@ -26,7 +26,7 @@ import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 
 function OrderItemCard({ order }) {
   const { updateOrderStatus } = useOrders();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   return (
@@ -70,7 +70,7 @@ function OrderItemCard({ order }) {
             variant="subtitle1"
             sx={{ fontWeight: 800, color: "text.primary" }}
           >
-            طاولة {order.table_number}
+            {t("table")} {order.table_number}
           </Typography>
 
           <Typography
@@ -85,7 +85,7 @@ function OrderItemCard({ order }) {
               borderRadius: "6px",
             }}
           >
-            {formatTimeAgo(order.created_at)}
+            {formatTimeAgo(order.created_at, language, t)}
           </Typography>
         </Box>
 
@@ -120,7 +120,7 @@ function OrderItemCard({ order }) {
                   variant="body2"
                   sx={{ color: "text.secondary", fontWeight: 600 }}
                 >
-                  {item.price} ر.س
+                  {item.price} {language === "ar" ? "ر.س" : "SAR"}
                 </Typography>
               </Box>
             ))}
@@ -148,7 +148,7 @@ function OrderItemCard({ order }) {
                 variant="caption"
                 sx={{ fontWeight: 700, color: "warning.dark" }}
               >
-                ملاحظة: {order.notes}
+                {t("note")}: {order.notes}
               </Typography>
             </Box>
           )}

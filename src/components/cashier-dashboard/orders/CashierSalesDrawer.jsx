@@ -35,7 +35,7 @@ function CashierSalesDrawer({ open, onClose }) {
 
   return (
     <>
-      <Drawer anchor={anchor} open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100vw", sm: "88vw", md: "40vw", lg: "40vw", xl: "40vw" }, minWidth: { md: "480px" }, maxWidth: "100vw", flexShrink: 0, p: { xs: 2, sm: 3, md: 3.5 }, direction: language === "ar" ? "rtl" : "ltr", background: "linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)" } }}>
+      <Drawer anchor={anchor} open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: 1, sm: 0.88, md: 0.4, lg: 0.4, xl: 0.4 }, minWidth: { md: 480 }, maxWidth: 1, flexShrink: 0, p: { xs: 2, sm: 3, md: 3.5 }, direction: language === "ar" ? "rtl" : "ltr", background: "linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)" } }}>
         <Stack spacing={2.2} sx={{ height: "100%" }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Box><Typography variant="h5" fontWeight={950}>{t("orderHistory")}</Typography><Typography variant="body2" color="text.secondary">{t("orderHistoryHint")}</Typography></Box>

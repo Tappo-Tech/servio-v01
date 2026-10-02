@@ -154,7 +154,7 @@ function RecentOrdersCard() {
                       {order.created_at
                         ? new Date(order.created_at).toLocaleTimeString(
                             language === "ar" ? "ar-SA" : "en-US",
-                            { hour: "2-digit", minute: "2-digit" },
+                            { hour: "2-digit", minute: "2-digit", hour12: false },
                           )
                         : t("managerNow")}
                     </Typography>
