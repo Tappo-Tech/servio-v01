@@ -10,15 +10,17 @@ import RequireSession from "./components/RequireSession";
 import { useParams } from "react-router-dom";
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
+import { useLanguage } from "./context/LanguageContext";
 
 function App() {
+  const { language } = useLanguage();
   const CashierLoginRoute = () => {
     const { slug } = useParams();
     return <AdminLogin cashierSlug={slug} />;
   };
 
   return (
-    <div className="App" dir="rtl">
+    <div className="App" dir={language === "ar" ? "rtl" : "ltr"}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<AdminLogin />} />

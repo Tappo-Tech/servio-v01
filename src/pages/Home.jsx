@@ -22,6 +22,7 @@ import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { Link as RouterLink } from "react-router-dom";
+import LanguageToggle from "../components/LanguageToggle";
 
 const features = [
   {
@@ -124,6 +125,7 @@ export default function Home() {
         position: "relative",
       }}
     >
+      <Box sx={{ position: "absolute", top: 20, insetInlineEnd: { xs: 16, sm: 28 }, zIndex: 5 }}><LanguageToggle compact /></Box>
       <Box
         sx={{
           position: "absolute",

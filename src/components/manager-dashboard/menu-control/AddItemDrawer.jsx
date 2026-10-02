@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMenu } from "../../../context/MenuContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // MUI COMPONENTS
 import { styled } from "@mui/material/styles";
@@ -66,6 +67,7 @@ const INITIAL_FORM_STATE = {
 
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const { addNewItem, updateItem, categoriesList = [], items = [] } = useMenu();
+  const { language } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
 
   return (
     <SwipeableDrawer
-      anchor="right"
+      anchor={language === "ar" ? "right" : "left"}
       open={open}
       onClose={onClose}
       onOpen={() => {}}

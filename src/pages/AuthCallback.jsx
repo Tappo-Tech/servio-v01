@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Paper, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import supabase from "../supabase";
+import LanguageToggle from "../components/LanguageToggle";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -41,5 +42,5 @@ export default function AuthCallback() {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [navigate]);
 
-  return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", p: 2, bgcolor: "background.default" }}><Paper elevation={3} sx={{ maxWidth: 460, width: "100%", p: { xs: 3, sm: 5 }, borderRadius: 3, textAlign: "center" }}>{error ? <Alert severity="error" sx={{ mb: 2, textAlign: "right" }}>{error}</Alert> : <CircularProgress sx={{ mb: 2 }} />}<Typography variant="h5" fontWeight={800} mb={1}>تأكيد البريد الإلكتروني</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.9 }}>{error ? "يمكنك العودة لتسجيل الدخول وإعادة إرسال رابط التفعيل." : message}</Typography>{error && <Button variant="contained" onClick={() => navigate("/login")} sx={{ mt: 3 }}>العودة لتسجيل الدخول</Button>}</Paper></Box>;
+  return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", p: 2, bgcolor: "background.default", position: "relative" }}><Box sx={{ position: "absolute", top: 18, insetInlineEnd: 18 }}><LanguageToggle /></Box><Paper elevation={3} sx={{ maxWidth: 460, width: "100%", p: { xs: 3, sm: 5 }, borderRadius: 3, textAlign: "center" }}>{error ? <Alert severity="error" sx={{ mb: 2, textAlign: "right" }}>{error}</Alert> : <CircularProgress sx={{ mb: 2 }} />}<Typography variant="h5" fontWeight={800} mb={1}>تأكيد البريد الإلكتروني</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.9 }}>{error ? "يمكنك العودة لتسجيل الدخول وإعادة إرسال رابط التفعيل." : message}</Typography>{error && <Button variant="contained" onClick={() => navigate("/login")} sx={{ mt: 3 }}>العودة لتسجيل الدخول</Button>}</Paper></Box>;
 }

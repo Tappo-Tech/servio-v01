@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../../context/StoreInfoContext";
 import { useUser } from "../../context/UserContext";
 import { logout } from "../../utils/logout";
+import LanguageToggle from "../LanguageToggle";
 function stringAvatar(name) { if (!name) return { children: "M" }; const parts = name.trim().split(" "); return { children: (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0]).toUpperCase() }; }
 function ManagerHeader({ onDrawerToggle }) {
   const { storeInfo } = useStore(); const { user } = useUser(); const navigate = useNavigate(); const userName = user?.name || "Manager";
@@ -64,6 +65,7 @@ function ManagerHeader({ onDrawerToggle }) {
         </Box>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.75, sm: 1.1 } }}>
+        <LanguageToggle compact />
         <Typography
           variant="body2"
           sx={{

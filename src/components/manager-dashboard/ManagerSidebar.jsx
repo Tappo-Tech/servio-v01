@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 // MUI HOOKS
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useLanguage } from "../../context/LanguageContext";
 
 // ICONS
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
@@ -41,6 +42,7 @@ function ManagerSidebar({
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { language } = useLanguage();
 
   const handleItemClick = (id) => {
     onSelectTab(id);
@@ -60,7 +62,7 @@ function ManagerSidebar({
 
   return (
     <SwipeableDrawer
-      anchor="right"
+      anchor={language === "ar" ? "right" : "left"}
       variant={isMobile ? "temporary" : "permanent"}
       open={isMobile ? mobileOpen : true}
       onClose={handleDrawerToggle}
