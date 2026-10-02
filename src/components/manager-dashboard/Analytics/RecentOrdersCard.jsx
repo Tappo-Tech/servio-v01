@@ -14,9 +14,11 @@ import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 
 // CONTEXTS
 import { useAnalytics } from "../../../context/AnalyticsContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function RecentOrdersCard() {
   const { recentOrders } = useAnalytics();
+  const { t, language } = useLanguage();
 
   // خريطة بسيطة لحالة الطلب
   const getStatusChip = (status) => {
@@ -24,7 +26,7 @@ function RecentOrdersCard() {
       case "completed":
         return (
           <Chip
-            label="مكتمل"
+            label={t("managerComplete")}
             size="small"
             color="success"
             sx={{ fontSize: "0.7rem", height: 20 }}
@@ -33,7 +35,7 @@ function RecentOrdersCard() {
       case "pending":
         return (
           <Chip
-            label="قيد الانتظار"
+            label={t("managerPending")}
             size="small"
             color="warning"
             sx={{ fontSize: "0.7rem", height: 20 }}
@@ -42,7 +44,7 @@ function RecentOrdersCard() {
       default:
         return (
           <Chip
-            label="جديد"
+            label={t("managerNew")}
             size="small"
             color="primary"
             sx={{ fontSize: "0.7rem", height: 20 }}
@@ -82,13 +84,13 @@ function RecentOrdersCard() {
               fontSize: "1.1rem",
             }}
           >
-            أحدث 3 طلبات اليوم
+            {t("managerRecent")}
           </Typography>
           <Typography
             variant="caption"
             sx={{ color: "#64748b", fontWeight: 600 }}
           >
-            مباشر (Real-time)
+            {t("managerLive")}
           </Typography>
         </Box>
 
@@ -136,7 +138,7 @@ function RecentOrdersCard() {
                           lineHeight: 1.2,
                         }}
                       >
-                        طاولة {order.table_number || order.table || "—"}
+                        {t("table")} {order.table_number || order.table || "—"}
                       </Typography>
                       {getStatusChip(order.status)}
                     </Box>
@@ -151,7 +153,7 @@ function RecentOrdersCard() {
                       {order.items?.length || 0} عناصر •{" "}
                       {order.created_at
                         ? new Date(order.created_at).toLocaleTimeString(
-                            "ar-SA",
+                            language === "ar" ? "ar-SA" : "en-US",
                             { hour: "2-digit", minute: "2-digit" },
                           )
                         : "الآن"}
@@ -177,7 +179,7 @@ function RecentOrdersCard() {
                       color: "#64748b",
                     }}
                   >
-                    ر.س
+                    {t("currencySar")}
                   </Typography>
                 </Typography>
               </ListItem>
@@ -187,7 +189,7 @@ function RecentOrdersCard() {
               variant="body2"
               sx={{ color: "#94a3b8", textAlign: "center", py: 3 }}
             >
-              لا توجد طلبات حديثة حالياً
+              {t("managerNoRecent")}
             </Typography>
           )}
         </List>

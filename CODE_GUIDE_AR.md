@@ -86,3 +86,42 @@ npm run build
 - ESLint على الملفات المعدلة نجح بلا مخرجات.
 - `git diff --check` نجح بلا مسافات أو علامات غير صالحة.
 - لم توجد تغييرات في `supabase/` أو `.env`.
+
+## 9. الترجمة الكاملة للواجهات العامة
+
+تم ربط نصوص الهوم الأساسية، بطاقات المزايا، الخطوات، الأدوار، النصوص التجريبية، وصفحة الدخول، نموذج التسجيل، تأكيد البريد، وبطاقات تحليلات المدير بمفاتيح `LanguageContext`. لذلك تغيير اللغة يبدل النصوص والاتجاه معًا بدل تغيير الاتجاه وحده. بيانات المنيو التي يدخلها صاحب النشاط، مثل أسماء الأصناف، لا تتم ترجمتها تلقائيًا لأنها بيانات حقيقية وليست نصوص واجهة.
+
+مسارات المنيو لها نطاق ثابت اسمه `menu`، وهذا النطاق يفرض العربية وRTL ولا يرث اختيار اللغة من الهوم أو الكاشير أو المدير.
+
+## 10. أوامر سحب آخر نسخة على جهاز Windows
+
+إذا كان المستودع موجودًا على الجهاز:
+
+```powershell
+cd "C:\Users\Mohamed alhaj\Documents\manus-auto-workspace\2026-10-02\CSAOFo\tappo-v01"
+git checkout main
+git fetch origin
+git pull --ff-only origin main
+npm ci
+npm start
+```
+
+إذا لم يكن موجودًا على الجهاز:
+
+```powershell
+cd "C:\Users\Mohamed alhaj\Documents\manus-auto-workspace\2026-10-02\CSAOFo"
+gh repo clone Tappo-Tech/tappo-v01
+cd tappo-v01
+git checkout main
+npm ci
+npm start
+```
+
+للتأكد من النسخة المسحوبة:
+
+```powershell
+git status --short --branch
+git log -1 --oneline
+```
+
+يجب أن يظهر الفرع `main` نظيفًا، وسيكون آخر commit هو commit الترجمة الذي يتم رفعه بعد اكتمال الاختبارات.

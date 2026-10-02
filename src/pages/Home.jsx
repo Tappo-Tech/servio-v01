@@ -25,24 +25,25 @@ import { Link as RouterLink } from "react-router-dom";
 import LanguageToggle from "../components/LanguageToggle";
 import { useLanguage } from "../context/LanguageContext";
 
+// محتوى الهوم محفوظ كمفاتيح ترجمة، لذلك تتغير النصوص مع اللغة بدل تغيير الاتجاه فقط.
 const features = [
   {
     icon: <QrCode2RoundedIcon />,
     eyebrow: "01",
-    title: "منيو رقمي لكل طاولة",
-    text: "كل طاولة تحصل على رابط وQR خاصين بها، والعميل يصل مباشرة إلى منيو الكافيه بدون تطبيق.",
+    title: "homeFeature1Title",
+    text: "homeFeature1Text",
   },
   {
     icon: <ShoppingBagRoundedIcon />,
     eyebrow: "02",
-    title: "الطلب يصل للفريق فورًا",
-    text: "الطلب ينتقل من شاشة العميل إلى لوحة التشغيل، مع حالة واضحة يمكن للفريق متابعتها لحظة بلحظة.",
+    title: "homeFeature2Title",
+    text: "homeFeature2Text",
   },
   {
     icon: <InsightsRoundedIcon />,
     eyebrow: "03",
-    title: "صورة أوضح عن التشغيل",
-    text: "اجمع الطلبات والتقييمات ومؤشرات الأداء في مساحة واحدة تساعدك تفهم يومك بشكل أسرع.",
+    title: "homeFeature3Title",
+    text: "homeFeature3Text",
   },
 ];
 
@@ -50,44 +51,44 @@ const steps = [
   {
     number: "1",
     icon: <TableRestaurantRoundedIcon />,
-    title: "أنشئ الكافيه",
-    text: "أدخل بيانات نشاطك وحدد اسم الرابط الخاص بالكافيه.",
+    title: "homeStep1Title",
+    text: "homeStep1Text",
   },
   {
     number: "2",
     icon: <QrCode2RoundedIcon />,
-    title: "ولّد روابط الطاولات",
-    text: "كل طاولة تحصل على رابطها وQR الخاص بها تلقائيًا.",
+    title: "homeStep2Title",
+    text: "homeStep2Text",
   },
   {
     number: "3",
     icon: <ShoppingBagRoundedIcon />,
-    title: "استقبل الطلبات",
-    text: "العميل يطلب من الطاولة والطلب يظهر في لوحة الكاشير.",
+    title: "homeStep3Title",
+    text: "homeStep3Text",
   },
   {
     number: "4",
     icon: <AutoGraphRoundedIcon />,
-    title: "تابع الأداء",
-    text: "راجع الطلبات والتقييمات والمؤشرات من لوحة الإدارة.",
+    title: "homeStep4Title",
+    text: "homeStep4Text",
   },
 ];
 
 const roles = [
   {
     icon: <StorefrontRoundedIcon />,
-    title: "لصاحب الكافيه",
-    text: "إدارة النشاط والمنيو والطاولات ومتابعة صورة التشغيل من مكان واحد.",
+    title: "homeRole1Title",
+    text: "homeRole1Text",
   },
   {
     icon: <BoltRoundedIcon />,
-    title: "للكاشير والفريق",
-    text: "رؤية واضحة للطلبات والحالات ونداءات الخدمة بدون تشتيت بين أدوات متعددة.",
+    title: "homeRole2Title",
+    text: "homeRole2Text",
   },
   {
     icon: <LocalCafeRoundedIcon />,
-    title: "للعميل",
-    text: "تجربة طلب بسيطة وسريعة من الطاولة باستخدام رابط أو QR.",
+    title: "homeRole3Title",
+    text: "homeRole3Text",
   },
 ];
 
@@ -346,7 +347,7 @@ export default function Home() {
                 maxWidth: 620,
               }}
             >
-              {["QR خاص لكل طاولة", "تشغيل لحظي للطلبات", "واجهة عربية RTL"].map(
+              {[t("homeFeatureBadge1"), t("homeFeatureBadge2"), t("homeFeatureBadge3")].map(
                 (item) => (
                   <Stack
                     key={item}
@@ -474,9 +475,9 @@ export default function Home() {
 
                   <Stack sx={{ gap: 1.1, mt: 3 }}>
                     {[
-                      ["طلب جديد", "طاولة 08", "الآن"],
-                      ["جاهز للتقديم", "طلب #1048", "قبل دقيقة"],
-                      ["نداء خدمة", "طاولة 04", "قبل دقيقتين"],
+                      [t("homeMockNew"), t("table") + " 08", t("today")],
+                      [t("homeMockReady"), "Order #1048", "1 min ago"],
+                      [t("homeMockCall"), t("table") + " 04", "2 min ago"],
                     ].map(([title, detail, time], index) => (
                       <Box
                         key={title}
@@ -517,9 +518,9 @@ export default function Home() {
                 <Grid container spacing={1.2} sx={{ mt: 1.2 }}>
                   {[
                     [QrCode2RoundedIcon, "QR"],
-                    [ShoppingBagRoundedIcon, "طلبات"],
-                    [NotificationsActiveRoundedIcon, "خدمة"],
-                    [InsightsRoundedIcon, "تحليل"],
+                    [ShoppingBagRoundedIcon, t("homeMockOrders")],
+                    [NotificationsActiveRoundedIcon, t("homeMockService")],
+                    [InsightsRoundedIcon, t("homeMockAnalytics")],
                   ].map(([Icon, label]) => (
                     <Grid size={{ xs: 6 }} key={label}>
                       <Box
@@ -615,7 +616,7 @@ export default function Home() {
 
           <Grid container spacing={2.2}>
             {features.map((feature) => (
-              <Grid size={{ xs: 12, md: 4 }} key={feature.title}>
+              <Grid size={{ xs: 12, md: 4 }} key={t(feature.title)}>
                 <GlassCard
                   sx={{
                     height: "100%",
@@ -665,13 +666,13 @@ export default function Home() {
                       color: "secondary.main",
                     }}
                   >
-                    {feature.title}
+                    {t(feature.title)}
                   </Typography>
                   <Typography
                     color="text.secondary"
                     sx={{ mt: 1, lineHeight: 1.9 }}
                   >
-                    {feature.text}
+                    {t(feature.text)}
                   </Typography>
                 </GlassCard>
               </Grid>
@@ -710,10 +711,10 @@ export default function Home() {
 
             <Stack sx={{ gap: 1.1, mt: 3 }}>
               {[
-                "هوية ورابط مخصص للكافيه",
+                t("homeBenefits1"),
                 "QR منفصل لكل طاولة",
-                "تدفق واضح للطلبات والحالات",
-                "بيانات تساعدك على فهم التشغيل",
+                t("homeBenefits2"),
+                t("homeBenefits3"),
               ].map((item) => (
                 <Stack
                   key={item}
@@ -780,10 +781,10 @@ export default function Home() {
                             variant="caption"
                             sx={{ fontWeight: 900, color: "text.secondary" }}
                           >
-                            الخطوة {step.number}
+                            {t("homeStepLabel")} {step.number}
                           </Typography>
                           <Typography sx={{ fontWeight: 900 }}>
-                            {step.title}
+                            {t(step.title)}
                           </Typography>
                         </Box>
                       </Stack>
@@ -792,7 +793,7 @@ export default function Home() {
                         color="text.secondary"
                         sx={{ mt: 1.4, lineHeight: 1.8 }}
                       >
-                        {step.text}
+                        {t(step.text)}
                       </Typography>
                     </Box>
                   </Grid>
@@ -826,7 +827,7 @@ export default function Home() {
 
           <Grid container spacing={2.2}>
             {roles.map((role) => (
-              <Grid size={{ xs: 12, md: 4 }} key={role.title}>
+              <Grid size={{ xs: 12, md: 4 }} key={t(role.title)}>
                 <GlassCard
                   sx={{
                     borderRadius: 4,
@@ -851,13 +852,13 @@ export default function Home() {
                   <Typography
                     sx={{ mt: 2.3, fontWeight: 900, fontSize: "1.15rem" }}
                   >
-                    {role.title}
+                    {t(role.title)}
                   </Typography>
                   <Typography
                     color="text.secondary"
                     sx={{ mt: 1, lineHeight: 1.9 }}
                   >
-                    {role.text}
+                    {t(role.text)}
                   </Typography>
                 </GlassCard>
               </Grid>

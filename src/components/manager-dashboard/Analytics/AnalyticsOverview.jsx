@@ -7,8 +7,10 @@ import Chip from "@mui/material/Chip";
 
 // CONTEXTS
 import { useAnalytics } from "../../../context/AnalyticsContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function AnalyticsOverview() {
+  const { t } = useLanguage();
   const {
     todaysOrders,
     totalSalesToday,
@@ -52,13 +54,13 @@ function AnalyticsOverview() {
             textAlign: "start",
           }}
         >
-          مؤشرات الأداء
+          {t("managerPerformance")}
         </Typography>
         <Typography
           variant="subtitle1"
           sx={{ color: "text.secondary", fontWeight: 600, textAlign: "start" }}
         >
-          بوابة إدارة الأعمال
+          {t("managerBusiness")}
         </Typography>
       </Box>
 
@@ -94,7 +96,7 @@ function AnalyticsOverview() {
                 textAlign: "start",
               }}
             >
-              إجمالي المبيعات اليوم
+              {t("managerSalesToday")}
             </Typography>
             <Box
               sx={{
@@ -138,7 +140,7 @@ function AnalyticsOverview() {
                 textAlign: "start",
               }}
             >
-              متوسط قيمة الطلب (AOV)
+              {t("managerAov")}
             </Typography>
             <Box
               sx={{

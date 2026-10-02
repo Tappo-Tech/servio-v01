@@ -10,9 +10,11 @@ import Avatar from "@mui/material/Avatar";
 
 // CONTEXT
 import { useAnalytics } from "../../../context/AnalyticsContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function TopSellingProductsCard() {
   const { topProducts } = useAnalytics();
+  const { t } = useLanguage();
 
   // بيانات fallback مطابقة للصورة في حال عدم وجود طلبات
   const displayProducts =
@@ -47,7 +49,7 @@ function TopSellingProductsCard() {
               fontSize: "1.1rem",
             }}
           >
-            أعلى 3 أصناف طلباً
+            {t("managerTopItems")}
           </Typography>
         </Box>
 
@@ -103,7 +105,7 @@ function TopSellingProductsCard() {
                       fontSize: "0.8rem",
                     }}
                   >
-                    {product.quantity} طلب
+                    {product.quantity} {t("managerItemCount")}
                   </Typography>
                 </Box>
               </Box>
@@ -122,7 +124,7 @@ function TopSellingProductsCard() {
                   component="span"
                   sx={{ fontSize: "0.8rem", fontWeight: 700 }}
                 >
-                  ر.س
+                  {t("currencySar")}
                 </Typography>
               </Typography>
             </ListItem>

@@ -12,12 +12,14 @@ import { BarChart } from "@mui/x-charts/BarChart";
 
 // CONTEXTS
 import { useAnalytics } from "../../../context/AnalyticsContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 function SalesTrendChart() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const { setViewType, isDaily, currentLabels, currentSales } =
     useAnalytics("daily");
-  const hordText = isDaily ? "اليومي" : "الأسبوعي";
+  const hordText = isDaily ? t("managerDaily") : t("managerWeekly");
 
   return (
     <Card
@@ -42,10 +44,10 @@ function SalesTrendChart() {
       >
         <Box sx={{ textAlign: "start" }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            اتجاه المبيعات {hordText}
+            {t("managerSalesTrend")} {hordText}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            متابعة حركة الأرباح والطلبات على مدار التقرير {hordText}
+            {t("managerReport")} {hordText}
           </Typography>
         </Box>
 
@@ -59,14 +61,14 @@ function SalesTrendChart() {
             onClick={() => setViewType("weekly")}
             sx={{ borderRadius: "8px" }}
           >
-            أسبوعي
+            {t("managerWeekly")}
           </Button>
           <Button
             variant={isDaily ? "contained" : "outlined"}
             onClick={() => setViewType("daily")}
             sx={{ borderRadius: "8px" }}
           >
-            يومي
+            {t("managerDaily")}
           </Button>
         </ButtonGroup>
       </Box>
@@ -100,9 +102,9 @@ function SalesTrendChart() {
             series={[
               {
                 data: currentSales,
-                label: "المبيعات (ر.س)",
+                label: t("managerSales"),
                 color: theme.palette.primary.main,
-                valueFormatter: (value) => `${value} ر.س`,
+                valueFormatter: (value) => `${value} ${t("currencySar")}`,
               },
             ]}
             grid={{ horizontal: false }}
