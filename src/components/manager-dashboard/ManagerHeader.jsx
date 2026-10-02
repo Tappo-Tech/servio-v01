@@ -47,7 +47,7 @@ function ManagerHeader({ onDrawerToggle }) {
             variant="overline"
             sx={{ color: "primary.main", fontWeight: 900, letterSpacing: 1.3 }}
           >
-            الإدارة
+            {t("managerHeader")}
           </Typography>
           <Typography
             variant="h6"
@@ -61,7 +61,7 @@ function ManagerHeader({ onDrawerToggle }) {
               maxWidth: { xs: 180, sm: 360, md: 520 },
             }}
           >
-            {storeInfo?.store_name || "المتجر"}
+            {storeInfo?.store_name || t("storeFallback")}
           </Typography>
         </Box>
       </Box>

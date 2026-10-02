@@ -24,14 +24,14 @@ import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 const navItems = [
   {
     id: "manager",
-    label: "لوحة النظرة العامة",
+    label: "لوحة النظرة العامة", translationKey: "manager",
     icon: <DashboardOutlinedIcon />,
   },
-  { id: "menu", label: "التحكم في المنيو", icon: <TuneOutlinedIcon /> },
-  { id: "qrGen", label: "أكواد الطاولات (QR)", icon: <QrCode2OutlinedIcon /> },
-  { id: "history", label: "سجل الطلبات", icon: <ReceiptLongOutlinedIcon /> },
-  { id: "settings", label: "الإعدادات", icon: <SettingsOutlinedIcon /> },
-  { id: "feedbacks", label: "اراء العملاء", icon: <RateReviewOutlinedIcon /> },
+  { id: "menu", label: "التحكم في المنيو", translationKey: "menuControl", icon: <TuneOutlinedIcon /> },
+  { id: "qrGen", label: "أكواد الطاولات (QR)", translationKey: "qrCodes", icon: <QrCode2OutlinedIcon /> },
+  { id: "history", label: "سجل الطلبات", translationKey: "orderHistory", icon: <ReceiptLongOutlinedIcon /> },
+  { id: "settings", label: "الإعدادات", translationKey: "settings", icon: <SettingsOutlinedIcon /> },
+  { id: "feedbacks", label: "اراء العملاء", translationKey: "feedbacks", icon: <RateReviewOutlinedIcon /> },
 ];
 
 function ManagerSidebar({
@@ -42,7 +42,7 @@ function ManagerSidebar({
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const handleItemClick = (id) => {
     onSelectTab(id);
@@ -54,7 +54,7 @@ function ManagerSidebar({
   const sidebarItems = navItems.map((item) => (
     <SidebarItem
       key={item.id}
-      navItem={item}
+      navItem={{ ...item, label: t(item.translationKey) }}
       isSelected={activeTab === item.id}
       onSelect={() => handleItemClick(item.id)}
     />

@@ -23,6 +23,7 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { Link as RouterLink } from "react-router-dom";
 import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../context/LanguageContext";
 
 const features = [
   {
@@ -116,6 +117,7 @@ function GlassCard({ children, sx = {}, ...props }) {
 }
 
 export default function Home() {
+  const { t } = useLanguage();
   return (
     <Box
       sx={{
@@ -202,7 +204,7 @@ export default function Home() {
                     variant="caption"
                     sx={{ color: "text.secondary", fontWeight: 700 }}
                   >
-                    تشغيل أذكى للكافيه
+                    {t("homeSubtitle")}
                   </Typography>
                 </Box>
               </Stack>
@@ -221,7 +223,7 @@ export default function Home() {
                   variant="text"
                   sx={{ fontWeight: 800, minWidth: "auto", px: { xs: 1, sm: 1.5 } }}
                 >
-                  تسجيل الدخول
+                  {t("homeLogin")}
                 </Button>
                 <Button
                   component={RouterLink}
@@ -234,7 +236,7 @@ export default function Home() {
                     boxShadow: "none",
                   }}
                 >
-                  ابدأ الآن
+                  {t("homeStart")}
                 </Button>
               </Stack>
             </Stack>
@@ -249,7 +251,7 @@ export default function Home() {
           <Grid size={{ xs: 12, md: 7 }}>
             <Chip
               icon={<BoltRoundedIcon />}
-              label="منيو + طلبات + تشغيل + تحليلات"
+              label={t("homeTag")}
               sx={{
                 mb: 2.5,
                 px: 0.8,
@@ -274,10 +276,10 @@ export default function Home() {
                 color: "secondary.main",
               }}
             >
-              الكافيه كله
+              {t("homeTitleA")}
               <br />
               <Box component="span" sx={{ color: "primary.main" }}>
-                في تدفق واحد.
+                {t("homeTitleB")}
               </Box>
             </Typography>
 
@@ -290,10 +292,7 @@ export default function Home() {
                 lineHeight: 1.95,
               }}
             >
-              TAPPO منصة تشغيل رقمية للكافيهات والمطاعم. من رابط المنيو الخاص
-              بكل طاولة، إلى الطلب، والكاشير، ونداءات الخدمة، وحتى مؤشرات الأداء
-              والتقييمات — كل شيء مترابط في تجربة واحدة أبسط للفريق وأوضح
-              للعميل.
+              {t("homeDescription")}
             </Typography>
 
             <Stack
@@ -318,7 +317,7 @@ export default function Home() {
                   boxShadow: "0 16px 34px rgba(244,121,32,.18)",
                 }}
               >
-                أنشئ حساب الكافيه
+                {t("homeCreate")}
               </Button>
 
               <Button
@@ -332,7 +331,7 @@ export default function Home() {
                   justifyContent: { xs: "center", sm: "flex-start" },
                 }}
               >
-                لدي حساب بالفعل
+                {t("homeAlready")}
               </Button>
             </Stack>
 
