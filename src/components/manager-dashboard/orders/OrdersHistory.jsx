@@ -278,16 +278,16 @@ function OrdersHistory() {
               <TableCell width={50} />
               <TableCell sx={{ fontWeight: 700 }}>{t("managerOrderNumber")}</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
-                الطاولة
+                {t("managerTable")}
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
                 {t("managerDateTime")}
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
-                الحالة
+                {t("managerStatus")}
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>
-                المجموع
+                {t("managerTotal")}
               </TableCell>
             </TableRow>
           </TableHead>

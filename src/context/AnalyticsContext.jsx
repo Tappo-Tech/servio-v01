@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { useHistory } from "./HistoryContext";
+import { useLanguage } from "./LanguageContext";
 
 const AnalyticsContext = createContext();
 
@@ -26,6 +27,7 @@ const calculateGrowth = (current, previous) => {
 
 export function AnalyticsProvider({ children }) {
   const { finishedOrders = [] } = useHistory();
+  const { language } = useLanguage();
   const [viewType, setViewType] = useState("daily");
 
   const analyticsData = useMemo(() => {
@@ -89,7 +91,7 @@ export function AnalyticsProvider({ children }) {
     });
 
     const weeklyLabels = last7Days.map((date) =>
-      date.toLocaleDateString("ar-SA", {
+      date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
         weekday: "long",
       })
     );
@@ -193,7 +195,7 @@ export function AnalyticsProvider({ children }) {
       topProducts,
       recentOrders,
     };
-  }, [finishedOrders]);
+  }, [finishedOrders, language]);
 
   const isDaily = viewType === "daily";
 
