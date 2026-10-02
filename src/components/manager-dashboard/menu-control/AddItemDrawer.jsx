@@ -67,7 +67,7 @@ const INITIAL_FORM_STATE = {
 
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const { addNewItem, updateItem, categoriesList = [], items = [] } = useMenu();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   useEffect(() => {
@@ -156,9 +156,9 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          {itemToEdit ? "تعديل الصنف" : "إضافة صنف جديد"}
+          {itemToEdit ? t("menuEditItem") : t("menuAddItem")}
         </Typography>
-        <IconButton onClick={onClose} aria-label="إغلاق">
+        <IconButton onClick={onClose} aria-label={t("menuCloseDrawer")}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -170,7 +170,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       >
         {submitError && <Alert severity="error">{submitError}</Alert>}
         <TextField
-          label="اسم الصنف"
+          label={t("menuItemName")}
           name="name"
           value={formData.name}
           onChange={handleChange}
@@ -180,7 +180,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         />
 
         <TextField
-          label="السعر (ر.س)"
+          label={t("menuPriceField")}
           name="price"
           type="number"
           inputProps={{ min: 0, step: "0.01" }}
@@ -193,7 +193,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
 
         <TextField
           select
-          label="القسم / التصنيف"
+          label={t("menuCategory")}
           name="category_id"
           value={formData.category_id}
           onChange={handleChange}
@@ -216,7 +216,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             startIcon={<CloudUploadIcon />}
             fullWidth
           >
-            {formData.image ? "تغيير الصورة" : "اختر صورة من جهازك"}
+            {formData.image ? t("menuChangeImage") : t("menuChooseImage")}
             <VisuallyHiddenInput
               type="file"
               accept="image/*"
@@ -228,7 +228,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             <Box
               component="img"
               src={formData.image}
-              alt="معاينة الصورة"
+              alt={t("menuImagePreview")}
               sx={{
                 width: "100%",
                 height: 120,
@@ -267,8 +267,8 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             <TextField
               {...params}
               size="small"
-              label="وسوم الاقتراحات والتوافق"
-              placeholder="اختر أو اكتب وسم..."
+              label={t("menuTags")}
+              placeholder={t("menuTagsPlaceholder")}
             />
           )}
           fullWidth
@@ -304,9 +304,9 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             <TextField
               {...params}
               size="small"
-              label="يتوافق مع / اقترح معه"
-              placeholder="اختر الأصناف المناسبة..."
-              helperText="هذه الأصناف ستظهر كاقتراحات عند اختيار هذا الصنف"
+              label={t("menuRecommendations")}
+              placeholder={t("menuRecommendationsPlaceholder")}
+              helperText={t("menuRecommendationsHint")}
             />
           )}
           fullWidth
@@ -331,15 +331,15 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             <TextField
               {...params}
               size="small"
-              label="المواد المسببة للحساسية"
-              placeholder="اختر المسببات..."
+              label={t("menuAllergens")}
+              placeholder={t("menuAllergensPlaceholder")}
             />
           )}
           fullWidth
         />
 
         <TextField
-          label="الوصف"
+          label={t("menuDescription")}
           name="description"
           value={formData.description}
           onChange={handleChange}
@@ -356,16 +356,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             fullWidth
             sx={{ bgcolor: "primary.main", fontWeight: 700 }}
           >
-            {itemToEdit ? "حفظ التعديلات" : "حفظ الصنف"}
+            {itemToEdit ? t("menuSaveChanges") : t("menuSaveItem")}
           </Button>
           <Button
             variant="outlined"
             color="inherit"
             fullWidth
             onClick={onClose}
-          >
-            إلغاء
-          </Button>
+          >{t("menuCancel")}</Button>
         </Box>
       </Box>
     </SwipeableDrawer>

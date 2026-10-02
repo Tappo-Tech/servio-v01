@@ -171,9 +171,7 @@ function QRCodeGenerate() {
                 variant="contained"
                 startIcon={<AddBoxOutlinedIcon />}
                 sx={{ py: 1, fontWeight: 700, borderRadius: "8px", gap: 1 }}
-              >
-                توليد
-              </Button>
+              >{t("managerGenerate")}</Button>
             </Grid>
 
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -184,9 +182,7 @@ function QRCodeGenerate() {
                 startIcon={<DeleteOutlinedIcon />}
                 onClick={clearTables}
                 sx={{ py: 1, fontWeight: 700, borderRadius: "8px", gap: 1 }}
-              >
-                مسح الكل
-              </Button>
+              >{t("managerClearAll")}</Button>
             </Grid>
           </Grid>
         </Box>
@@ -216,9 +212,7 @@ function QRCodeGenerate() {
               size="small"
               sx={{ borderRadius: "8px", fontWeight: 700, gap: 1 }}
               onClick={() => handlePrint()}
-            >
-              طباعة كل الكروت
-            </Button>
+            >{t("managerPrintAll")}</Button>
           </Box>
 
           <Grid container spacing={2.5}>
@@ -323,9 +317,7 @@ function QRCodeGenerate() {
                       startIcon={<PrintIcon />}
                       onClick={() => handlePrint(table.id)}
                       sx={{ gap: 0.5 }}
-                    >
-                      طباعة
-                    </Button>
+                    >{t("managerPrint")}</Button>
                   </CardActions>
                 </Card>
               </Grid>

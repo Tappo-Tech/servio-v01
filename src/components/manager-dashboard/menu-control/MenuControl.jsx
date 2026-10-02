@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMenu } from "../../../context/MenuContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // COMPONENTS
 import AddItemDrawer from "./AddItemDrawer";
@@ -36,6 +37,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { v4 as uuidV4 } from "uuid";
 
 function MenuControl() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -115,7 +117,7 @@ function MenuControl() {
         }}
       >
         <TextField
-          placeholder="ابحث عن صنف..."
+          placeholder={t("menuSearch")}
           size="small"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -133,7 +135,7 @@ function MenuControl() {
               px: 2,
             }}
           >
-            إدارة التصنيفات والفلاتر
+            {t("menuCategories")}
           </Button>
 
           <Button
@@ -147,7 +149,7 @@ function MenuControl() {
               px: 2.5,
             }}
           >
-            إضافة صنف جديد
+            {t("menuAddItem")}
           </Button>
         </Box>
       </Box>
@@ -200,7 +202,7 @@ function MenuControl() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    ر.س {Number(product.price || 0).toFixed(2)}
+                    {t("menuPrice")} {Number(product.price || 0).toFixed(2)}
                   </Typography>
                 </Box>
 
@@ -245,7 +247,7 @@ function MenuControl() {
                   }
                   label={
                     <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {product.available ? "متوفر" : "غير متوفر"}
+                      {product.available ? t("menuAvailable") : t("menuUnavailable")}
                     </Typography>
                   }
                 />
@@ -263,7 +265,7 @@ function MenuControl() {
                 <IconButton
                   size="small"
                   color="primary"
-                  aria-label="تعديل"
+                  aria-label={t("menuEdit")}
                   onClick={() => handleOpenEdit(product)}
                 >
                   <EditIcon fontSize="small" />
@@ -272,7 +274,7 @@ function MenuControl() {
                 <IconButton
                   size="small"
                   color="error"
-                  aria-label="حذف"
+                  aria-label={t("menuDelete")}
                   onClick={() => deleteItem(product.id)}
                 >
                   <DeleteOutlinedIcon fontSize="small" />
@@ -305,7 +307,7 @@ function MenuControl() {
             fontWeight: 700,
           }}
         >
-          إدارة فلاتر المنيو والتصنيفات
+          {t("menuDialogTitle")}
           <IconButton size="small" onClick={() => setCategoryModalOpen(false)}>
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -318,8 +320,8 @@ function MenuControl() {
             <TextField
               size="small"
               fullWidth
-              label={editingCategory ? "تعديل اسم التصنيف" : "إضافة تصنيف جديد"}
-              placeholder="مثال: مشروبات باردة، حلويات..."
+              label={editingCategory ? t("menuEditCategory") : t("menuAddCategory")}
+              placeholder={t("menuCategoryExample")}
               value={newCategoryTitle}
               onChange={(e) => setNewCategoryTitle(e.target.value)}
             />
@@ -328,17 +330,15 @@ function MenuControl() {
               onClick={handleSaveCategory}
               sx={{ whiteSpace: "nowrap", fontWeight: 700 }}
             >
-              {editingCategory ? "حفظ" : "إضافة"}
+              {editingCategory ? t("menuSave") : t("menuAdd")}
             </Button>
             {editingCategory && (
-              <Button color="inherit" onClick={handleCancelCategoryEdit}>
-                إلغاء
-              </Button>
+              <Button color="inherit" onClick={handleCancelCategoryEdit}>{t("menuCancel")}</Button>
             )}
           </Box>
 
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-            التصنيفات الحالية ({categoriesList.length}):
+            {t("menuCurrentCategories")} ({categoriesList.length}):
           </Typography>
 
           <List disablePadding sx={{ maxHeight: 240, overflowY: "auto" }}>
@@ -377,7 +377,7 @@ function MenuControl() {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setCategoryModalOpen(false)}>إغلاق</Button>
+          <Button onClick={() => setCategoryModalOpen(false)}>{t("menuClose")}</Button>
         </DialogActions>
       </Dialog>
     </Box>

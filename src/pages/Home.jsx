@@ -415,10 +415,10 @@ export default function Home() {
                     </Box>
                     <Box>
                       <Typography sx={{ fontWeight: 900, lineHeight: 1.2 }}>
-                        لوحة تشغيل TAPPO
+                        {t("homeDashboardTitle")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        مثال توضيحي
+                        {t("homeDemoLabel")}
                       </Typography>
                     </Box>
                   </Stack>
@@ -449,7 +449,7 @@ export default function Home() {
                   >
                     <Box>
                       <Typography variant="body2" sx={{ opacity: 0.65, mb: 0.6 }}>
-                        نشاط الطلبات
+                        {t("homeOrderActivity")}
                       </Typography>
                       <Typography
                         sx={{ fontSize: { xs: "2.6rem", sm: "3.15rem" }, fontWeight: 950, lineHeight: 1 }}
@@ -457,7 +457,7 @@ export default function Home() {
                         12
                       </Typography>
                       <Typography variant="caption" sx={{ opacity: 0.62 }}>
-                        مثال داخل لوحة التشغيل
+                        {t("homeDashboardExample")}
                       </Typography>
                     </Box>
                     <Chip
@@ -476,8 +476,8 @@ export default function Home() {
                   <Stack sx={{ gap: 1.1, mt: 3 }}>
                     {[
                       [t("homeMockNew"), t("table") + " 08", t("today")],
-                      [t("homeMockReady"), "Order #1048", "1 min ago"],
-                      [t("homeMockCall"), t("table") + " 04", "2 min ago"],
+                      [t("homeMockReady"), "Order #1048", t("homeOneMinute")],
+                      [t("homeMockCall"), t("table") + " 04", t("homeTwoMinutes")],
                     ].map(([title, detail, time], index) => (
                       <Box
                         key={title}
@@ -573,7 +573,7 @@ export default function Home() {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      رابط الطاولة
+                      {t("homeTableLink")}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 900 }}>
                       /menu/cafe/8
@@ -591,7 +591,7 @@ export default function Home() {
               variant="overline"
               sx={{ color: "primary.main", fontWeight: 950, letterSpacing: 2 }}
             >
-              TAPPO IN ONE VIEW
+              {t("homeViewEyebrow")}
             </Typography>
             <Typography
               component="h2"
@@ -603,14 +603,13 @@ export default function Home() {
                 color: "secondary.main",
               }}
             >
-              أدوات مرتبة حول تجربة واحدة
+              {t("homeViewTitle")}
             </Typography>
             <Typography
               color="text.secondary"
               sx={{ mt: 1.2, maxWidth: 650, lineHeight: 1.85 }}
             >
-              بدل ما تتنقل بين شاشات وأنظمة متفرقة، TAPPO يجمع رحلة العميل
-              ورحلة الفريق في مسار واضح من أول مسح الـQR إلى متابعة الأداء.
+              {t("homeViewText")}
             </Typography>
           </Stack>
 
@@ -690,7 +689,7 @@ export default function Home() {
               variant="overline"
               sx={{ color: "primary.main", fontWeight: 950, letterSpacing: 2 }}
             >
-              SIMPLE FLOW
+              {t("homeFlowEyebrow")}
             </Typography>
             <Typography
               component="h2"
@@ -702,17 +701,16 @@ export default function Home() {
                 color: "secondary.main",
               }}
             >
-              من أول إعداد إلى آخر طلب
+              {t("homeFlowTitle")}
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.9 }}>
-              تم تصميم TAPPO حول رحلة يومية واضحة: تنشئ النشاط، تربط الطاولات،
-              تستقبل الطلبات، ثم تراجع الصورة الكاملة للتشغيل.
+              {t("homeFlowText")}
             </Typography>
 
             <Stack sx={{ gap: 1.1, mt: 3 }}>
               {[
                 t("homeBenefits1"),
-                "QR منفصل لكل طاولة",
+                t("homeQrBenefit"),
                 t("homeBenefits2"),
                 t("homeBenefits3"),
               ].map((item) => (
@@ -809,7 +807,7 @@ export default function Home() {
               variant="overline"
               sx={{ color: "primary.main", fontWeight: 950, letterSpacing: 2 }}
             >
-              MADE FOR THE FULL EXPERIENCE
+              {t("homeRolesEyebrow")}
             </Typography>
             <Typography
               component="h2"
@@ -821,7 +819,7 @@ export default function Home() {
                 color: "secondary.main",
               }}
             >
-              كل طرف يعرف دوره
+              {t("homeRolesTitle")}
             </Typography>
           </Stack>
 
@@ -900,14 +898,13 @@ export default function Home() {
                   color: "secondary.main",
                 }}
               >
-                جاهز تخلي تشغيل الكافيه أبسط؟
+                {t("homeCtaTitle")}
               </Typography>
               <Typography
                 color="text.secondary"
                 sx={{ mt: 1.2, maxWidth: 650, lineHeight: 1.9 }}
               >
-                ابدأ بهوية الكافيه، اربط طاولاتك، وخلّ TAPPO يوحّد تجربة
-                المنيو والطلبات والتشغيل في مكان واحد.
+                {t("homeCtaText")}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -927,7 +924,7 @@ export default function Home() {
                     fontWeight: 900,
                   }}
                 >
-                  ابدأ مع TAPPO
+                  {t("homeCtaStart")}
                 </Button>
                 <Button
                   component={RouterLink}
@@ -940,7 +937,7 @@ export default function Home() {
                     fontWeight: 850,
                   }}
                 >
-                  تسجيل الدخول
+                  {t("homeLogin")}
                 </Button>
               </Stack>
             </Grid>
@@ -970,7 +967,7 @@ export default function Home() {
             </Typography>
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            منصة رقمية لتبسيط تجربة الكافيه من الطاولة إلى لوحة التشغيل.
+            {t("homeFooterText")}
           </Typography>
         </Stack>
       </Container>
