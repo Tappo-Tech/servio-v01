@@ -22,7 +22,10 @@ function Dashboard() {
   const { finishedOrders = [] } = useOrders();
   const { storeInfo = {} } = useStore();
   const { t, language } = useLanguage();
-  const todayOrders = useMemo(() => finishedOrders.filter((order) => dayjs(order.completed_at || order.created_at).isSame(dayjs(), "day")), [finishedOrders]);
+  const todayOrders = useMemo(() => finishedOrders.filter((order) => (
+    order.status !== "cancelled" &&
+    dayjs(order.completed_at || order.created_at).isSame(dayjs(), "day")
+  )), [finishedOrders]);
   const totalSales = todayOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
   const currency = storeInfo.currency || "ر.س";
 

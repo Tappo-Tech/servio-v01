@@ -37,7 +37,7 @@ export function AnalyticsProvider({ children }) {
     yesterday.setDate(today.getDate() - 1);
 
     const validFinishedOrders = finishedOrders.filter((order) =>
-      isValidDate(order.created_at)
+      order.status !== "cancelled" && isValidDate(order.created_at)
     );
 
     const todaysOrders = validFinishedOrders.filter((order) =>
