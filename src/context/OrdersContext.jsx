@@ -83,9 +83,14 @@ export const OrdersProvider = ({ children }) => {
         }
       } else if (eventType === "UPDATE" && next) {
         const formatted = formatOrder(next);
-        setOrders((current) => hasCompleteItems(formatted)
-          ? current.map((entry) => entry.id === next.id ? formatted : entry)
-          : current.filter((entry) => entry.id !== next.id));
+        setOrders((current) => current.map((entry) => {
+          if (entry.id !== next.id) return entry;
+          // Status updates can arrive with a partial Realtime payload. Keep
+          // the already-rendered items instead of removing the order card.
+          return hasCompleteItems(formatted)
+            ? formatted
+            : formatOrder({ ...entry, ...next, items: entry.items });
+        }));
       } else if (eventType === "DELETE" && old) {
         setOrders((current) => current.filter((entry) => entry.id !== old.id));
       }
@@ -140,7 +145,12 @@ export const OrdersProvider = ({ children }) => {
       .update({ status: newStatus, is_completed: finished, completed_at: completedAt?.toISOString() || null })
       .eq("id", orderId)
       .eq("tenant_id", tenantId);
-    if (!error) setOrders((prev) => prev.map((order) => order.id === orderId ? formatOrder({ ...order, status: newStatus, is_completed: finished, completed_at: completedAt }) : order));
+    if (!error) setOrders((prev) => prev.map((order) => order.id === orderId ? {
+      ...order,
+      status: newStatus,
+      is_completed: finished,
+      completed_at: completedAt,
+    } : order));
     return { error };
   });
 
