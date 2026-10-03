@@ -1,6 +1,6 @@
 {
   "short_name": "SERVIO",
-  "name": "SERVIO | Smart Table Ordering",
+  "name": "SERVIO | منصة تشغيل الخدمات",
   "icons": [
     {
       "src": "favicon.ico",
@@ -21,5 +21,5 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#171A2F",
-  "background_color": "#ffffff"
+  "background_color": "#171A2F"
 }

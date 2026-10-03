@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMenu } from "../../../context/MenuContext";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -11,6 +11,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import Card from "@mui/material/Card";
 import CardMedia from "@mui/material/CardMedia";
@@ -37,7 +38,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { v4 as uuidV4 } from "uuid";
 
 function MenuControl() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -59,7 +60,16 @@ function MenuControl() {
     addCategory,      // دالة إضافة تصنيف في Context
     updateCategory,   // دالة تعديل تصنيف في Context
     deleteCategory,   // دالة حذف تصنيف في Context
+    menuLoading,
+    menuRefreshing,
+    menuError,
+    refreshMenu,
   } = useMenu();
+
+  // يرجع MenuProvider بيانات قديمة بعد إعادة فتح التبويب؛ أعد المزامنة عند دخول الإدارة.
+  useEffect(() => {
+    refreshMenu();
+  }, [refreshMenu]);
 
   const handleOpenAdd = () => {
     setItemToEdit(null);
@@ -159,6 +169,33 @@ function MenuControl() {
           </Button>
         </Box>
       </Box>
+
+      {menuError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2, borderRadius: 2 }}
+          action={(
+            <Button color="inherit" size="small" onClick={refreshMenu}>
+              {language === "ar" ? "إعادة المحاولة" : "Retry"}
+            </Button>
+          )}
+        >
+          {language === "ar" ? "تعذر تحميل المنيو أو مزامنته. تحقق من الاتصال ثم أعد المحاولة." : "The menu could not be loaded or synced. Check the connection and retry."}
+        </Alert>
+      )}
+
+      {menuRefreshing && <CircularProgress size={18} aria-label={language === "ar" ? "جارٍ تحديث المنيو" : "Refreshing menu"} sx={{ mb: 1 }} />}
+
+      {menuLoading && filteredMenu.length === 0 ? (
+        <Box role="status" sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 4, justifyContent: "center" }}>
+          <CircularProgress size={22} />
+          <Typography color="text.secondary">{language === "ar" ? "جارٍ تحميل أصناف المنيو…" : "Loading menu items…"}</Typography>
+        </Box>
+      ) : !menuLoading && !menuError && filteredMenu.length === 0 ? (
+        <Alert severity="info" sx={{ borderRadius: 2 }}>
+          {language === "ar" ? "لا توجد أصناف مطابقة حاليًا. أضف صنفًا أو غيّر البحث." : "No matching menu items. Add an item or change your search."}
+        </Alert>
+      ) : null}
 
       {/* CARDS GRID */}
       <Grid container spacing={2}>
