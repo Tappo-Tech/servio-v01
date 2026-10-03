@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 function Dashboard() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSalesHistoryOpen, setIsSalesHistoryOpen] = useState(false);
-  const { finishedOrders = [], ordersLoading } = useOrders();
+  const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { storeInfo = {} } = useStore();
   const { t, language } = useLanguage();
   const todayOrders = useMemo(() => finishedOrders.filter((order) => (
@@ -42,7 +42,7 @@ function Dashboard() {
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800 }}>{t("totalSales")} · {language === "ar" ? "اليوم" : "Today"}</Typography>
                 <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mt: .2 }}>
-                  <Typography sx={{ fontSize: { xs: "1.45rem", sm: "1.8rem" }, fontWeight: 950, color: "text.primary", letterSpacing: "-.04em" }}>{ordersLoading ? "—" : totalSales.toFixed(2)}</Typography>
+                  <Typography sx={{ fontSize: { xs: "1.45rem", sm: "1.8rem" }, fontWeight: 950, color: "text.primary", letterSpacing: "-.04em" }}>{ordersLoading || ordersLoadError ? "—" : totalSales.toFixed(2)}</Typography>
                   <Typography variant="body2" fontWeight={800} color="text.secondary">{currency}</Typography>
                 </Stack>
               </Box>

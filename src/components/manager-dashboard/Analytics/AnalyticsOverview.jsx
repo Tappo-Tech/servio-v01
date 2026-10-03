@@ -4,13 +4,14 @@ import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
 
 // CONTEXTS
 import { useAnalytics } from "../../../context/AnalyticsContext";
 import { useLanguage } from "../../../context/LanguageContext";
 
 function AnalyticsOverview() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const {
     todaysOrders,
     totalSalesToday,
@@ -18,6 +19,9 @@ function AnalyticsOverview() {
     salesGrowth,
     aovGrowth,
     ordersGrowth,
+    analyticsReady,
+    ordersLoadError,
+    reloadOrders,
   } = useAnalytics();
 
   // دالة مساعدة لتنسيق شريحة نسبة النمو ديناميكياً
@@ -64,6 +68,16 @@ function AnalyticsOverview() {
         </Typography>
       </Box>
 
+      {/* عند تعذر جلب الطلبات نعرض حالة واضحة بدل رقم صفر يوحي بعدم وجود مبيعات. */}
+      {ordersLoadError && (
+        <Box role="status" sx={{ mb: 2, color: "error.main", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="body2">{t("unexpectedError")}</Typography>
+          <Button size="small" color="error" onClick={reloadOrders}>
+            {language === "ar" ? "إعادة المحاولة" : "Retry"}
+          </Button>
+        </Box>
+      )}
+
       {/* ANALYTICS OVERVIEW CARDS */}
       <Box
         sx={{
@@ -106,7 +120,7 @@ function AnalyticsOverview() {
               }}
             >
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {totalSalesToday}{" "}
+                {analyticsReady ? totalSalesToday : "—"}{" "}
                 <Typography
                   component="span"
                   variant="body2"
@@ -115,7 +129,7 @@ function AnalyticsOverview() {
                   {t("currencySar")}
                 </Typography>
               </Typography>
-              {renderGrowthChip(salesGrowth)}
+              {analyticsReady && renderGrowthChip(salesGrowth)}
             </Box>
           </CardContent>
         </Card>
@@ -150,7 +164,7 @@ function AnalyticsOverview() {
               }}
             >
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {aovToday}{" "}
+                {analyticsReady ? aovToday : "—"}{" "}
                 <Typography
                   component="span"
                   variant="body2"
@@ -159,7 +173,7 @@ function AnalyticsOverview() {
                   {t("currencySar")}
                 </Typography>
               </Typography>
-              {renderGrowthChip(aovGrowth)}
+              {analyticsReady && renderGrowthChip(aovGrowth)}
             </Box>
           </CardContent>
         </Card>
@@ -194,9 +208,9 @@ function AnalyticsOverview() {
               }}
             >
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {todaysOrders.length}
+                {analyticsReady ? todaysOrders.length : "—"}
               </Typography>
-              {renderGrowthChip(ordersGrowth)}
+              {analyticsReady && renderGrowthChip(ordersGrowth)}
             </Box>
           </CardContent>
         </Card>

@@ -100,7 +100,7 @@ function ManagerSidebar({
         >
           <Box
             component="img"
-            src="/logo-icon.webp"
+            src="/logo192.png"
             alt="SERVIO Logo"
             sx={{ width: 35, height: 35, borderRadius: 0.8 }}
           />

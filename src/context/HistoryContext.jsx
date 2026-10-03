@@ -4,10 +4,23 @@ import { useOrders } from "./OrdersContext";
 const HistoryContext = createContext();
 
 export const HistoryProvider = ({ children }) => {
-  const { finishedOrders, cancelledOrders } = useOrders();
+  // سجل المبيعات لا يملك نسخة ثانية من الطلبات؛ مصدر الحقيقة الوحيد هو OrdersContext.
+  const {
+    finishedOrders,
+    cancelledOrders,
+    ordersLoading,
+    ordersLoadError,
+    reloadOrders,
+  } = useOrders();
 
   return (
-    <HistoryContext.Provider value={{ finishedOrders, cancelledOrders }}>
+    <HistoryContext.Provider value={{
+      finishedOrders,
+      cancelledOrders,
+      ordersLoading,
+      ordersLoadError,
+      reloadOrders,
+    }}>
       {children}
     </HistoryContext.Provider>
   );
