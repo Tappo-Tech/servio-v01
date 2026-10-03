@@ -28,7 +28,12 @@ function LiveOrders() {
   const { orders } = useOrders();
   const { t } = useLanguage();
 
-  const activeOrders = orders.filter((order) => !order.is_completed);
+  const activeOrders = orders.filter((order) => (
+    !order.is_completed &&
+    Array.isArray(order.items) &&
+    order.items.length > 0 &&
+    order.items.every((item) => item && String(item.name || "").trim() && item.quantity != null && item.price != null)
+  ));
 
   const getOrdersByStatus = (status) =>
     activeOrders.filter((order) => order.status === status);
