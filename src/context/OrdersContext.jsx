@@ -52,24 +52,29 @@ const hasCompleteItems = (order) => order?.items?.length > 0 && order.items.ever
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic } = useTenant();
   const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const guard = useRef(createRequestGuard()).current;
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       if (isPublic || !tenantId) return;
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: true });
-      if (active && !error) {
-        const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
-        setOrders((current) => {
-          const byId = new Map(current.map((order) => [order.id, order]));
-          loaded.forEach((order) => byId.set(order.id, order));
-          return Array.from(byId.values()).filter(hasCompleteItems);
-        });
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id")
+          .eq("tenant_id", tenantId)
+          .order("created_at", { ascending: true });
+        if (active && !error) {
+          const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
+          setOrders((current) => {
+            const byId = new Map(current.map((order) => [order.id, order]));
+            loaded.forEach((order) => byId.set(order.id, order));
+            return Array.from(byId.values()).filter(hasCompleteItems);
+          });
+        }
+      } finally {
+        if (active) setOrdersLoading(false);
       }
     };
 
@@ -194,7 +199,7 @@ export const OrdersProvider = ({ children }) => {
   });
 
   return (
-    <OrdersContext.Provider value={{ orders, finishedOrders: orders.filter((o) => o.is_completed && o.status !== "cancelled"), cancelledOrders: orders.filter((o) => o.status === "cancelled"), addOrder, updateOrderStatus }}>
+    <OrdersContext.Provider value={{ orders, ordersLoading, finishedOrders: orders.filter((o) => o.is_completed && o.status !== "cancelled"), cancelledOrders: orders.filter((o) => o.status === "cancelled"), addOrder, updateOrderStatus }}>
       {children}
     </OrdersContext.Provider>
   );

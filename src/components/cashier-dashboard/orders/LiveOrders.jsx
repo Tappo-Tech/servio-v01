@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // ANIMATION
 import { AnimatePresence } from "framer-motion";
@@ -25,7 +26,7 @@ const COLUMNS = [
 ];
 
 function LiveOrders() {
-  const { orders } = useOrders();
+  const { orders, ordersLoading } = useOrders();
   const { t } = useLanguage();
 
   const activeOrders = orders.filter((order) => (
@@ -37,6 +38,15 @@ function LiveOrders() {
 
   const getOrdersByStatus = (status) =>
     activeOrders.filter((order) => order.status === status);
+
+  if (ordersLoading) {
+    return (
+      <Box sx={{ minHeight: 260, display: "flex", alignItems: "center", justifyContent: "center", gap: 1.2 }}>
+        <CircularProgress size={24} />
+        <Typography color="text.secondary">جاري تحميل الطلبات...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Grid container spacing={3}>
