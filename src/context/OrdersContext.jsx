@@ -55,10 +55,16 @@ export const OrdersProvider = ({ children }) => {
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: true });
-      if (active && !error) setOrders((data || []).map(formatOrder).filter(hasCompleteItems));
+      if (active && !error) {
+        const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
+        setOrders((current) => {
+          const byId = new Map(current.map((order) => [order.id, order]));
+          loaded.forEach((order) => byId.set(order.id, order));
+          return Array.from(byId.values()).filter(hasCompleteItems);
+        });
+      }
     };
 
-    load();
     if (isPublic || !tenantId) return () => { active = false; };
 
     const apply = (eventType, payload) => {
@@ -83,14 +89,19 @@ export const OrdersProvider = ({ children }) => {
         }
       } else if (eventType === "UPDATE" && next) {
         const formatted = formatOrder(next);
-        setOrders((current) => current.map((entry) => {
-          if (entry.id !== next.id) return entry;
-          // Status updates can arrive with a partial Realtime payload. Keep
-          // the already-rendered items instead of removing the order card.
-          return hasCompleteItems(formatted)
-            ? formatted
-            : formatOrder({ ...entry, ...next, items: entry.items });
-        }));
+        setOrders((current) => {
+          const existing = current.find((entry) => entry.id === next.id);
+          if (!existing) return hasCompleteItems(formatted) ? [formatted, ...current] : current;
+          const merged = formatOrder({
+            ...existing,
+            ...next,
+            items: hasCompleteItems(formatted) ? formatted.items : existing.items,
+            status: next.status || existing.status,
+            is_completed: typeof next.is_completed === "boolean" ? next.is_completed : existing.is_completed,
+            completed_at: next.completed_at === undefined ? existing.completed_at : next.completed_at,
+          });
+          return current.map((entry) => entry.id === next.id ? merged : entry);
+        });
       } else if (eventType === "DELETE" && old) {
         setOrders((current) => current.filter((entry) => entry.id !== old.id));
       }
@@ -100,6 +111,9 @@ export const OrdersProvider = ({ children }) => {
       .channel(`tenant:${tenantId}:orders:${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `tenant_id=eq.${tenantId}` }, ({ eventType, new: next, old }) => apply(eventType, { new: next, old }))
       .subscribe();
+
+    // Subscribe before the initial query so no order can be missed while loading.
+    load();
 
     return () => {
       active = false;
@@ -140,17 +154,19 @@ export const OrdersProvider = ({ children }) => {
     if (!target) return { error: new Error("الطلب غير موجود") };
     const finished = ["served", "unclaimed", "cancelled"].includes(newStatus);
     const completedAt = finished ? target.completed_at || new Date() : null;
+    const optimisticOrder = {
+      ...target,
+      status: newStatus,
+      is_completed: finished,
+      completed_at: completedAt,
+    };
+    setOrders((prev) => prev.map((order) => order.id === orderId ? optimisticOrder : order));
     const { error } = await supabase
       .from("orders")
       .update({ status: newStatus, is_completed: finished, completed_at: completedAt?.toISOString() || null })
       .eq("id", orderId)
       .eq("tenant_id", tenantId);
-    if (!error) setOrders((prev) => prev.map((order) => order.id === orderId ? {
-      ...order,
-      status: newStatus,
-      is_completed: finished,
-      completed_at: completedAt,
-    } : order));
+    if (error) setOrders((prev) => prev.map((order) => order.id === orderId ? target : order));
     return { error };
   });
 
