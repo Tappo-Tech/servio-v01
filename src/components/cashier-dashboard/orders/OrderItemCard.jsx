@@ -30,6 +30,7 @@ function OrderItemCard({ order }) {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const changeStatus = async (status) => { if (sending) return; setSending(true); await updateOrderStatus(order.id, status); setSending(false); };
+  const orderItems = Array.isArray(order?.items) ? order.items : [];
 
   return (
     <motion.div
@@ -96,7 +97,7 @@ function OrderItemCard({ order }) {
         {/* عناصر الطلب */}
         <CardContent sx={{ p: 2, py: 1.5, "&:last-child": { pb: 1.5 } }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {order.items.map((item) => (
+            {orderItems.map((item) => (
               <Box
                 key={item.cartItemId || item.id}
                 sx={{
