@@ -9,10 +9,12 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   useEffect(() => {
     let active = true;
+    // معلومات auth تثبت الهوية؛ الاسم والدور من profile أو بيانات المصادقة كقيمة احتياطية فقط.
     const load = async (authUser) => {
       if (!authUser) { if (active) setUser(null); return; }
       if (active) setUser({ id: authUser.id, name: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "مستخدم", email: authUser.email || "", role: profile?.role || authUser.user_metadata?.role || "admin" });
     };
+    // قراءة الجلسة الحالية تعالج تحديث الصفحة، والمستمع يغطي الدخول والخروج اللاحقين.
     supabase.auth.getUser().then(({ data }) => load(data.user));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => load(session?.user));
     return () => { active = false; listener.subscription.unsubscribe(); };

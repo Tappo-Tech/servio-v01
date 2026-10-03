@@ -29,6 +29,7 @@ function autoRoot() {
       <ErrorBoundary>
       <BrowserRouter>
       <LanguageProvider>
+        {/* يبدأ السياق من اللغة ثم المستأجر؛ Orders يحتاج tenantId، وHistory/Analytics يعتمدان على Orders. */}
         <TenantProvider>
           <MenuProvider>
             <CartProvider>

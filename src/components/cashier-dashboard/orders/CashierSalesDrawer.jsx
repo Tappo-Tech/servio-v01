@@ -12,7 +12,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 /** سجل الكاشير مستقل عن قائمة الطلبات الحية، لذلك يمكن تصفيته دون التأثير على التشغيل. */
 function CashierSalesDrawer({ open, onClose }) {
-  const { finishedOrders = [] } = useOrders();
+  const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { storeInfo = {} } = useStore();
   const { language, t } = useLanguage();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -45,7 +45,7 @@ function CashierSalesDrawer({ open, onClose }) {
           <TextField label={language === "ar" ? "تاريخ السجل" : "History date"} type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} InputLabelProps={{ shrink: true }} fullWidth size="small" />
           <Box sx={{ p: 2.4, borderRadius: 4, color: "#fff", background: "linear-gradient(135deg,#171A2F 0%,#2E3250 62%,#F47920 180%)", boxShadow: "0 18px 38px rgba(23,26,47,.16)" }}>
             <Typography variant="body2" sx={{ opacity: .76, fontWeight: 700 }}>{t("totalSales")}</Typography>
-            <Typography variant="h4" fontWeight={950} sx={{ mt: .4 }}>{sales.toFixed(2)} {currency}</Typography>
+            <Typography variant="h4" fontWeight={950} sx={{ mt: .4 }}>{ordersLoading || ordersLoadError ? "—" : sales.toFixed(2)} {currency}</Typography>
             <Typography variant="caption" sx={{ opacity: .7 }}>{filteredOrders.length} {t("completedOrders")}</Typography>
           </Box>
 

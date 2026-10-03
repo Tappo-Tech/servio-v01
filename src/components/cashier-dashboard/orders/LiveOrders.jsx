@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
 
 // ANIMATION
 import { AnimatePresence } from "framer-motion";
@@ -26,8 +27,8 @@ const COLUMNS = [
 ];
 
 function LiveOrders() {
-  const { orders, ordersLoading } = useOrders();
-  const { t } = useLanguage();
+  const { orders, ordersLoading, ordersLoadError, reloadOrders } = useOrders();
+  const { t, language } = useLanguage();
 
   const activeOrders = orders.filter((order) => (
     !order.is_completed &&
@@ -50,6 +51,14 @@ function LiveOrders() {
 
   return (
     <Grid container spacing={3}>
+      {ordersLoadError && (
+        <Grid size={{ xs: 12 }}>
+          <Paper elevation={0} role="status" sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, border: "1px solid", borderColor: "error.light" }}>
+            <Typography color="error">{language === "ar" ? "تعذر تحميل الطلبات. تحقق من الاتصال ثم أعد المحاولة." : "Orders could not load. Check the connection and retry."}</Typography>
+            <Button size="small" onClick={reloadOrders}>{language === "ar" ? "إعادة المحاولة" : "Retry"}</Button>
+          </Paper>
+        </Grid>
+      )}
       {COLUMNS.map((col) => {
         const columnOrders = getOrdersByStatus(col.key);
 

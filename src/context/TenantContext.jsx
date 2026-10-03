@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import supabase from "../supabase";
 
 const TenantContext = createContext(null);
+// هذه المسارات تخص التطبيق نفسه وليست معرف متجر؛ جميع المسارات الأخرى قد تحمل slug لمتجر عام.
 const RESERVED_ROUTES = new Set(["login", "register", "dashboard", "manager", "menu", "cashier", "auth"]);
 
 function getRouteContext(pathname) {
@@ -22,10 +23,10 @@ export function TenantProvider({ children }) {
 
   const [authVersion, setAuthVersion] = useState(0);
 
-  // Re-resolve the tenant whenever the auth session changes (login, logout, token refresh after reload).
+  // عند تسجيل الدخول أو الخروج نعيد حسم مستأجر لوحة الإدارة قبل تحميل الطلبات.
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      // Public menu pages don't depend on the session; skip them so tab-focus SIGNED_IN events never reload the menu.
+      // المنيو العامة لا تعتمد على الجلسة؛ لذلك لا نعيد تحميلها مع أحداث تجديد التوكن.
       if (route.slug) return;
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setAuthVersion((v) => v + 1);
     });
@@ -38,6 +39,7 @@ export function TenantProvider({ children }) {
       setLoading(true);
       try {
         if (route.slug) {
+          // بيانات المطعم العامة تُحمّل من RPCs محددة الأعمدة؛ لا يحتاج زائر المنيو إلى صفوف الإدارة.
           const [{ data: tenantData }, { data: storeData }] = await Promise.all([
             supabase.rpc("get_public_tenant", { p_slug: route.slug }),
             supabase.rpc("get_public_store", { p_slug: route.slug }),
@@ -52,7 +54,7 @@ export function TenantProvider({ children }) {
             if (!cancelled) { setProfile(null); setTenant(null); setStoreInfo(null); }
             return;
           }
-          // ensure_profile_for_current_user is SECURITY DEFINER and returns the profile row itself.
+          // RPC يهيئ/يعيد ملف المستخدم بصلاحيات محكومة؛ واستعلام profiles أدناه مسار احتياطي عند تعذر RPC.
           let { data: profileData, error: profileError } = await supabase.rpc("ensure_profile_for_current_user");
           if (profileError || !profileData?.id) {
             const fallback = await supabase.from("profiles").select("id, tenant_id, full_name, role").eq("id", sessionData.session.user.id).maybeSingle();
@@ -78,6 +80,7 @@ export function TenantProvider({ children }) {
     return () => { cancelled = true; };
   }, [route.slug, authVersion]);
 
+  // tenantId القادم من سجل النشاط هو المفتاح الذي تستخدمه RLS وقنوات الطلبات في بقية السياقات.
   const value = useMemo(() => ({
     slug: route.slug,
     tableNumber: route.tableNumber,
