@@ -88,12 +88,15 @@ export const OrdersProvider = ({ children }) => {
         if (hasCompleteItems(formatted)) {
           addCompleteOrder(formatted);
         } else {
-          // Realtime may notify before the complete row is visible to the client.
-          // Fetch it again and render nothing until all item fields are present.
-          setTimeout(async () => {
+          // Keep the first render safe, but retry immediately if the row is partial.
+          let retries = 0;
+          const refetchCompleteOrder = async () => {
             const { data } = await supabase.from("orders").select("*").eq("id", next.id).maybeSingle();
-            addCompleteOrder(formatOrder(data || next));
-          }, 350);
+            const complete = formatOrder(data || next);
+            if (hasCompleteItems(complete)) addCompleteOrder(complete);
+            else if (active && retries++ < 5) setTimeout(refetchCompleteOrder, 100);
+          };
+          refetchCompleteOrder();
         }
       } else if (eventType === "UPDATE" && next) {
         const formatted = formatOrder(next);
@@ -116,7 +119,19 @@ export const OrdersProvider = ({ children }) => {
     };
 
     const channel = supabase
-      .channel(`tenant:${tenantId}:orders:${Math.random().toString(36).slice(2)}`)
+      .channel(`tenant:${tenantId}`)
+      .on("broadcast", { event: "INSERT" }, ({ payload }) => apply("INSERT", {
+        new: payload?.record || payload?.new,
+        old: payload?.old_record || payload?.old,
+      }))
+      .on("broadcast", { event: "UPDATE" }, ({ payload }) => apply("UPDATE", {
+        new: payload?.record || payload?.new,
+        old: payload?.old_record || payload?.old,
+      }))
+      .on("broadcast", { event: "DELETE" }, ({ payload }) => apply("DELETE", {
+        new: payload?.record || payload?.new,
+        old: payload?.old_record || payload?.old,
+      }))
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `tenant_id=eq.${tenantId}` }, ({ eventType, new: next, old }) => apply(eventType, { new: next, old }))
       .subscribe();
 
