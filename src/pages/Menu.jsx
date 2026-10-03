@@ -10,10 +10,12 @@ import CallWaiterConfirm from "../components/menu/CallWaiterConfirm";
 import SuggestionBanner from "../components/menu/SuggestionBanner";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
+import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useCart } from "../context/CartContext";
 import { useTables } from "../context/TablesContext";
 import { useTenant } from "../context/TenantContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useState, useEffect } from "react";
 
 function Menu() {
@@ -22,7 +24,8 @@ function Menu() {
   const [callingWaiterConfirmation, setCallingWaiterConfirmation] = useState(false);
   const { tables, loaded: tablesLoaded } = useTables();
   const { setTable } = useCart();
-  const { tableNumber, tenant, loading: tenantLoading } = useTenant();
+  const { tableNumber, tenant, slug, loading: tenantLoading } = useTenant();
+  const { language } = useLanguage();
   const isValidTable = tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true;
   useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
   if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
@@ -37,6 +40,13 @@ function Menu() {
         </Box>
       </Box>
       <Container maxWidth="md" sx={{ pt: 1.5 }}>
+        {slug === "mzaj-ryfy" && (
+          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+            {language === "ar"
+              ? "معلومات الحساسية للأصناف المضافة من القائمة المصورة تقديرية ومبنية على وصفات مقترحة، وليست مؤكدة من المطبخ. اسأل الموظف عن المكونات واحتمال التلامس العرضي قبل الطلب."
+              : "Allergen details for items added from the photographed menu are estimates based on suggested recipes, not verified by the kitchen. Ask staff about ingredients and possible cross-contact before ordering."}
+          </Alert>
+        )}
         <MenuItemsList />
       </Container>
     <FloatingActions handleReview={() => setReviewOpen(true)} handleCallWaiter={() => setCallingWaiterConfirmation(true)} />

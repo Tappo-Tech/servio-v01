@@ -16,15 +16,21 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 // CONTEXTS
 import { useCart } from "../../context/CartContext";
+import { useLanguage } from "../../context/LanguageContext";
+import { useTenant } from "../../context/TenantContext";
 
 function ItemDetailsDrawer({ open, onClose, itemDetails }) {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
+  const { language } = useLanguage();
+  const { slug } = useTenant();
 
   const handleIncrease = () => setQuantity((prev) => prev + 1);
   const handleDecrease = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const hasAllergy = itemDetails?.allergens && itemDetails.allergens.length > 0;
+  const hasDraftAllergenData =
+    slug === "mzaj-ryfy" && itemDetails?.tags?.includes("وصفة مبدئية");
 
   const bottomBarHeight = "80px";
 
@@ -128,15 +134,35 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
             {itemDetails?.description}
           </Typography>
 
-          {hasAllergy && (
+          {hasDraftAllergenData ? (
             <Alert
-              severity="error"
+              severity="warning"
               icon={<WarningAmberIcon />}
               sx={{ borderRadius: "12px", mb: 3, fontWeight: 600 }}
             >
-              يحتوي هذا الصنف على مسببات الحساسية:{" "}
-              {itemDetails.allergens.join("، ")}
+              {hasAllergy ? (
+                <>
+                  {language === "ar" ? "مسببات حساسية محتملة وفق الوصفة المقترحة:" : "Potential allergens based on the suggested recipe:"}{" "}
+                  {itemDetails.allergens.join(language === "ar" ? "، " : ", ")}.{" "}
+                  {language === "ar" ? "هذه القائمة تقديرية وغير مؤكدة بمكونات المطبخ؛ اسأل الموظف عن المكونات والتلامس العرضي." : "This estimate is not verified against the kitchen’s ingredients; ask staff about ingredients and cross-contact."}
+                </>
+              ) : (
+                language === "ar"
+                  ? "لم يُحدَّد مسبب شائع في الوصفة المقترحة، لكن مكونات التحضير والتلامس العرضي غير مؤكدة. اسأل الموظف قبل الطلب."
+                  : "No common allergen is listed for the suggested recipe, but actual ingredients and cross-contact are unverified. Please ask staff before ordering."
+              )}
             </Alert>
+          ) : (
+            hasAllergy && (
+              <Alert
+                severity="error"
+                icon={<WarningAmberIcon />}
+                sx={{ borderRadius: "12px", mb: 3, fontWeight: 600 }}
+              >
+                يحتوي هذا الصنف على مسببات الحساسية:{" "}
+                {itemDetails.allergens.join("، ")}
+              </Alert>
+            )
           )}
         </Box>
       </Box>
