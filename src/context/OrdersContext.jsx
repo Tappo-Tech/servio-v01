@@ -30,6 +30,14 @@ const parseOrderItems = (items) => {
   return [];
 };
 
+const compactOrderItems = (items) => parseOrderItems(items).map((item) => ({
+  id: item.id || item.cartItemId || null,
+  cartItemId: item.cartItemId || item.id || null,
+  name: String(item.name || "").trim(),
+  quantity: Number(item.quantity) || 1,
+  price: Number(item.price) || 0,
+})).filter((item) => item.name);
+
 const formatOrder = (order = {}) => ({
   ...order,
   items: parseOrderItems(order.items),
@@ -125,7 +133,7 @@ export const OrdersProvider = ({ children }) => {
     if (isPublic) {
       const { data, error } = await supabase.rpc("create_public_order", {
         p_slug: slug,
-        p_items: parseOrderItems(newOrder.items),
+        p_items: compactOrderItems(newOrder.items),
         p_total_price: newOrder.total_price,
         p_table_number: newOrder.table_number,
         p_notes: newOrder.notes || null,
@@ -139,7 +147,7 @@ export const OrdersProvider = ({ children }) => {
 
     const { data, error } = await supabase
       .from("orders")
-      .insert([{ ...newOrder, items: parseOrderItems(newOrder.items), tenant_id: tenantId, status: "pending", is_completed: false, completed_at: null }])
+      .insert([{ ...newOrder, items: compactOrderItems(newOrder.items), tenant_id: tenantId, status: "pending", is_completed: false, completed_at: null }])
       .select();
     if (!error && data?.[0]) {
       const formatted = formatOrder(data[0]);

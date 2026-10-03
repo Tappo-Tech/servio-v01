@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -29,6 +29,11 @@ function OrderItemCard({ order }) {
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [, setTimeTick] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const changeStatus = async (status) => { if (sending) return; setSending(true); await updateOrderStatus(order.id, status); setSending(false); };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
 
