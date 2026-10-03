@@ -1,10 +1,12 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 
 const OrdersContext = createContext();
+
+const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id";
 
 const parseOrderItems = (items) => {
   if (Array.isArray(items)) {
@@ -13,30 +15,33 @@ const parseOrderItems = (items) => {
       if (typeof item !== "string") return [];
       try {
         const parsed = JSON.parse(item);
-        return Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? [parsed] : [];
+        return parsed && typeof parsed === "object" ? (Array.isArray(parsed) ? parsed : [parsed]) : [];
       } catch {
         return [];
       }
     });
   }
+
   if (typeof items === "string") {
     try {
-      const parsed = JSON.parse(items);
-      return parseOrderItems(parsed);
+      return parseOrderItems(JSON.parse(items));
     } catch {
       return [];
     }
   }
+
   return [];
 };
 
-const compactOrderItems = (items) => parseOrderItems(items).map((item) => ({
-  id: item.id || item.cartItemId || null,
-  cartItemId: item.cartItemId || item.id || null,
-  name: String(item.name || "").trim(),
-  quantity: Number(item.quantity) || 1,
-  price: Number(item.price) || 0,
-})).filter((item) => item.name);
+const compactOrderItems = (items) => parseOrderItems(items)
+  .map((item) => ({
+    id: item.id || item.cartItemId || null,
+    cartItemId: item.cartItemId || item.id || null,
+    name: String(item.name || "").trim(),
+    quantity: Number(item.quantity) || 1,
+    price: Number(item.price) || 0,
+  }))
+  .filter((item) => item.name);
 
 const formatOrder = (order = {}) => ({
   ...order,
@@ -45,9 +50,32 @@ const formatOrder = (order = {}) => ({
   completed_at: order.completed_at ? new Date(order.completed_at) : null,
 });
 
-const hasCompleteItems = (order) => order?.items?.length > 0 && order.items.every((item) => (
-  item && typeof item === "object" && String(item.name || "").trim() && item.quantity != null && item.price != null
-));
+const hasCompleteItems = (order) => (
+  Array.isArray(order?.items) &&
+  order.items.length > 0 &&
+  order.items.every((item) => (
+    item && typeof item === "object" &&
+    String(item.name || "").trim() &&
+    item.quantity != null &&
+    item.price != null
+  ))
+);
+
+const mergeOrder = (existing, incoming) => {
+  const next = formatOrder(incoming);
+  if (!existing) return next;
+
+  return formatOrder({
+    ...existing,
+    ...incoming,
+    // Realtime UPDATE payloads can omit unchanged columns. Never erase items.
+    items: hasCompleteItems(next) ? next.items : existing.items,
+    created_at: incoming.created_at || existing.created_at,
+    status: incoming.status || existing.status,
+    is_completed: typeof incoming.is_completed === "boolean" ? incoming.is_completed : existing.is_completed,
+    completed_at: incoming.completed_at === undefined ? existing.completed_at : incoming.completed_at,
+  });
+};
 
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic } = useTenant();
@@ -57,91 +85,74 @@ export const OrdersProvider = ({ children }) => {
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      if (isPublic || !tenantId) return;
+    setOrdersLoading(!isPublic && Boolean(tenantId));
+
+    if (isPublic || !tenantId) {
+      setOrders([]);
+      return () => { active = false; };
+    }
+
+    const applyRealtimeOrder = (eventType, next, old) => {
+      if (!active) return;
+
+      if (eventType === "DELETE") {
+        if (old?.id) setOrders((current) => current.filter((order) => order.id !== old.id));
+        return;
+      }
+
+      if (!next?.id) return;
+      const incoming = formatOrder(next);
+
+      setOrders((current) => {
+        const existing = current.find((order) => order.id === incoming.id);
+        if (eventType === "INSERT") {
+          if (!hasCompleteItems(incoming)) return current;
+          if (existing) return current.map((order) => order.id === incoming.id ? mergeOrder(order, incoming) : order);
+          playRealtimeNotification("order");
+          return [incoming, ...current];
+        }
+
+        if (!existing && !hasCompleteItems(incoming)) return current;
+        const merged = mergeOrder(existing, incoming);
+        return existing
+          ? current.map((order) => order.id === incoming.id ? merged : order)
+          : [merged, ...current];
+      });
+    };
+
+    // Same mechanism as waiter calls: one postgres_changes channel per tenant.
+    const channel = supabase
+      .channel(`tenant:${tenantId}:orders:${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `tenant_id=eq.${tenantId}` },
+        ({ eventType, new: next, old }) => applyRealtimeOrder(eventType, next, old),
+      )
+      .subscribe();
+
+    const loadInitialOrders = async () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id")
+          .select(ORDER_COLUMNS)
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: true });
-        if (active && !error) {
-          const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
-          setOrders((current) => {
-            const byId = new Map(current.map((order) => [order.id, order]));
-            loaded.forEach((order) => byId.set(order.id, order));
-            return Array.from(byId.values()).filter(hasCompleteItems);
-          });
-        }
+
+        if (!active || error) return;
+        const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
+        setOrders((current) => {
+          const byId = new Map(current.map((order) => [order.id, order]));
+          loaded.forEach((order) => byId.set(order.id, mergeOrder(byId.get(order.id), order)));
+          return Array.from(byId.values()).filter(hasCompleteItems);
+        });
       } finally {
         if (active) setOrdersLoading(false);
       }
     };
 
-    if (isPublic || !tenantId) return () => { active = false; };
-
-    const apply = (eventType, payload) => {
-      const next = payload?.new;
-      const old = payload?.old;
-      if (eventType === "INSERT" && next) {
-        const formatted = formatOrder(next);
-        const addCompleteOrder = (order) => {
-          if (!active || !hasCompleteItems(order)) return;
-          setOrders((current) => current.some((entry) => entry.id === order.id) ? current : [order, ...current]);
-          playRealtimeNotification("order");
-        };
-        if (hasCompleteItems(formatted)) {
-          addCompleteOrder(formatted);
-        } else {
-          // Keep the first render safe, but retry immediately if the row is partial.
-          let retries = 0;
-          const refetchCompleteOrder = async () => {
-            const { data } = await supabase.from("orders").select("*").eq("id", next.id).maybeSingle();
-            const complete = formatOrder(data || next);
-            if (hasCompleteItems(complete)) addCompleteOrder(complete);
-            else if (active && retries++ < 5) setTimeout(refetchCompleteOrder, 100);
-          };
-          refetchCompleteOrder();
-        }
-      } else if (eventType === "UPDATE" && next) {
-        const formatted = formatOrder(next);
-        setOrders((current) => {
-          const existing = current.find((entry) => entry.id === next.id);
-          if (!existing) return hasCompleteItems(formatted) ? [formatted, ...current] : current;
-          const merged = formatOrder({
-            ...existing,
-            ...next,
-            items: hasCompleteItems(formatted) ? formatted.items : existing.items,
-            status: next.status || existing.status,
-            is_completed: typeof next.is_completed === "boolean" ? next.is_completed : existing.is_completed,
-            completed_at: next.completed_at === undefined ? existing.completed_at : next.completed_at,
-          });
-          return current.map((entry) => entry.id === next.id ? merged : entry);
-        });
-      } else if (eventType === "DELETE" && old) {
-        setOrders((current) => current.filter((entry) => entry.id !== old.id));
-      }
-    };
-
-    const channel = supabase
-      .channel(`tenant:${tenantId}`)
-      .on("broadcast", { event: "INSERT" }, ({ payload }) => apply("INSERT", {
-        new: payload?.record || payload?.new,
-        old: payload?.old_record || payload?.old,
-      }))
-      .on("broadcast", { event: "UPDATE" }, ({ payload }) => apply("UPDATE", {
-        new: payload?.record || payload?.new,
-        old: payload?.old_record || payload?.old,
-      }))
-      .on("broadcast", { event: "DELETE" }, ({ payload }) => apply("DELETE", {
-        new: payload?.record || payload?.new,
-        old: payload?.old_record || payload?.old,
-      }))
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `tenant_id=eq.${tenantId}` }, ({ eventType, new: next, old }) => apply(eventType, { new: next, old }))
-      .subscribe();
-
-    // Subscribe before the initial query so no order can be missed while loading.
-    load();
+    // Start the query immediately after registering the channel. State merging
+    // makes INSERT events safe even if they arrive during the initial query.
+    loadInitialOrders();
 
     return () => {
       active = false;
@@ -150,56 +161,81 @@ export const OrdersProvider = ({ children }) => {
   }, [tenantId, isPublic]);
 
   const addOrder = (newOrder) => guard("orders:add", async () => {
+    const items = compactOrderItems(newOrder.items);
+    if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
+
     if (isPublic) {
       const { data, error } = await supabase.rpc("create_public_order", {
         p_slug: slug,
-        p_items: compactOrderItems(newOrder.items),
-        p_total_price: newOrder.total_price,
-        p_table_number: newOrder.table_number,
-        p_notes: newOrder.notes || null,
+        p_items: items,
+        p_total_price: Number(newOrder.total_price) || 0,
+        p_table_number: String(newOrder.table_number || "غير محدد"),
+        p_notes: newOrder.notes ? String(newOrder.notes) : null,
       });
       if (!error && data) {
         const formatted = formatOrder(data);
-        if (hasCompleteItems(formatted)) setOrders((prev) => [formatted, ...prev]);
+        if (hasCompleteItems(formatted)) setOrders((current) => [formatted, ...current.filter((order) => order.id !== formatted.id)]);
       }
       return { data, error };
     }
 
     const { data, error } = await supabase
       .from("orders")
-      .insert([{ ...newOrder, items: compactOrderItems(newOrder.items), tenant_id: tenantId, status: "pending", is_completed: false, completed_at: null }])
-      .select();
-    if (!error && data?.[0]) {
-      const formatted = formatOrder(data[0]);
-      if (hasCompleteItems(formatted)) setOrders((prev) => [formatted, ...prev]);
+      .insert([{
+        items,
+        total_price: Number(newOrder.total_price) || 0,
+        table_number: String(newOrder.table_number || "غير محدد"),
+        notes: newOrder.notes ? String(newOrder.notes) : null,
+        tenant_id: tenantId,
+        status: "pending",
+        is_completed: false,
+        completed_at: null,
+      }])
+      .select(ORDER_COLUMNS)
+      .single();
+
+    if (!error && data) {
+      const formatted = formatOrder(data);
+      if (hasCompleteItems(formatted)) setOrders((current) => [formatted, ...current.filter((order) => order.id !== formatted.id)]);
     }
-    return { data: data?.[0], error };
+    return { data, error };
   });
 
   const updateOrderStatus = (orderId, newStatus) => guard(`orders:update:${orderId}`, async () => {
     if (isPublic) return { error: new Error("غير مصرح") };
     const target = orders.find((order) => order.id === orderId);
     if (!target) return { error: new Error("الطلب غير موجود") };
+
     const finished = ["served", "unclaimed", "cancelled"].includes(newStatus);
     const completedAt = finished ? target.completed_at || new Date() : null;
-    const optimisticOrder = {
-      ...target,
-      status: newStatus,
-      is_completed: finished,
-      completed_at: completedAt,
-    };
-    setOrders((prev) => prev.map((order) => order.id === orderId ? optimisticOrder : order));
+    const optimistic = { ...target, status: newStatus, is_completed: finished, completed_at: completedAt };
+
+    // Move the card immediately; keep its items while Supabase confirms.
+    setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
+
     const { error } = await supabase
       .from("orders")
-      .update({ status: newStatus, is_completed: finished, completed_at: completedAt?.toISOString() || null })
+      .update({
+        status: newStatus,
+        is_completed: finished,
+        completed_at: completedAt?.toISOString() || null,
+      })
       .eq("id", orderId)
       .eq("tenant_id", tenantId);
-    if (error) setOrders((prev) => prev.map((order) => order.id === orderId ? target : order));
+
+    if (error) setOrders((current) => current.map((order) => order.id === orderId ? target : order));
     return { error };
   });
 
   return (
-    <OrdersContext.Provider value={{ orders, ordersLoading, finishedOrders: orders.filter((o) => o.is_completed && o.status !== "cancelled"), cancelledOrders: orders.filter((o) => o.status === "cancelled"), addOrder, updateOrderStatus }}>
+    <OrdersContext.Provider value={{
+      orders,
+      ordersLoading,
+      finishedOrders: orders.filter((order) => order.is_completed && order.status !== "cancelled"),
+      cancelledOrders: orders.filter((order) => order.status === "cancelled"),
+      addOrder,
+      updateOrderStatus,
+    }}>
       {children}
     </OrdersContext.Provider>
   );
