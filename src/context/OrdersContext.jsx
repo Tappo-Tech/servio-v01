@@ -7,11 +7,22 @@ import { createRequestGuard } from "../utils/requestGuard";
 const OrdersContext = createContext();
 
 const parseOrderItems = (items) => {
-  if (Array.isArray(items)) return items;
+  if (Array.isArray(items)) {
+    return items.flatMap((item) => {
+      if (item && typeof item === "object") return [item];
+      if (typeof item !== "string") return [];
+      try {
+        const parsed = JSON.parse(item);
+        return Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? [parsed] : [];
+      } catch {
+        return [];
+      }
+    });
+  }
   if (typeof items === "string") {
     try {
       const parsed = JSON.parse(items);
-      return Array.isArray(parsed) ? parsed : [];
+      return parseOrderItems(parsed);
     } catch {
       return [];
     }
