@@ -106,13 +106,11 @@ export const OrdersProvider = ({ children }) => {
       setOrders((current) => {
         const existing = current.find((order) => order.id === incoming.id);
         if (eventType === "INSERT") {
-          if (!hasCompleteItems(incoming)) return current;
           if (existing) return current.map((order) => order.id === incoming.id ? mergeOrder(order, incoming) : order);
-          playRealtimeNotification("order");
+          if (hasCompleteItems(incoming)) playRealtimeNotification("order");
           return [incoming, ...current];
         }
 
-        if (!existing && !hasCompleteItems(incoming)) return current;
         const merged = mergeOrder(existing, incoming);
         return existing
           ? current.map((order) => order.id === incoming.id ? merged : order)
@@ -139,11 +137,12 @@ export const OrdersProvider = ({ children }) => {
           .order("created_at", { ascending: true });
 
         if (!active || error) return;
-        const loaded = (data || []).map(formatOrder).filter(hasCompleteItems);
+        // Keep every row for totals/history; LiveOrders filters incomplete cards.
+        const loaded = (data || []).map(formatOrder);
         setOrders((current) => {
           const byId = new Map(current.map((order) => [order.id, order]));
           loaded.forEach((order) => byId.set(order.id, mergeOrder(byId.get(order.id), order)));
-          return Array.from(byId.values()).filter(hasCompleteItems);
+          return Array.from(byId.values());
         });
       } finally {
         if (active) setOrdersLoading(false);
