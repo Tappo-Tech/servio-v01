@@ -13,15 +13,15 @@ create index if not exists tenants_slug_idx on public.tenants (slug);
 
 insert into public.tenants (name, slug, logo_url)
 select
-  coalesce(nullif(store_name, ''), 'TAPPO'),
-  coalesce(nullif(regexp_replace(lower(coalesce(nullif(store_slug, ''), nullif(store_name, ''), 'tappo')), '[^a-z0-9]+', '-', 'g'), ''), 'tappo'),
+  coalesce(nullif(store_name, ''), 'SERVIO'),
+  coalesce(nullif(regexp_replace(lower(coalesce(nullif(store_slug, ''), nullif(store_name, ''), 'servio')), '[^a-z0-9]+', '-', 'g'), ''), 'servio'),
   logo_url
 from public.store
 where not exists (select 1 from public.tenants)
 limit 1;
 
 insert into public.tenants (name, slug)
-select 'TAPPO', 'tappo'
+select 'SERVIO', 'servio'
 where not exists (select 1 from public.tenants);
 
 alter table public.store add column if not exists tenant_id uuid;

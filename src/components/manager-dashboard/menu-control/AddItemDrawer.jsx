@@ -105,11 +105,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   };
 
   const [submitError, setSubmitError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price) return;
+    if (saving) return;
     setSubmitError("");
+    setSaving(true);
 
     const payload = {
       name: formData.name,
@@ -128,8 +131,10 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       : await addNewItem({ id: uuidV4(), ...payload });
     if (result?.error) {
       setSubmitError(result.error.message || "تعذر حفظ الصنف");
+      setSaving(false);
       return;
     }
+    setSaving(false);
     onClose();
   };
 
@@ -353,10 +358,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           <Button
             type="submit"
             variant="contained"
+            disabled={saving}
             fullWidth
             sx={{ bgcolor: "primary.main", fontWeight: 700 }}
           >
-            {itemToEdit ? t("menuSaveChanges") : t("menuSaveItem")}
+{saving ? "جاري الإرسال..." : (itemToEdit ? t("menuSaveChanges") : t("menuSaveItem"))}
           </Button>
           <Button
             variant="outlined"

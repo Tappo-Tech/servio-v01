@@ -24,9 +24,11 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 // OTHERS
 import { formatTimeAgo } from "../../../utils/helpers";
+import { useState } from "react";
 
 function WaiterCallNotification({ open, close }) {
-  const { calls, resolveCall } = useWaiterCalls(); 
+  const { calls, resolveCall } = useWaiterCalls();
+  const [resolvingId, setResolvingId] = useState(null);
   const { language, t } = useLanguage();
 
   return (
@@ -117,7 +119,8 @@ function WaiterCallNotification({ open, close }) {
                     fullWidth
                     variant="contained"
                     size="small"
-                    onClick={() => resolveCall(call.id)}
+                    onClick={async () => { if (resolvingId) return; setResolvingId(call.id); await resolveCall(call.id); setResolvingId(null); }}
+                    disabled={resolvingId === call.id}
                     sx={{
                       borderRadius: "8px",
                       backgroundColor: "success",
@@ -126,7 +129,7 @@ function WaiterCallNotification({ open, close }) {
                       "&:hover": { backgroundColor: "success" },
                     }}
                   >
-                    {t("waiterFulfilled")}
+                    {resolvingId === call.id ? "جاري الإرسال..." : t("waiterFulfilled")}
                   </Button>
                 </CardContent>
               </Card>

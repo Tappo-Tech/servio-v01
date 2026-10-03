@@ -48,6 +48,7 @@ function StoreInfoSettings() {
   });
 
   const [isSlugLocked, setIsSlugLocked] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({
     open: false,
     message: "",
@@ -85,6 +86,8 @@ function StoreInfoSettings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
     const result = await updateStoreInfo(formData);
     if (result?.error) {
       setToast({
@@ -92,8 +95,10 @@ function StoreInfoSettings() {
         message: result.error.message?.includes("duplicate") ? t("slugName") : result.error.message || t("genericLoginError"),
         severity: "error",
       });
+      setSaving(false);
       return;
     }
+    setSaving(false);
     setToast({
       open: true,
       message: t("managerSaved"),
@@ -317,6 +322,7 @@ function StoreInfoSettings() {
             type="submit"
             variant="contained"
             startIcon={<SaveIcon />}
+            disabled={saving}
             fullWidth={{ xs: true, sm: false }}
             sx={{
               px: 4,
@@ -325,7 +331,7 @@ function StoreInfoSettings() {
               fontWeight: 700,
             }}
           >
-            {t("managerSave")}
+            {saving ? "جاري الإرسال..." : t("managerSave")}
           </Button>
         </Grid>
       </Grid>

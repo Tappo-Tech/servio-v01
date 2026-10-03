@@ -29,15 +29,20 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
   const { t } = useLanguage();
-  const { tables, error: tablesError, generateTables, clearTables } = useTables();
+  const { tables, error: tablesError, generateTables, deleteTable, clearTables } = useTables();
+  const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const { slug: routeSlug, tenant } = useTenant();
   const resolvedSlug = tenant?.slug || routeSlug;
   const [tablesCount, setTablesCount] = useState(tables.length || 5);
 
   const handleGenerate = (e) => {
     e.preventDefault();
+    if (sending) return;
+    setSending(true);
     generateTables(tablesCount).then((result) => {
       if (!result?.error) setTablesCount("");
+      setSending(false);
     });
   };
 
@@ -169,9 +174,10 @@ function QRCodeGenerate() {
                 fullWidth
                 type="submit"
                 variant="contained"
+                disabled={sending}
                 startIcon={<AddBoxOutlinedIcon />}
                 sx={{ py: 1, fontWeight: 700, borderRadius: "8px", gap: 1 }}
-              >{t("managerGenerate")}</Button>
+              >{sending ? "جاري الإرسال..." : t("managerGenerate")}</Button>
             </Grid>
 
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -180,7 +186,8 @@ function QRCodeGenerate() {
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteOutlinedIcon />}
-                onClick={clearTables}
+                onClick={async () => { if (sending) return; setSending(true); await clearTables(); setSending(false); }}
+                disabled={sending}
                 sx={{ py: 1, fontWeight: 700, borderRadius: "8px", gap: 1 }}
               >{t("managerClearAll")}</Button>
             </Grid>
@@ -318,6 +325,7 @@ function QRCodeGenerate() {
                       onClick={() => handlePrint(table.id)}
                       sx={{ gap: 0.5 }}
                     >{t("managerPrint")}</Button>
+                    <Button size="small" color="error" startIcon={<DeleteOutlinedIcon />} disabled={deletingId === table.id || sending} onClick={async () => { setDeletingId(table.id); await deleteTable(table.id); setDeletingId(null); }}>{deletingId === table.id ? "جاري الإرسال..." : t("menuDelete")}</Button>
                   </CardActions>
                 </Card>
               </Grid>

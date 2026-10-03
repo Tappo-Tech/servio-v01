@@ -28,6 +28,8 @@ function OrderItemCard({ order }) {
   const { updateOrderStatus } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const changeStatus = async (status) => { if (sending) return; setSending(true); await updateOrderStatus(order.id, status); setSending(false); };
 
   return (
     <motion.div
@@ -164,10 +166,10 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="contained"
                 disableElevation
-                onClick={() => updateOrderStatus(order.id, "preparing")}
+                onClick={() => changeStatus("preparing")} disabled={sending}
                 sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
-                {t("startPreparing")}
+                {sending ? "جاري الإرسال..." : t("startPreparing")}
               </Button>
               <Button
                 size="medium"
@@ -182,7 +184,7 @@ function OrderItemCard({ order }) {
                 color="error"
                 size="medium"
                 variant="outlined"
-                onClick={() => updateOrderStatus(order.id, "cancelled")}
+                onClick={() => changeStatus("cancelled")} disabled={sending}
                 sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "75px" }}
               >
                 {t("cancel")}
@@ -197,7 +199,7 @@ function OrderItemCard({ order }) {
               size="medium"
               variant="contained"
               disableElevation
-              onClick={() => updateOrderStatus(order.id, "ready")}
+              onClick={() => changeStatus("ready")} disabled={sending}
               sx={{
                 borderRadius: "10px",
                 fontWeight: 700,
@@ -205,7 +207,7 @@ function OrderItemCard({ order }) {
                 color: "white",
               }}
             >
-              {t("ready")}
+              {sending ? "جاري الإرسال..." : t("ready")}
             </Button>
           )}
 
@@ -217,7 +219,7 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="contained"
                 disableElevation
-                onClick={() => updateOrderStatus(order.id, "served")}
+                onClick={() => changeStatus("served")} disabled={sending}
                 sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
                 {t("received")}
@@ -226,7 +228,7 @@ function OrderItemCard({ order }) {
                 color="warning"
                 size="medium"
                 variant="outlined"
-                onClick={() => updateOrderStatus(order.id, "unclaimed")}
+                onClick={() => changeStatus("unclaimed")} disabled={sending}
                 sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "90px" }}
               >
                 {t("unclaimed")}

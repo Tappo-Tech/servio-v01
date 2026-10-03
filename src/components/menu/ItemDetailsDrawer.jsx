@@ -86,6 +86,8 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
         <Box
           component="img"
           src={itemDetails?.image}
+          loading="lazy"
+          decoding="async"
           alt={itemDetails?.name}
           sx={{
             width: "100%",

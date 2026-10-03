@@ -38,24 +38,14 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
     setSelectedReason((prev) => (prev === reason ? "" : reason));
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (loading) return;
     setLoading(true);
-
-    // إضافة النداء للكونتكست
-    addCall(tableNumber, selectedReason);
-
-    setTimeout(() => {
-      setLoading(false);
-      setIsSent(true);
-
-      setTimeout(() => {
-        if (close) close();
-        setTimeout(() => {
-          setIsSent(false);
-          setSelectedReason("");
-        }, 300);
-      }, 1500);
-    }, 400);
+    const result = await addCall(tableNumber, selectedReason);
+    setLoading(false);
+    if (result?.error) return;
+    setIsSent(true);
+    setTimeout(() => { if (close) close(); setTimeout(() => { setIsSent(false); setSelectedReason(""); }, 300); }, 1500);
   };
 
   return (

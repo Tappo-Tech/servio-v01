@@ -101,7 +101,7 @@ function ManagerSidebar({
           <Box
             component="img"
             src="/logo-icon.webp"
-            alt="TAPPO Logo"
+            alt="SERVIO Logo"
             sx={{ width: 35, height: 35, borderRadius: 0.8 }}
           />
           <Typography
@@ -109,7 +109,7 @@ function ManagerSidebar({
             variant="h4"
             component="h1"
           >
-            TAPPO
+            SERVIO
           </Typography>
         </Box>
 

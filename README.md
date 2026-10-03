@@ -1,8 +1,8 @@
-# <img src="public/logo-icon.webp" alt="TAPPO" width="42" /> TAPPO
+# <img src="public/logo-icon.webp" alt="SERVIO" width="42" /> SERVIO
 
 > ## **Serve faster. Operate smarter. Grow with every table.**
 >
-> TAPPO is a Saudi FoodTech platform that helps cafés and restaurants modernize table ordering and daily operations through QR-powered experiences.
+> SERVIO is a Saudi FoodTech platform that helps cafés and restaurants modernize table ordering and daily operations through QR-powered experiences.
 
 <p align="left">
   <img src="https://img.shields.io/badge/status-pre--incubation%20MVP-f59e0b?style=flat-square" alt="Pre-incubation MVP" />
@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/license-proprietary-111827?style=flat-square" alt="Proprietary" />
 </p>
 
-TAPPO connects guests, service teams, and managers through QR-based table ordering, real-time operations, and practical business insights. A guest scans a table QR code, browses the menu, places an order, requests a waiter, and leaves feedback — without downloading an app. Managers and cashiers receive live updates through a focused Arabic-first dashboard built for hospitality operations.
+SERVIO connects guests, service teams, and managers through QR-based table ordering, real-time operations, and practical business insights. A guest scans a table QR code, browses the menu, places an order, requests a waiter, and leaves feedback — without downloading an app. Managers and cashiers receive live updates through a focused Arabic-first dashboard built for hospitality operations.
 
 > **Current focus:** validating the need, demand, and market fit in Saudi Arabia before formal company registration and incubation applications.
 
@@ -28,7 +28,7 @@ TAPPO connects guests, service teams, and managers through QR-based table orderi
 
 ## Contents
 
-- [Why TAPPO](#why-tappo)
+- [Why SERVIO](#why-servio)
 - [Product experience](#product-experience)
 - [Product capabilities](#product-capabilities)
 - [Technical architecture](#technical-architecture)
@@ -42,11 +42,11 @@ TAPPO connects guests, service teams, and managers through QR-based table orderi
 
 ---
 
-## Why TAPPO
+## Why SERVIO
 
 Cafés and restaurants lose time and revenue when ordering, waiter requests, and operational follow-up depend on fragmented tools or manual communication.
 
-TAPPO brings the core workflow into one system:
+SERVIO brings the core workflow into one system:
 
 - **Faster ordering:** customers order directly from their table.
 - **Better service:** waiter calls and new orders reach the team in real time.
@@ -102,7 +102,7 @@ QR cards use high error correction and can be printed individually or in bulk.
 
 **Current stage:** Initial experimental MVP / pre-incubation validation.
 
-TAPPO is not yet formally registered as a company. The team is currently validating the need, user demand, and market fit in Saudi Arabia before applying to an incubator and proceeding with formal registration.
+SERVIO is not yet formally registered as a company. The team is currently validating the need, user demand, and market fit in Saudi Arabia before applying to an incubator and proceeding with formal registration.
 
 The current repository includes the core ordering, tenant isolation, authentication, realtime operations, QR, RTL, and manager workflow foundations. A public production launch still requires environment configuration, reliable email delivery, deployment setup, legal/commercial decisions, and full end-to-end acceptance testing with real cafés and restaurants.
 
@@ -170,8 +170,8 @@ public/                         Static assets and optimized logo files
 PowerShell:
 
 ```powershell
-git clone https://github.com/Tappo-Tech/tappo-v01.git
-cd tappo-v01
+git clone https://github.com/Servio-Tech/servio-v01.git
+cd servio-v01
 npm ci
 Copy-Item .env.example .env
 notepad .env
@@ -181,8 +181,8 @@ npm start
 macOS / Linux:
 
 ```bash
-git clone https://github.com/Tappo-Tech/tappo-v01.git
-cd tappo-v01
+git clone https://github.com/Servio-Tech/servio-v01.git
+cd servio-v01
 npm ci
 cp .env.example .env
 nano .env
@@ -219,8 +219,8 @@ Manager registration uses Supabase Auth email sign-up with a redirect back to `/
 When **Confirm email** is enabled in Supabase Auth:
 
 1. The manager submits the registration form.
-2. TAPPO creates the tenant and sends an activation email.
-3. TAPPO shows a verification screen.
+2. SERVIO creates the tenant and sends an activation email.
+3. SERVIO shows a verification screen.
 4. The manager can resend the activation email.
 5. The manager confirms the email and then signs in.
 
@@ -268,7 +268,7 @@ npm test           # Run the test runner
 
 ## Roadmap
 
-> The roadmap below is a product planning draft and should be confirmed by the TAPPO team.
+> The roadmap below is a product planning draft and should be confirmed by the SERVIO team.
 
 - Production deployment pipeline and preview environments.
 - Automated unit, integration, and end-to-end tests.
@@ -292,7 +292,7 @@ npm test           # Run the test runner
 
 ### Mohamed Elhag Mohamed Eshag — Founder, CEO & Tech Lead
 
-Mohamed is TAPPO's principal founder and leads product direction, technical strategy, and frontend engineering.
+Mohamed is SERVIO's principal founder and leads product direction, technical strategy, and frontend engineering.
 
 - GitHub: [codemo-dev](https://github.com/codemo-dev)
 - LinkedIn: [Mohamed Eshag](https://www.linkedin.com/in/codemo-dev)
@@ -302,29 +302,29 @@ Mohamed is TAPPO's principal founder and leads product direction, technical stra
 
 ### Amin Ehab Ahmed Bakhit — Co-founder & COO
 
-Amin is a co-founder responsible for operations, execution, and helping shape TAPPO's path from product validation to market readiness.
+Amin is a co-founder responsible for operations, execution, and helping shape SERVIO's path from product validation to market readiness.
 
-- LinkedIn: [Amin Bakhit](https://www.linkedin.com/in/amin-tappo-3a9249438)
-- Email: [amintappo@gmail.com](mailto:amintappo@gmail.com)
+- LinkedIn: [Amin Bakhit](https://www.linkedin.com/in/amin-servio-3a9249438)
+- Email: [aminservio@gmail.com](mailto:aminservio@gmail.com)
 
 ### Mujahid Abbas Alhassan Alamin — Co-founder & CMO
 
-Mujahid leads marketing direction, brand development, and go-to-market preparation as TAPPO validates its position in the Saudi hospitality market. His public profile and contact details will be added after confirmation.
+Mujahid leads marketing direction, brand development, and go-to-market preparation as SERVIO validates its position in the Saudi hospitality market. His public profile and contact details will be added after confirmation.
 
 ## Contact and links
 
 - Product stage: Initial experimental MVP / pre-incubation
 - Primary market: Saudi Arabia
-- Product website: [Tappo MVP](https://tappo-mvp.vercel.app/)
-- Support and general contact: [tappo.app.sa@gmail.com](mailto:tappo.app.sa@gmail.com)
-- Company LinkedIn: [TAPPO Tech](https://www.linkedin.com/company/tappo-tech)
-- Company X: [@tappoApp](https://x.com/tappoApp)
-- Repository: [Tappo-Tech/tappo-v01](https://github.com/Tappo-Tech/tappo-v01)
+- Product website: [Servio MVP](https://servio-mvp.vercel.app/)
+- Support and general contact: [servio.app.sa@gmail.com](mailto:servio.app.sa@gmail.com)
+- Company LinkedIn: [SERVIO Tech](https://www.linkedin.com/company/servio-tech)
+- Company X: [@servioApp](https://x.com/servioApp)
+- Repository: [Servio-Tech/servio-v01](https://github.com/Servio-Tech/servio-v01)
 
 
 ## Commercial and licensing status
 
-TAPPO is **not open source** at this stage. The repository is a private product codebase intended for the founding team and authorized collaborators. Until the company is formally registered and its intellectual-property ownership is documented, the safest practical position is to keep the repository private and use a **proprietary / all-rights-reserved** notice.
+SERVIO is **not open source** at this stage. The repository is a private product codebase intended for the founding team and authorized collaborators. Until the company is formally registered and its intellectual-property ownership is documented, the safest practical position is to keep the repository private and use a **proprietary / all-rights-reserved** notice.
 
 This README is product documentation, not legal advice. Before public launch or onboarding external contributors, the team should confirm ownership, founder IP assignment, contributor agreements, privacy terms, customer terms, and the final commercial license with a qualified lawyer in Saudi Arabia.
 
@@ -332,4 +332,4 @@ This README is product documentation, not legal advice. Before public launch or 
 
 **Proprietary — All rights reserved.**
 
-No permission is granted to copy, modify, distribute, sublicense, or use this software commercially without written permission from TAPPO's authorized owners. This notice should be reviewed and formalized when the company is registered.
+No permission is granted to copy, modify, distribute, sublicense, or use this software commercially without written permission from SERVIO's authorized owners. This notice should be reviewed and formalized when the company is registered.

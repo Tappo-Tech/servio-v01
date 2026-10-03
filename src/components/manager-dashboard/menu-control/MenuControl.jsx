@@ -46,6 +46,8 @@ function MenuControl() {
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [busyId, setBusyId] = useState(null);
 
   const {
     filteredMenu = [],
@@ -77,7 +79,9 @@ function MenuControl() {
   // معالجة حفظ تصنيف جديد أو تعديله
   const handleSaveCategory = async () => {
     if (!newCategoryTitle.trim()) return;
+    if (categorySaving) return;
     setCategoryError("");
+    setCategorySaving(true);
 
     let result;
     if (editingCategory) {
@@ -87,8 +91,10 @@ function MenuControl() {
     }
     if (result?.error) {
       setCategoryError(result.error.message || "تعذر حفظ التصنيف");
+      setCategorySaving(false);
       return;
     }
+    setCategorySaving(false);
     setEditingCategory(null);
     setNewCategoryTitle("");
   };
@@ -173,6 +179,8 @@ function MenuControl() {
             >
               <CardMedia
                 component="img"
+                loading="lazy"
+                decoding="async"
                 height="140"
                 image={product.image || "/logo-icon.webp"}
                 alt={product.name}
@@ -240,7 +248,8 @@ function MenuControl() {
                   control={
                     <Switch
                       checked={Boolean(product.available)}
-                      onChange={() => toggleAvailable(product.id)}
+                      onChange={async () => { if (busyId) return; setBusyId(product.id); await toggleAvailable(product.id); setBusyId(null); }}
+                      disabled={busyId === product.id}
                       color="success"
                       size="small"
                     />
@@ -275,7 +284,8 @@ function MenuControl() {
                   size="small"
                   color="error"
                   aria-label={t("menuDelete")}
-                  onClick={() => deleteItem(product.id)}
+                  onClick={async () => { if (busyId) return; setBusyId(product.id); await deleteItem(product.id); setBusyId(null); }}
+                  disabled={busyId === product.id}
                 >
                   <DeleteOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -328,9 +338,10 @@ function MenuControl() {
             <Button
               variant="contained"
               onClick={handleSaveCategory}
+              disabled={categorySaving}
               sx={{ whiteSpace: "nowrap", fontWeight: 700 }}
             >
-              {editingCategory ? t("menuSave") : t("menuAdd")}
+              {categorySaving ? "جاري الإرسال..." : (editingCategory ? t("menuSave") : t("menuAdd"))}
             </Button>
             {editingCategory && (
               <Button color="inherit" onClick={handleCancelCategoryEdit}>{t("menuCancel")}</Button>
@@ -363,7 +374,8 @@ function MenuControl() {
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => deleteCategory && deleteCategory(cat.id)}
+                      onClick={async () => { if (busyId) return; setBusyId(cat.id); await (deleteCategory && deleteCategory(cat.id)); setBusyId(null); }}
+                      disabled={busyId === cat.id}
                     >
                       <DeleteOutlinedIcon fontSize="small" />
                     </IconButton>

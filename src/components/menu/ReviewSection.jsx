@@ -34,6 +34,7 @@ function ReviewSection({ open, close, tableNumber }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [comment, setComment] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleTagToggle = (tag) => {
     setSelectedTags((prev) =>
@@ -41,8 +42,9 @@ function ReviewSection({ open, close, tableNumber }) {
     );
   };
 
-  const handleSubmit = () => {
-    if (rating === 0) return;
+  const handleSubmit = async () => {
+    if (rating === 0 || loading) return;
+    setLoading(true);
 
     // بناء كائن التقييم الجديد
     const newFeedback = {
@@ -52,8 +54,9 @@ function ReviewSection({ open, close, tableNumber }) {
       comment: comment,
     };
 
-    // حفظ التقييم في Context
-    addFeedback(newFeedback);
+    const result = await addFeedback(newFeedback);
+    setLoading(false);
+    if (result?.error) return;
     setIsSubmitted(true);
 
     setTimeout(() => {
@@ -210,7 +213,7 @@ function ReviewSection({ open, close, tableNumber }) {
               variant="contained"
               color="primary"
               size="large"
-              disabled={rating === 0}
+              disabled={rating === 0 || loading}
               onClick={handleSubmit}
               sx={{
                 borderRadius: "14px",
@@ -221,7 +224,7 @@ function ReviewSection({ open, close, tableNumber }) {
                 mt: 2,
               }}
             >
-              إرسال التقييم
+              {loading ? "جاري الإرسال..." : "إرسال التقييم"}
             </Button>
           </>
         ) : (

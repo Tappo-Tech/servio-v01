@@ -130,9 +130,9 @@ export const menuItems = [
 export const currentUserMock = {
   id: "usr_101",
   name: "Mohamed",
-  email: "mohamed@tappo.com",
+  email: "mohamed@servio.com",
   role: "Manager",
-  restaurantName: "TAPPO Cafe",
+  restaurantName: "SERVIO Cafe",
   avatar: "",
   notificationsCount: 3,
 };

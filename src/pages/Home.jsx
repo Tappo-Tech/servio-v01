@@ -192,14 +192,14 @@ export default function Home() {
                 <Box
                   component="img"
                   src="/logo-icon.webp"
-                  alt="TAPPO"
+                  alt="SERVIO"
                   sx={{ width: 40, height: 40, objectFit: "contain" }}
                 />
                 <Box>
                   <Typography
                     sx={{ fontWeight: 950, color: "secondary.main", lineHeight: 1 }}
                   >
-                    TAPPO
+                    SERVIO
                   </Typography>
                   <Typography
                     variant="caption"
@@ -959,11 +959,11 @@ export default function Home() {
             <Box
               component="img"
               src="/logo-icon.webp"
-              alt="TAPPO"
+              alt="SERVIO"
               sx={{ width: 30, height: 30, objectFit: "contain" }}
             />
             <Typography sx={{ fontWeight: 900, color: "secondary.main" }}>
-              TAPPO
+              SERVIO
             </Typography>
           </Stack>
           <Typography variant="body2" color="text.secondary">

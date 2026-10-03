@@ -18,7 +18,7 @@ function ErrorBoundaryView({ error }) {
 export default class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) { return { error }; }
-  componentDidCatch(error, info) { console.error("TAPPO UI error:", error, info?.componentStack); }
+  componentDidCatch(error, info) { console.error("SERVIO UI error:", error, info?.componentStack); }
   render() {
     if (!this.state.error) return this.props.children;
     return <ErrorBoundaryView error={this.state.error} />;

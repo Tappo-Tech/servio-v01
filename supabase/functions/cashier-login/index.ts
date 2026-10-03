@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
     const cashier = verified?.[0];
     if (verifyError || !cashier) return json({ error: "بيانات الكاشير غير صحيحة" }, 401);
 
-    const email = `${cashier.id}@cashier.tappo.internal`;
+    const email = `${cashier.id}@cashier.servio.internal`;
     const metadata = { tenant_id: cashier.tenant_id, full_name: cashier.full_name, role: "cashier" };
     // The PIN is only verified here. The Auth password is a random one-time secret (Auth requires 6+ chars, PINs can be 4).
     const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;

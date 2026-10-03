@@ -23,14 +23,16 @@ function CartDrawer({ open, close }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
   const [notes, setNotes] = useState("");
+  const [sending, setSending] = useState(false);
 
   const totalPrice = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
 
-  const handleConfirmOrder = () => {
-    if (cartItems.length === 0) return;
+  const handleConfirmOrder = async () => {
+    if (cartItems.length === 0 || sending) return;
+    setSending(true);
 
     const newOrder = {
       items: cartItems,
@@ -39,11 +41,12 @@ function CartDrawer({ open, close }) {
       notes: notes,
     };
 
-    addOrder(newOrder);
-
+    const result = await addOrder(newOrder);
+    if (result?.error) { setSending(false); return; }
     clearCart();
     setNotes("");
     close();
+    setSending(false);
   };
 
   const bottomBarHeight = "130px";
@@ -162,7 +165,7 @@ function CartDrawer({ open, close }) {
           fullWidth
           variant="contained"
           size="large"
-          disabled={cartItems.length === 0}
+          disabled={cartItems.length === 0 || sending}
           onClick={handleConfirmOrder}
           sx={{
             py: 1.4,
@@ -171,7 +174,7 @@ function CartDrawer({ open, close }) {
             fontSize: "1rem",
           }}
         >
-          تأكيد وإرسال الطلب
+          {sending ? "جاري الإرسال..." : "تأكيد وإرسال الطلب"}
         </Button>
       </Box>
     </SwipeableDrawer>

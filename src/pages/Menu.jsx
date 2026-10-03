@@ -26,7 +26,7 @@ function Menu() {
   const isValidTable = tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true;
   useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
   if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
-  if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="الرابط لا يشير إلى كافيه مسجل في TAPPO." /></Container>;
+  if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="الرابط لا يشير إلى كافيه مسجل في SERVIO." /></Container>;
   if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="طاولة غير صالحة" message="عذراً، لم نتمكن من التعرف على رقم الطاولة." /></Container>;
   return (
     <Box sx={{ minHeight: "100vh", background: "radial-gradient(circle at 100% 0%, rgba(244,121,32,.08), transparent 28%), linear-gradient(180deg, #fafbfc 0%, #f6f7f9 100%)", pb: 3 }}>
