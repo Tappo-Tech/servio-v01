@@ -8,15 +8,19 @@ export const roundMoney = (value) => {
   return Math.round((number + Number.EPSILON) * 100) / 100;
 };
 
+// يحوّل السعر إلى هللات صحيحة قبل الجمع لتجنّب فروق النقطة العائمة.
+export const toMinorUnits = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.round((number + Number.EPSILON) * 100);
+};
+
 /**
  * تفصل قيمة VAT المضمنة في مبلغ إجمالي شامل للضريبة.
  * يعيد الإجمالي نفسه دون زيادته، ويحسب الضريبة إلى أقرب هللة.
  */
 export function calculateInclusiveVat(grossAmount, ratePercent = KSA_STANDARD_VAT_PERCENT) {
-  const parsedGross = Number(grossAmount);
-  const grossMinorUnits = Number.isFinite(parsedGross)
-    ? Math.max(0, Math.round((parsedGross + Number.EPSILON) * 100))
-    : 0;
+  const grossMinorUnits = Math.max(0, toMinorUnits(grossAmount));
   const validRate = Number.isFinite(Number(ratePercent)) && Number(ratePercent) >= 0
     ? Number(ratePercent)
     : KSA_STANDARD_VAT_PERCENT;

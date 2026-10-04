@@ -2,6 +2,7 @@
 import CartItemCard from "./CartItemCard";
 
 // MUI COMPONENTS
+import Alert from "@mui/material/Alert";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -18,21 +19,26 @@ import { useState } from "react";
 // CONTEXTS
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
+import { calculateInclusiveVat, toMinorUnits } from "../../utils/taxUtils";
 
 function CartDrawer({ open, close }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
 
-  const totalPrice = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+  const totalMinorUnits = cartItems.reduce(
+    (acc, item) => acc + toMinorUnits(item.price) * Number(item.quantity || 0),
     0,
   );
+  const totalPrice = totalMinorUnits / 100;
+  const vatBreakdown = calculateInclusiveVat(totalPrice);
 
   const handleConfirmOrder = async () => {
     if (cartItems.length === 0 || sending) return;
     setSending(true);
+    setSendError("");
 
     const newOrder = {
       items: cartItems,
@@ -41,15 +47,21 @@ function CartDrawer({ open, close }) {
       notes: notes,
     };
 
-    const result = await addOrder(newOrder);
-    if (result?.error) { setSending(false); return; }
-    clearCart();
-    setNotes("");
-    close();
-    setSending(false);
+    try {
+      const result = await addOrder(newOrder);
+      if (result?.error || !result?.data) throw result?.error || new Error("لم يصل تأكيد حفظ الطلب");
+      clearCart();
+      setNotes("");
+      close();
+    } catch (error) {
+      console.error("تعذر إرسال طلب الطاولة:", { code: error?.code, status: error?.status, message: error?.message });
+      setSendError("تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
+    } finally {
+      setSending(false);
+    }
   };
 
-  const bottomBarHeight = "130px";
+  const bottomBarHeight = "220px";
 
   return (
     <SwipeableDrawer
@@ -135,7 +147,8 @@ function CartDrawer({ open, close }) {
 
       <Box
         sx={{
-          height: bottomBarHeight,
+          minHeight: bottomBarHeight,
+          height: "auto",
           p: 2,
           borderTop: "1px solid",
           borderColor: "divider",
@@ -146,20 +159,35 @@ function CartDrawer({ open, close }) {
           justifyContent: "start",
         }}
       >
+        <Box sx={{ mb: 1.2 }}>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: .6 }}>
+            الأسعار شاملة ضريبة القيمة المضافة 15%، والتفصيل أدناه من دون زيادة الإجمالي.
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: .4 }}>
+            <Typography variant="caption" color="text.secondary">المبلغ قبل الضريبة</Typography>
+            <Typography variant="caption">{vatBreakdown.net.toFixed(2)} ر.س</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography variant="caption" color="text.secondary">VAT 15% (مضمنة)</Typography>
+            <Typography variant="caption">{vatBreakdown.vat.toFixed(2)} ر.س</Typography>
+          </Box>
+        </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography
             variant="body1"
             sx={{ color: "text.secondary", fontWeight: 600 }}
           >
-            الإجمالي النهائي:
+            الإجمالي المستحق شامل الضريبة:
           </Typography>
           <Typography
             variant="h6"
             sx={{ fontWeight: 800, color: "primary.main" }}
           >
-            {totalPrice} ر.س
+            {totalPrice.toFixed(2)} ر.س
           </Typography>
         </Box>
+
+        {sendError && <Alert severity="error" sx={{ mb: 1 }}>{sendError}</Alert>}
 
         <Button
           fullWidth
