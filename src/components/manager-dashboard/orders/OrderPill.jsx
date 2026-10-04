@@ -18,9 +18,10 @@ import dayjs from "dayjs";
 // CONTEXTS
 import { useStore } from "../../../context/StoreInfoContext";
 import { useLanguage } from "../../../context/LanguageContext";
+import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
 
 function InvoiceModal({ open, onClose, order }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
 
   if (!order) return null;
@@ -31,6 +32,8 @@ function InvoiceModal({ open, onClose, order }) {
 
   const currency = storeInfo.currency || t("currencySar");
   const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
+  const invoiceAmounts = calculateInclusiveVat(order.total_price);
+  const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency}`;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -84,6 +87,11 @@ function InvoiceModal({ open, onClose, order }) {
               {t("managerTax")}: {storeInfo.tax_number}
             </Typography>
           )}
+          {storeInfo.address && (
+            <Typography variant="caption" display="block" color="text.secondary">
+              {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}
+            </Typography>
+          )}
 
           <Typography
             variant="caption"
@@ -124,7 +132,7 @@ function InvoiceModal({ open, onClose, order }) {
                 {item.name} × {item.quantity}
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {item.price * item.quantity} {currency}
+                {money(roundMoney(Number(item.price) * Number(item.quantity || 1)))}
               </Typography>
             </Box>
           ))}
@@ -138,20 +146,23 @@ function InvoiceModal({ open, onClose, order }) {
           </Typography>
         )}
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            mt: 2,
-            pt: 1,
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            {t("managerTotal")}:
+        <Box sx={{ mt: 2, pt: 1 }}>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
+            {language === "ar" ? "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." : "Item prices include 15% VAT."}
           </Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            {order.total_price} {currency}
-          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: .8 }}>
+            <Typography variant="body2">{language === "ar" ? "المبلغ قبل الضريبة" : "Amount before VAT"}</Typography>
+            <Typography variant="body2">{money(invoiceAmounts.net)}</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Typography variant="body2">{language === "ar" ? "ضريبة القيمة المضافة 15% (مضمنة)" : "VAT 15% (included)"}</Typography>
+            <Typography variant="body2">{money(invoiceAmounts.vat)}</Typography>
+          </Box>
+          <Divider sx={{ borderStyle: "dashed", my: 1 }} />
+          <Box sx={{ display: "flex", justifyContent: "space-between", pt: .3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>{language === "ar" ? "الإجمالي المستحق (شامل الضريبة)" : "Total due (VAT included)"}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>{money(invoiceAmounts.gross)}</Typography>
+          </Box>
         </Box>
 
         <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
@@ -189,7 +200,7 @@ function InvoiceModal({ open, onClose, order }) {
 
       <DialogActions sx={{ p: 2, justifyContent: "space-between" }}>
         <Button onClick={onClose} color="inherit">
-          إغلاق
+          {language === "ar" ? "إغلاق" : "Close"}
         </Button>
         <Button
           variant="contained"
@@ -197,7 +208,7 @@ function InvoiceModal({ open, onClose, order }) {
           onClick={handlePrint}
           color="primary"
         >
-          طباعة
+          {language === "ar" ? "طباعة" : "Print"}
         </Button>
       </DialogActions>
     </Dialog>
