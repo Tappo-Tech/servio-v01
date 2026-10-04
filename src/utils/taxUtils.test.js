@@ -1,4 +1,4 @@
-import { calculateInclusiveVat, KSA_STANDARD_VAT_PERCENT } from "./taxUtils";
+import { calculateInclusiveVat, KSA_STANDARD_VAT_PERCENT, toMinorUnits } from "./taxUtils";
 
 describe("calculateInclusiveVat", () => {
   test("extracts 15% VAT from an inclusive total without changing the amount due", () => {
@@ -21,5 +21,11 @@ describe("calculateInclusiveVat", () => {
   test("treats invalid or negative totals as zero", () => {
     expect(calculateInclusiveVat(-12).gross).toBe(0);
     expect(calculateInclusiveVat("not-a-number").vat).toBe(0);
+    expect(calculateInclusiveVat(Infinity).gross).toBe(0);
+  });
+
+  test("converts cart amounts to integer halalas", () => {
+    expect(toMinorUnits(12.35)).toBe(1235);
+    expect(toMinorUnits("not-a-number")).toBe(0);
   });
 });

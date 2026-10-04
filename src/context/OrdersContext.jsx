@@ -285,6 +285,9 @@ export const OrdersProvider = ({ children }) => {
     const items = compactOrderItems(newOrder.items);
     if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
 
+    // الإكمال الفوري خيار داخلي لشاشة POS فقط؛ لا نسمح بتحويل طلب ضيف الطاولة إلى بيع مكتمل.
+    if (isPublic && newOrder.completeImmediately) return { error: new Error("غير مصرح") };
+
     // للضيف نستخدم RPC آمن بالـ slug؛ كما يفرض ترحيل قاعدة البيانات ضغط العناصر مهما كان العميل قديمًا.
     if (isPublic) {
       const { data, error } = await supabase.rpc("create_public_order", {
@@ -306,6 +309,7 @@ export const OrdersProvider = ({ children }) => {
     }
 
     if (!tenantId) return { error: new Error("لم يكتمل تحميل النشاط بعد") };
+    const completedAt = newOrder.completeImmediately ? new Date().toISOString() : null;
     const { data, error } = await supabase
       .from("orders")
       .insert([{
@@ -314,9 +318,9 @@ export const OrdersProvider = ({ children }) => {
         table_number: String(newOrder.table_number || "غير محدد"),
         notes: newOrder.notes ? String(newOrder.notes) : null,
         tenant_id: tenantId,
-        status: "pending",
-        is_completed: false,
-        completed_at: null,
+        status: completedAt ? "served" : "pending",
+        is_completed: Boolean(completedAt),
+        completed_at: completedAt,
       }])
       .select(ORDER_COLUMNS)
       .single();

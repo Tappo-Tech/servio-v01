@@ -4,15 +4,19 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   Paper,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -24,68 +28,85 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import PointOfSaleRoundedIcon from "@mui/icons-material/PointOfSaleRounded";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import { useMenu } from "../context/MenuContext";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
 import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
-import { calculateInclusiveVat, roundMoney } from "../utils/taxUtils";
+import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
+
+const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
 const copy = {
   ar: {
-    title: "كاشير — طلب جديد",
-    subtitle: "أضف الأصناف، راجع السلة، ثم أرسل الطلب للمطبخ واطبع الإيصال.",
+    title: "كاشير — بيع جديد",
+    subtitle: "اختر الأصناف وعدّل السلة ثم اعتمد البيع مكتملًا وأصدر الفاتورة؛ لا يُرسل هذا الطلب للمطبخ.",
     back: "العودة للطلبات",
     search: "ابحث عن صنف",
     all: "الكل",
     add: "إضافة",
-    cart: "سلة الطلب",
-    empty: "اختر صنفًا من المنيو لبدء الطلب.",
+    cart: "سلة البيع",
+    empty: "اختر صنفًا من المنيو لبدء البيع.",
     clear: "تفريغ السلة",
     location: "رقم الطاولة أو نوع الطلب",
     locationHint: "مثال: 4 أو سفري",
-    notes: "ملاحظات للمطبخ (اختياري)",
-    vatNote: "الأسعار شاملة لضريبة القيمة المضافة 15%؛ تُفصل الضريبة في الفاتورة ولا تزيد المبلغ المستحق.",
+    notes: "ملاحظات على الفاتورة (اختياري)",
+    vatNote: "الأسعار شاملة VAT 15%؛ نفصل الضريبة من الإجمالي من دون زيادته.",
     net: "المبلغ قبل الضريبة",
     vat: "ضريبة القيمة المضافة 15% (مضمنة)",
     gross: "الإجمالي المستحق (شامل الضريبة)",
-    submit: "إرسال للمطبخ وإصدار الفاتورة",
-    submitting: "جارٍ حفظ الطلب…",
-    saved: "تم حفظ الطلب؛ سيظهر الآن في شاشة الطلبات الحية.",
-    error: "تعذر حفظ الطلب. تحقق من الاتصال ثم حاول مرة أخرى.",
+    submit: "اعتماد البيع مكتملًا وطباعة الفاتورة",
+    submitting: "جارٍ حفظ البيع…",
+    saved: "تم تسجيل البيع كمكتمل وإضافته إلى سجل المبيعات وإجمالي اليوم.",
+    error: "تعذر حفظ الفاتورة. تحقق من الاتصال والصلاحية ثم حاول مرة أخرى.",
     noItems: "لا توجد أصناف متاحة تطابق البحث.",
     loading: "جارٍ تحميل المنيو…",
     reload: "إعادة المحاولة",
     image: "صورة الصنف",
     cashier: "طلب كاشير",
+    printerSetup: "إعداد الطابعة",
+    autoPrint: "استدعاء الطباعة تلقائيًا بعد حفظ البيع",
+    printerHelp: "اختبار الطباعة يفتح نافذة الطباعة في المتصفح/النظام لاختيار الطابعة. لا يستطيع الموقع اكتشاف الطابعة أو التحقق من اتصالها. إذا لم تُضبط طابعة افتراضية، اخترها من النافذة؛ وقد تظهر النافذة مع كل فاتورة. الطباعة الصامتة تحتاج إعدادًا خاصًا على جهاز الكاشير.",
+    testPrint: "اختبار الطابعة / اختيارها",
+    close: "إغلاق",
+    printerTestItem: "اختبار الطباعة",
+    printerTestLocation: "اختبار طابعة — لا يوجد طلب",
   },
   en: {
-    title: "Cashier — New order",
-    subtitle: "Add items, review the cart, then send the order to the kitchen and print a receipt.",
+    title: "Cashier — New sale",
+    subtitle: "Choose items, edit the cart, then save the sale as completed and issue its invoice; it is not sent to a kitchen.",
     back: "Back to orders",
     search: "Search menu items",
     all: "All",
     add: "Add",
-    cart: "Order cart",
-    empty: "Choose an item from the menu to start an order.",
+    cart: "Sale cart",
+    empty: "Choose an item from the menu to start a sale.",
     clear: "Clear cart",
     location: "Table number or order type",
     locationHint: "For example: 4 or Takeaway",
-    notes: "Kitchen notes (optional)",
-    vatNote: "Menu prices include 15% VAT; the invoice separates the VAT amount without increasing the amount due.",
+    notes: "Invoice/order notes (optional)",
+    vatNote: "Menu prices include 15% VAT; it is separated from the total without increasing it.",
     net: "Amount before VAT",
     vat: "VAT 15% (included)",
     gross: "Amount due (VAT included)",
-    submit: "Send to kitchen & issue invoice",
-    submitting: "Saving order…",
-    saved: "Order saved and sent to the live kitchen queue.",
-    error: "Could not save the order. Check your connection and try again.",
+    submit: "Complete sale and print invoice",
+    submitting: "Saving sale…",
+    saved: "Sale marked completed and added to history and today's sales.",
+    error: "Could not save the invoice. Check the connection and access, then try again.",
     noItems: "No available items match this search.",
     loading: "Loading menu…",
     reload: "Retry",
     image: "Item image",
-    cashier: "Cashier order",
+    cashier: "Cashier sale",
+    printerSetup: "Printer setup",
+    autoPrint: "Open printing automatically after saving a sale",
+    printerHelp: "Printer test opens the browser/system print window so you can choose a printer. The website cannot detect or verify a connected printer. If no default printer is configured, choose one in the print window; it may appear for every invoice. Silent printing requires special setup on the cashier device.",
+    testPrint: "Test / choose printer",
+    close: "Close",
+    printerTestItem: "Printer test",
+    printerTestLocation: "Printer test — no order",
   },
 };
 
@@ -95,8 +116,8 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
 ).format(Number(value) || 0);
 
 /**
- * نقطة بيع للكاشير: تحتفظ بسلة محلية مستقلة حتى لا تختلط بسلة عميل المنيو العام.
- * تأكيد الطلب يستخدم OrdersContext نفسه، فيُحفظ بحالة pending ويصل للمطبخ عبر Realtime.
+ * شاشة بيع للكاشير: سلة مستقلة، حفظ كمكتمل، وإصدار فاتورة فورًا.
+ * الطباعة تمر عبر نافذة النظام التي يديرها المتصفح؛ لا يتيح الموقع تعداد الطابعات.
  */
 function CashierPOSPage() {
   const navigate = useNavigate();
@@ -116,7 +137,16 @@ function CashierPOSPage() {
   const [saving, setSaving] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [invoiceIsTest, setInvoiceIsTest] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
+  const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
+  const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
+    try {
+      return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  });
 
   const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
   const categories = useMemo(() => categoriesList.filter((category) => (
@@ -130,10 +160,11 @@ function CashierPOSPage() {
     ));
   }, [availableItems, search, selectedCategory]);
 
-  // تُحوّل الأسعار إلى هللات قبل الجمع حتى يبقى إجمالي السلة والفاتورة متطابقين.
-  const grossMinorUnits = cart.reduce((sum, item) => (
-    sum + Math.round((Number(item.price) || 0) * 100) * item.quantity
-  ), 0);
+  // اجمع الأسعار بوحدة الهللة نفسها المستخدمة في شاشة المنيو العامة والفاتورة.
+  const grossMinorUnits = cart.reduce(
+    (sum, item) => sum + toMinorUnits(item.price) * item.quantity,
+    0,
+  );
   const grossAmount = grossMinorUnits / 100;
   const breakdown = calculateInclusiveVat(grossAmount);
   const amount = (value) => `${formatAmount(value, language)} ${currency}`;
@@ -154,6 +185,32 @@ function CashierPOSPage() {
       .filter((item) => item.quantity > 0));
   };
 
+  const handleAutoPrintChange = (event) => {
+    const enabled = event.target.checked;
+    setAutoPrintAfterSave(enabled);
+    try {
+      window.localStorage.setItem(AUTO_PRINT_KEY, String(enabled));
+    } catch {
+      // يستمر الخيار لهذه الجلسة حتى لو منع المتصفح التخزين المحلي.
+    }
+  };
+
+  const openPrinterTest = () => {
+    const now = new Date();
+    setPrinterSetupOpen(false);
+    setCheckoutError("");
+    setSavedMessage("");
+    setInvoiceIsTest(true);
+    setInvoiceOrder({
+      id: `PRINTER-TEST-${now.getTime()}`,
+      created_at: now,
+      table_number: text.printerTestLocation,
+      notes: null,
+      total_price: 0,
+      items: [{ id: "printer-test", name: text.printerTestItem, quantity: 1, price: 0 }],
+    });
+  };
+
   const submitOrder = async () => {
     if (!tenantId || cart.length === 0 || saving) return;
     setSaving(true);
@@ -162,22 +219,29 @@ function CashierPOSPage() {
     try {
       const result = await addOrder({
         items: cart,
-        // total_price يخزّن المبلغ الإجمالي الذي يدفعه الزبون، وهو شامل VAT كما أُكد من المستخدم.
+        // المبلغ المحفوظ مستحق شامل VAT؛ والبيع النقدي المكتمل لا يمر بطابور المطبخ.
         total_price: grossAmount,
         table_number: tableNumber.trim() || text.cashier,
         notes: notes.trim() || null,
+        completeImmediately: true,
       });
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
+      setInvoiceIsTest(false);
       setInvoiceOrder(result.data);
       setCart([]);
       setNotes("");
       setSavedMessage(text.saved);
     } catch (error) {
-      console.error("تعذر إنشاء طلب الكاشير:", error?.message || error);
+      console.error("تعذر حفظ بيع الكاشير:", { code: error?.code, status: error?.status, message: error?.message });
       setCheckoutError(text.error);
     } finally {
       setSaving(false);
     }
+  };
+
+  const closeInvoice = () => {
+    setInvoiceOrder(null);
+    setInvoiceIsTest(false);
   };
 
   return (
@@ -192,9 +256,14 @@ function CashierPOSPage() {
                 <Typography variant="body2" color="text.secondary">{text.subtitle}</Typography>
               </Box>
             </Stack>
-            <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate("/dashboard")} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
-              {text.back}
-            </Button>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+                {text.printerSetup}
+              </Button>
+              <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate("/dashboard")} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+                {text.back}
+              </Button>
+            </Stack>
           </Stack>
         </Paper>
 
@@ -224,25 +293,39 @@ function CashierPOSPage() {
             ) : visibleItems.length === 0 ? (
               <Typography color="text.secondary" align="center" sx={{ py: 8 }}>{text.noItems}</Typography>
             ) : (
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2,minmax(0,1fr))", xl: "repeat(3,minmax(0,1fr))" }, gap: 1.1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: 1 }}>
                 {visibleItems.map((item) => (
-                  <Card key={item.id} elevation={0} sx={{ border: "1px solid rgba(23,26,47,.1)", borderRadius: 2.5, overflow: "hidden", transition: "transform .16s ease, box-shadow .16s ease", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(23,26,47,.09)" } }}>
-                    <CardActionArea onClick={() => addItem(item)} sx={{ p: 1.1, minHeight: 112 }}>
-                      <Stack direction="row" alignItems="center" spacing={1.2}>
-                        {item.image ? (
-                          <Box component="img" src={item.image} alt={item.name || text.image} loading="lazy" sx={{ width: 72, height: 78, borderRadius: 1.8, objectFit: "cover", flex: "0 0 auto", bgcolor: "grey.100" }} onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
-                        ) : (
-                          <Box sx={{ width: 72, height: 78, borderRadius: 1.8, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.08)", color: "primary.main", flex: "0 0 auto" }}><ReceiptLongRoundedIcon /></Box>
-                        )}
-                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                          <Typography fontWeight={850} sx={{ lineHeight: 1.35 }}>{item.name}</Typography>
-                          <Typography variant="body2" fontWeight={800} color="primary.main" sx={{ mt: .6 }}>{amount(item.price)}</Typography>
-                          <Typography variant="caption" color="text.secondary">{text.add}</Typography>
-                        </Box>
-                        <AddRoundedIcon color="primary" />
-                      </Stack>
-                    </CardActionArea>
-                  </Card>
+                  <Button
+                    key={item.id}
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => addItem(item)}
+                    aria-label={`${text.add} ${item.name || text.image} ${amount(item.price)}`}
+                    sx={{
+                      minHeight: 86,
+                      px: 1,
+                      py: 1,
+                      borderColor: "rgba(23,26,47,.14)",
+                      borderRadius: 2.5,
+                      color: "text.primary",
+                      textAlign: language === "ar" ? "right" : "left",
+                      justifyContent: "space-between",
+                      "&:hover": { borderColor: "primary.main", bgcolor: "rgba(244,121,32,.05)" },
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={0.8} sx={{ minWidth: 0, flex: 1 }}>
+                      {item.image ? (
+                        <Box component="img" src={item.image} alt={item.name || text.image} loading="lazy" sx={{ width: 42, height: 42, borderRadius: 1.4, objectFit: "cover", flex: "0 0 auto", bgcolor: "grey.100" }} onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
+                      ) : (
+                        <Box sx={{ width: 42, height: 42, borderRadius: 1.4, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.08)", color: "primary.main", flex: "0 0 auto" }}><ReceiptLongRoundedIcon fontSize="small" /></Box>
+                      )}
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" fontWeight={850} noWrap>{item.name}</Typography>
+                        <Typography variant="caption" fontWeight={850} color="primary.main">{amount(item.price)}</Typography>
+                      </Box>
+                    </Stack>
+                    <AddRoundedIcon fontSize="small" color="primary" sx={{ flex: "0 0 auto", ml: .4 }} />
+                  </Button>
                 ))}
               </Box>
             )}
@@ -259,7 +342,7 @@ function CashierPOSPage() {
             ) : (
               <Stack spacing={1.1} sx={{ py: 1.5, maxHeight: { lg: "40vh" }, overflowY: "auto" }}>
                 {cart.map((item) => {
-                  const lineTotal = Math.round(Number(item.price) * 100) * item.quantity / 100;
+                  const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
                   return (
                     <Box key={item.id} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, alignItems: "center", py: .7 }}>
                       <Box sx={{ minWidth: 0 }}><Typography fontWeight={800} noWrap>{item.name}</Typography><Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography></Box>
@@ -296,7 +379,29 @@ function CashierPOSPage() {
           </Paper>
         </Box>
       </Box>
-      <InvoiceModal open={Boolean(invoiceOrder)} onClose={() => setInvoiceOrder(null)} order={invoiceOrder} />
+
+      <Dialog open={printerSetupOpen} onClose={() => setPrinterSetupOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle dir={language === "ar" ? "rtl" : "ltr"}>{text.printerSetup}</DialogTitle>
+        <DialogContent dir={language === "ar" ? "rtl" : "ltr"}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>{text.printerHelp}</Typography>
+          <FormControlLabel
+            control={<Switch checked={autoPrintAfterSave} onChange={handleAutoPrintChange} />}
+            label={text.autoPrint}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, justifyContent: "space-between" }}>
+          <Button onClick={() => setPrinterSetupOpen(false)} color="inherit">{text.close}</Button>
+          <Button variant="contained" startIcon={<PrintRoundedIcon />} onClick={openPrinterTest}>{text.testPrint}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <InvoiceModal
+        open={Boolean(invoiceOrder)}
+        onClose={closeInvoice}
+        order={invoiceOrder}
+        autoPrint={autoPrintAfterSave || invoiceIsTest}
+        isTest={invoiceIsTest}
+      />
     </Box>
   );
 }

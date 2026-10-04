@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 // MUI COMPONENTS
 import {
   Dialog,
@@ -20,9 +22,25 @@ import { useStore } from "../../../context/StoreInfoContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
 
-function InvoiceModal({ open, onClose, order }) {
+function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false }) {
   const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
+  const autoPrintedOrderRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) {
+      autoPrintedOrderRef.current = null;
+      return undefined;
+    }
+    if (!autoPrint || !order?.id || autoPrintedOrderRef.current === order.id) return undefined;
+
+    // نافذة الطباعة يحددها المتصفح/نظام التشغيل؛ يبقى زر الطباعة اليدوي متاحًا كمسار احتياطي.
+    const timer = window.setTimeout(() => {
+      autoPrintedOrderRef.current = order.id;
+      window.print();
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [autoPrint, open, order?.id]);
 
   if (!order) return null;
 
@@ -100,6 +118,11 @@ function InvoiceModal({ open, onClose, order }) {
           >
             {t("invoiceSimple")}
           </Typography>
+          {isTest && (
+            <Typography variant="caption" color="warning.main" display="block" sx={{ mt: .6, fontWeight: 900 }}>
+              {language === "ar" ? "اختبار الطابعة — ليست فاتورة بيع" : "Printer test — not a sale invoice"}
+            </Typography>
+          )}
           <Typography variant="caption" display="block">
             {dayjs(order.created_at).format("DD/MM/YY · hh:mm A")}
           </Typography>
