@@ -6,7 +6,7 @@ describe("receipt HTML", () => {
     created_at: "2026-10-05T03:00:00Z",
     table_number: "محل - 4",
     total_price: 115,
-    items: [{ id: "tea", name: "شاي <script>alert(1)</script>", quantity: 1, price: 115 }],
+    items: [{ id: "tea", name: "شاي <script>alert(1)</script>", quantity: 1, price: 115, selected_addons: [{ id: null, name: "عسل <b>" }] }],
   };
 
   test("escapes user-controlled text before placing it in the receipt document", () => {
@@ -15,6 +15,8 @@ describe("receipt HTML", () => {
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(html).not.toContain("<script>alert(1)</script>");
     expect(html).toContain("&lt;SERVIO&gt;");
+    expect(html).toContain("إضافات: عسل &lt;b&gt;");
+    expect(html).not.toContain("عسل <b>");
   });
 
   test.each([["58mm", "58mm"], ["80mm", "80mm"], ["A4", "210mm"]])("uses the requested %s width", (paperWidth, expectedCssWidth) => {

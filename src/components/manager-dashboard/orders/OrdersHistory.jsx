@@ -59,7 +59,7 @@ const renderStatusChip = (status, t) => {
   );
 };
 
-function OrderRow({ order, currency, t }) {
+function OrderRow({ order, currency, t, language }) {
   const [open, setOpen] = useState(false);
   const [openInvoice, setOpenInvoice] = useState(false);
   const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
@@ -150,9 +150,17 @@ function OrderRow({ order, currency, t }) {
                       borderRadius: 1,
                     }}
                   >
-                    <Typography variant="body2">
-                      {item.name} × {item.quantity}
-                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2">
+                        {item.name} × {item.quantity}
+                      </Typography>
+                      {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {language === "ar" ? "إضافات: " : "Add-ons: "}
+                          {item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}
+                        </Typography>
+                      )}
+                    </Box>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
                       {item.price * item.quantity} {currency}
                     </Typography>
@@ -179,7 +187,7 @@ function OrderRow({ order, currency, t }) {
 }
 
 function OrdersHistory() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { orders = [] } = useOrders();
   const { storeInfo } = useStore();
   const currency = storeInfo?.currency || t("currencySar");
@@ -294,7 +302,7 @@ function OrdersHistory() {
           <TableBody>
             {filteredOrders.length > 0 ? (
               filteredOrders.map((order) => (
-                <OrderRow key={order.id} order={order} currency={currency} t={t} />
+                <OrderRow key={order.id} order={order} currency={currency} t={t} language={language} />
               ))
             ) : (
               <TableRow>

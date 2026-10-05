@@ -2,9 +2,10 @@ import { useCallback, useState, useContext, useMemo, createContext, useEffect, u
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { createRequestGuard } from "../utils/requestGuard";
+import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../utils/menuItemOptions";
 
 const MenuContext = createContext();
-const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,recommendation_item_ids";
+const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
 
 export const MenuProvider = ({ children }) => {
   const { slug, tenantId, isPublic, isTracking, loading: tenantLoading } = useTenant();
@@ -199,7 +200,25 @@ export const MenuProvider = ({ children }) => {
 
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const row = { id: newItem.id, name: newItem.name, price: newItem.price, category_id: newItem.category_id, description: newItem.description, image: newItem.image, allergens: newItem.allergens, tags: newItem.tags, available: newItem.available, recommendation_item_ids: Array.isArray(newItem.recommendation_item_ids) ? newItem.recommendation_item_ids : [], tenant_id: tenantId };
+    const addonOptions = normalizeAddonOptions(newItem.addon_options);
+    const freeAddonItemIds = normalizeAddonItemIds(newItem.free_addon_item_ids).filter((id) => id !== newItem.id);
+    const maxAddons = normalizeAddonLimit(newItem.max_addons, addonOptions.length + freeAddonItemIds.length);
+    const row = {
+      id: newItem.id,
+      name: newItem.name,
+      price: newItem.price,
+      category_id: newItem.category_id,
+      description: newItem.description,
+      image: newItem.image,
+      allergens: newItem.allergens,
+      tags: newItem.tags,
+      available: newItem.available,
+      recommendation_item_ids: Array.isArray(newItem.recommendation_item_ids) ? newItem.recommendation_item_ids : [],
+      addon_options: addonOptions,
+      free_addon_item_ids: freeAddonItemIds,
+      max_addons: maxAddons,
+      tenant_id: tenantId,
+    };
     const { data, error } = await supabase.from("menu_items").insert([row]).select(MENU_ITEM_COLUMNS).single();
     const savedItem = data ? { ...data, image: newItem.image || null } : data;
     if (!error && savedItem) setItems((prev) => [savedItem, ...prev.filter((item) => item.id !== savedItem.id)]);
@@ -209,7 +228,10 @@ export const MenuProvider = ({ children }) => {
   const updateItem = (updatedItem) => guard(`menu:update-item:${updatedItem.id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const recommendationIds = Array.isArray(updatedItem.recommendation_item_ids) ? updatedItem.recommendation_item_ids.filter((id) => id && id !== updatedItem.id) : [];
-    const { data, error } = await supabase.from("menu_items").update({ name: updatedItem.name, price: updatedItem.price, category_id: updatedItem.category_id, description: updatedItem.description, image: updatedItem.image, allergens: updatedItem.allergens, tags: updatedItem.tags, available: updatedItem.available, recommendation_item_ids: recommendationIds }).eq("id", updatedItem.id).eq("tenant_id", tenantId).select(MENU_ITEM_COLUMNS).maybeSingle();
+    const addonOptions = normalizeAddonOptions(updatedItem.addon_options);
+    const freeAddonItemIds = normalizeAddonItemIds(updatedItem.free_addon_item_ids).filter((id) => id !== updatedItem.id);
+    const maxAddons = normalizeAddonLimit(updatedItem.max_addons, addonOptions.length + freeAddonItemIds.length);
+    const { data, error } = await supabase.from("menu_items").update({ name: updatedItem.name, price: updatedItem.price, category_id: updatedItem.category_id, description: updatedItem.description, image: updatedItem.image, allergens: updatedItem.allergens, tags: updatedItem.tags, available: updatedItem.available, recommendation_item_ids: recommendationIds, addon_options: addonOptions, free_addon_item_ids: freeAddonItemIds, max_addons: maxAddons }).eq("id", updatedItem.id).eq("tenant_id", tenantId).select(MENU_ITEM_COLUMNS).maybeSingle();
     const savedItem = data ? { ...data, image: updatedItem.image || null } : data;
     if (!error && savedItem) setItems((prev) => prev.map((item) => item.id === updatedItem.id ? savedItem : item));
     return { data: savedItem, error: error || (!data ? new Error("لم يتم العثور على الصنف") : null) };

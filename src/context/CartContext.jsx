@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { toggleSelectedAddon } from "../utils/menuItemOptions";
 
 const CartContext = createContext();
 
@@ -29,9 +30,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (item, quantityToAdd = 1) => {
     setCartItems((prevCartItems) => {
-      const existingItemIndex = prevCartItems.findIndex(
-        (cartItem) => cartItem.id === item.id,
-      );
+      const existingItemIndex = prevCartItems.findIndex((cartItem) => cartItem.id === item.id);
 
       if (existingItemIndex !== -1) {
         const updatedCart = [...prevCartItems];
@@ -42,14 +41,12 @@ export const CartProvider = ({ children }) => {
         return updatedCart;
       }
 
-      return [...prevCartItems, { ...item, quantity: quantityToAdd }];
+      return [...prevCartItems, { ...item, quantity: quantityToAdd, selected_addons: [] }];
     });
   };
 
   const removeFromCart = (itemId) => {
-    setCartItems((prevCartItems) =>
-      prevCartItems.filter((cartItem) => cartItem.id !== itemId),
-    );
+    setCartItems((prevCartItems) => prevCartItems.filter((cartItem) => cartItem.id !== itemId));
   };
 
   const updatedQuantity = (itemId, currentQuantity) => {
@@ -58,11 +55,17 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, quantity: currentQuantity } : item,
-      ),
-    );
+    setCartItems((prev) => prev.map((item) => item.id === itemId ? { ...item, quantity: currentQuantity } : item));
+  };
+
+  const toggleCartItemAddon = (itemId, choice, choices) => {
+    setCartItems((previous) => previous.map((item) => {
+      if (item.id !== itemId) return item;
+      return {
+        ...item,
+        selected_addons: toggleSelectedAddon(item.selected_addons, choice, choices, item.max_addons),
+      };
+    }));
   };
 
   const clearCart = () => {
@@ -72,22 +75,11 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{
-        tableNumber,
-        setTable,
-        cartItems,
-        addToCart,
-        removeFromCart,
-        updatedQuantity,
-        clearCart,
-      }}
+      value={{ tableNumber, setTable, cartItems, addToCart, removeFromCart, updatedQuantity, toggleCartItemAddon, clearCart }}
     >
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  return context;
-};
+export const useCart = () => useContext(CartContext);

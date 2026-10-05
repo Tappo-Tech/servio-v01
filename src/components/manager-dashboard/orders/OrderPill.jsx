@@ -178,9 +178,17 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
                 mb: 1,
               }}
             >
-              <Typography variant="body2">
-                {item.name} × {item.quantity}
-              </Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2">
+                  {item.name} × {item.quantity}
+                </Typography>
+                {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    {language === "ar" ? "إضافات: " : "Add-ons: "}
+                    {item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}
+                  </Typography>
+                )}
+              </Box>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
                 {money(roundMoney(Number(item.price) * Number(item.quantity || 1)))}
               </Typography>
