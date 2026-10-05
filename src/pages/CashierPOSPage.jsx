@@ -6,6 +6,10 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   InputAdornment,
@@ -23,6 +27,9 @@ import PointOfSaleRoundedIcon from "@mui/icons-material/PointOfSaleRounded";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
+import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import { v4 as uuidV4 } from "uuid";
 import { useMenu } from "../context/MenuContext";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
@@ -31,6 +38,8 @@ import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
+import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
+import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -63,6 +72,12 @@ const copy = {
     loading: "جارٍ تحميل المنيو…",
     reload: "إعادة المحاولة",
     image: "صورة الصنف",
+    addonsTitle: "اختر الإضافات المجانية",
+    addonBadge: "إضافات",
+    addonsLimit: "اختَر حتى",
+    addonsHint: "الإضافات لا تزيد سعر الصنف. اختر الخيارات المطلوبة قبل الإضافة للسلة.",
+    addToSale: "إضافة إلى سلة البيع",
+    cancel: "إلغاء",
     cashier: "طلب كاشير",
     printerSetup: "إعداد الطابعة",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع عبر QZ Tray",
@@ -100,6 +115,12 @@ const copy = {
     loading: "Loading menu…",
     reload: "Retry",
     image: "Item image",
+    addonsTitle: "Choose free add-ons",
+    addonBadge: "Add-ons",
+    addonsLimit: "Choose up to",
+    addonsHint: "Add-ons do not change the item price. Choose options before adding it to the sale.",
+    addToSale: "Add to sale cart",
+    cancel: "Cancel",
     cashier: "Cashier sale",
     printerSetup: "Printer setup",
     autoPrint: "Send the receipt automatically through QZ Tray after saving a sale",
@@ -139,6 +160,8 @@ function CashierPOSPage() {
   const [saving, setSaving] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [addonDialogItem, setAddonDialogItem] = useState(null);
+  const [addonDraft, setAddonDraft] = useState([]);
   const [invoiceIsTest, setInvoiceIsTest] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
@@ -151,6 +174,9 @@ function CashierPOSPage() {
   });
 
   const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
+  const addonChoiceCounts = useMemo(() => new Map(availableItems.map((item) => (
+    [String(item.id), buildAddonChoices(item, availableItems).length]
+  ))), [availableItems]);
   const categories = useMemo(() => categoriesList.filter((category) => (
     availableItems.some((item) => item.category_id === category.id)
   )), [categoriesList, availableItems]);
@@ -161,6 +187,10 @@ function CashierPOSPage() {
       (!normalizedSearch || `${item.name || ""} ${item.description || ""}`.toLocaleLowerCase().includes(normalizedSearch))
     ));
   }, [availableItems, search, selectedCategory]);
+  const addonDialogChoices = addonDialogItem ? buildAddonChoices(addonDialogItem, availableItems) : [];
+  const addonDialogLimit = addonDialogItem ? normalizeAddonLimit(addonDialogItem.max_addons, addonDialogChoices.length) : 0;
+  const normalizedAddonDraft = normalizeSelectedAddons(addonDraft, addonDialogChoices, addonDialogLimit);
+  const selectedAddonKeys = new Set(normalizedAddonDraft.map((addon) => addon.id ? `item:${addon.id}` : `text:${addon.name.toLocaleLowerCase()}`));
 
   // اجمع الأسعار بوحدة الهللة نفسها المستخدمة في شاشة المنيو العامة والفاتورة.
   const grossMinorUnits = cart.reduce(
@@ -171,19 +201,58 @@ function CashierPOSPage() {
   const breakdown = calculateInclusiveVat(grossAmount);
   const amount = (value) => `${formatAmount(value, language)} ${currency}`;
 
-  const addItem = (menuItem) => {
+  const addItem = (menuItem, selectedAddons = []) => {
     setSavedMessage("");
     setCheckoutError("");
+    const choices = buildAddonChoices(menuItem, availableItems);
+    const addonOptions = normalizeAddonOptions(menuItem.addon_options);
+    const freeAddonItemIds = normalizeAddonItemIds(menuItem.free_addon_item_ids);
+    const maxAddons = normalizeAddonLimit(menuItem.max_addons, choices.length);
+    const normalizedAddons = normalizeSelectedAddons(selectedAddons, choices, maxAddons);
+    const selectionSignature = getAddonSelectionSignature(normalizedAddons);
+    const newLine = {
+      id: menuItem.id,
+      cartItemId: uuidV4(),
+      name: menuItem.name,
+      price: roundMoney(menuItem.price),
+      quantity: 1,
+      addon_options: addonOptions,
+      free_addon_item_ids: freeAddonItemIds,
+      max_addons: maxAddons,
+      selected_addons: normalizedAddons,
+    };
     setCart((current) => {
-      const existing = current.find((row) => row.id === menuItem.id);
-      if (existing) return current.map((row) => row.id === menuItem.id ? { ...row, quantity: row.quantity + 1 } : row);
-      return [...current, { id: menuItem.id, name: menuItem.name, price: roundMoney(menuItem.price), quantity: 1 }];
+      const existing = current.find((row) => row.id === menuItem.id && getAddonSelectionSignature(row.selected_addons) === selectionSignature);
+      if (existing) return current.map((row) => row.cartItemId === existing.cartItemId ? { ...row, quantity: row.quantity + 1 } : row);
+      return [...current, newLine];
     });
   };
 
-  const changeQuantity = (itemId, delta) => {
+  const handleSelectItem = (menuItem) => {
+    const choices = buildAddonChoices(menuItem, availableItems);
+    if (normalizeAddonLimit(menuItem.max_addons, choices.length) > 0 && choices.length > 0) {
+      setAddonDraft([]);
+      setAddonDialogItem(menuItem);
+      return;
+    }
+    addItem(menuItem);
+  };
+
+  const confirmAddonSelection = () => {
+    if (!addonDialogItem) return;
+    addItem(addonDialogItem, normalizedAddonDraft);
+    setAddonDraft([]);
+    setAddonDialogItem(null);
+  };
+
+  const closeAddonDialog = () => {
+    setAddonDraft([]);
+    setAddonDialogItem(null);
+  };
+
+  const changeQuantity = (lineId, delta) => {
     setCart((current) => current
-      .map((item) => item.id === itemId ? { ...item, quantity: item.quantity + delta } : item)
+      .map((item) => getCartLineKey(item) === String(lineId) ? { ...item, quantity: item.quantity + delta } : item)
       .filter((item) => item.quantity > 0));
   };
 
@@ -323,7 +392,7 @@ function CashierPOSPage() {
                     key={item.id}
                     fullWidth
                     variant="outlined"
-                    onClick={() => addItem(item)}
+                    onClick={() => handleSelectItem(item)}
                     aria-label={`${text.add} ${item.name || text.image} ${amount(item.price)}`}
                     sx={{
                       minHeight: 86,
@@ -345,7 +414,12 @@ function CashierPOSPage() {
                       )}
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="body2" fontWeight={850} noWrap>{item.name}</Typography>
-                        <Typography variant="caption" fontWeight={850} color="primary.main">{amount(item.price)}</Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.55}>
+                          <Typography variant="caption" fontWeight={850} color="primary.main">{amount(item.price)}</Typography>
+                          {normalizeAddonLimit(item.max_addons, addonChoiceCounts.get(String(item.id)) || 0) > 0 && (
+                            <Chip label={text.addonBadge} size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: "0.58rem", fontWeight: 850, "& .MuiChip-label": { px: 0.7 } }} />
+                          )}
+                        </Stack>
                       </Box>
                     </Stack>
                     <AddRoundedIcon fontSize="small" color="primary" sx={{ flex: "0 0 auto", ml: .4 }} />
@@ -367,13 +441,22 @@ function CashierPOSPage() {
               <Stack spacing={1.1} sx={{ py: 1.5, maxHeight: { lg: "40vh" }, overflowY: "auto" }}>
                 {cart.map((item) => {
                   const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
+                  const lineId = getCartLineKey(item);
                   return (
-                    <Box key={item.id} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, alignItems: "center", py: .7 }}>
-                      <Box sx={{ minWidth: 0 }}><Typography fontWeight={800} noWrap>{item.name}</Typography><Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography></Box>
+                    <Box key={lineId} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, alignItems: "center", py: .7 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography fontWeight={800} noWrap>{item.name}</Typography>
+                        {item.selected_addons?.length > 0 && (
+                          <Typography variant="caption" color="primary.main" display="block" sx={{ overflowWrap: "anywhere" }}>
+                            {item.selected_addons.map((addon) => addon.name).join(language === "ar" ? "، " : ", ")}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography>
+                      </Box>
                       <Stack direction="row" alignItems="center" spacing={.2}>
-                        <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(item.id, -1)}><RemoveRoundedIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)}><RemoveRoundedIcon fontSize="small" /></IconButton>
                         <Typography sx={{ minWidth: 22, textAlign: "center", fontWeight: 900 }}>{item.quantity}</Typography>
-                        <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(item.id, 1)}><AddRoundedIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)}><AddRoundedIcon fontSize="small" /></IconButton>
                       </Stack>
                     </Box>
                   );
@@ -411,6 +494,50 @@ function CashierPOSPage() {
         onAutoPrintChange={handleAutoPrintChange}
         onTest={openPrinterTest}
       />
+
+      <Dialog open={Boolean(addonDialogItem)} onClose={closeAddonDialog} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 950 }}>{text.addonsTitle}</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={1.5}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={850} noWrap>{addonDialogItem?.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{amount(addonDialogItem?.price)}</Typography>
+              </Box>
+              <Chip
+                size="small"
+                color={normalizedAddonDraft.length >= addonDialogLimit ? "primary" : "default"}
+                label={`${normalizedAddonDraft.length} / ${addonDialogLimit}`}
+                sx={{ fontWeight: 900, borderRadius: 1.5 }}
+              />
+            </Stack>
+            <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.8}>
+              {addonDialogChoices.map((choice) => {
+                const selected = selectedAddonKeys.has(choice.key);
+                const atLimit = normalizedAddonDraft.length >= addonDialogLimit;
+                return (
+                  <Button
+                    key={choice.key}
+                    variant={selected ? "contained" : "outlined"}
+                    color={selected ? "primary" : "inherit"}
+                    disabled={!selected && atLimit}
+                    startIcon={selected ? <CheckCircleRoundedIcon /> : <AddCircleOutlineRoundedIcon />}
+                    onClick={() => setAddonDraft((current) => toggleSelectedAddon(current, choice, addonDialogChoices, addonDialogLimit))}
+                    sx={{ borderRadius: 2, fontWeight: 800, whiteSpace: "nowrap", textTransform: "none" }}
+                  >
+                    {choice.name}
+                  </Button>
+                );
+              })}
+            </Stack>
+            <Typography variant="caption" color="text.secondary">{text.addonsHint}</Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={closeAddonDialog} color="inherit">{text.cancel}</Button>
+          <Button onClick={confirmAddonSelection} variant="contained" sx={{ fontWeight: 850 }}>{text.addToSale}</Button>
+        </DialogActions>
+      </Dialog>
 
       <InvoiceModal
         open={Boolean(invoiceOrder)}

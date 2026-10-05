@@ -22,6 +22,7 @@ import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useTenant } from "../../context/TenantContext";
 import { calculateInclusiveVat, toMinorUnits } from "../../utils/taxUtils";
+import { getCartLineKey } from "../../utils/cartItemUtils";
 
 function CartDrawer({ open, close }) {
   const { cartItems, tableNumber, clearCart } = useCart();
@@ -38,6 +39,7 @@ function CartDrawer({ open, close }) {
   );
   const totalPrice = totalMinorUnits / 100;
   const vatBreakdown = calculateInclusiveVat(totalPrice);
+  const itemCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
   const handleConfirmOrder = async () => {
     if (cartItems.length === 0 || sending) return;
@@ -128,7 +130,7 @@ function CartDrawer({ open, close }) {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              ملخص الطلب ({cartItems.length})
+              ملخص الطلب ({itemCount})
             </Typography>
             <IconButton size="small" onClick={close}>
               <CloseIcon />
@@ -137,7 +139,7 @@ function CartDrawer({ open, close }) {
         </Box>
 
         {cartItems.map((item) => (
-          <CartItemCard key={item.id} cartItemDetails={item} />
+          <CartItemCard key={getCartLineKey(item)} cartItemDetails={item} />
         ))}
 
         <TextField

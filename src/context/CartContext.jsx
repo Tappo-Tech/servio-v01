@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { v4 as uuidV4 } from "uuid";
 import { toggleSelectedAddon } from "../utils/menuItemOptions";
+import { getAddonSelectionSignature, getCartLineKey, splitCartLine } from "../utils/cartItemUtils";
 
 const CartContext = createContext();
 
@@ -29,38 +31,53 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const addToCart = (item, quantityToAdd = 1) => {
-    setCartItems((prevCartItems) => {
-      const existingItemIndex = prevCartItems.findIndex((cartItem) => cartItem.id === item.id);
+    setCartItems((previousItems) => {
+      const signature = getAddonSelectionSignature(item.selected_addons);
+      const existingIndex = previousItems.findIndex((cartItem) => (
+        cartItem.id === item.id && getAddonSelectionSignature(cartItem.selected_addons) === signature
+      ));
 
-      if (existingItemIndex !== -1) {
-        const updatedCart = [...prevCartItems];
-        updatedCart[existingItemIndex] = {
-          ...updatedCart[existingItemIndex],
-          quantity: updatedCart[existingItemIndex].quantity + quantityToAdd,
+      if (existingIndex !== -1) {
+        const updated = [...previousItems];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: Number(updated[existingIndex].quantity || 0) + quantityToAdd,
         };
-        return updatedCart;
+        return updated;
       }
 
-      return [...prevCartItems, { ...item, quantity: quantityToAdd, selected_addons: [] }];
+      return [...previousItems, {
+        ...item,
+        cartItemId: item.cartItemId || uuidV4(),
+        quantity: quantityToAdd,
+        selected_addons: Array.isArray(item.selected_addons) ? item.selected_addons : [],
+      }];
     });
   };
 
-  const removeFromCart = (itemId) => {
-    setCartItems((prevCartItems) => prevCartItems.filter((cartItem) => cartItem.id !== itemId));
+  // Split one unit out of a multi-quantity row; with one unit, add another independently configurable unit.
+  const addSeparateCartItem = (lineId) => {
+    setCartItems((previousItems) => splitCartLine(previousItems, lineId, uuidV4()));
   };
 
-  const updatedQuantity = (itemId, currentQuantity) => {
+  const removeFromCart = (lineId) => {
+    setCartItems((previousItems) => previousItems.filter((item) => getCartLineKey(item) !== String(lineId)));
+  };
+
+  const updatedQuantity = (lineId, currentQuantity) => {
     if (currentQuantity <= 0) {
-      setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+      removeFromCart(lineId);
       return;
     }
 
-    setCartItems((prev) => prev.map((item) => item.id === itemId ? { ...item, quantity: currentQuantity } : item));
+    setCartItems((previousItems) => previousItems.map((item) => (
+      getCartLineKey(item) === String(lineId) ? { ...item, quantity: currentQuantity } : item
+    )));
   };
 
-  const toggleCartItemAddon = (itemId, choice, choices) => {
-    setCartItems((previous) => previous.map((item) => {
-      if (item.id !== itemId) return item;
+  const toggleCartItemAddon = (lineId, choice, choices) => {
+    setCartItems((previousItems) => previousItems.map((item) => {
+      if (getCartLineKey(item) !== String(lineId)) return item;
       return {
         ...item,
         selected_addons: toggleSelectedAddon(item.selected_addons, choice, choices, item.max_addons),
@@ -75,7 +92,7 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ tableNumber, setTable, cartItems, addToCart, removeFromCart, updatedQuantity, toggleCartItemAddon, clearCart }}
+      value={{ tableNumber, setTable, cartItems, addToCart, addSeparateCartItem, removeFromCart, updatedQuantity, toggleCartItemAddon, clearCart }}
     >
       {children}
     </CartContext.Provider>
