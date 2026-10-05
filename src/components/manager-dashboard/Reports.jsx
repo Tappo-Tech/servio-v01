@@ -17,9 +17,10 @@ import {
   TableRow,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { BarChart } from "@mui/x-charts/BarChart";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import LocalPrintshopOutlinedIcon from "@mui/icons-material/LocalPrintshopOutlined";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -130,13 +131,12 @@ function createReportRows(report, text, from, to, currency) {
   ];
 }
 
-function MetricCard({ title, value, detail, accent = "primary.main" }) {
+function MetricCard({ title, value, detail }) {
   return (
-    <Card className="reports-print-card" elevation={0} sx={{ height: "100%", borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: "relative", overflow: "hidden" }}>
-      <Box sx={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: 4, bgcolor: accent }} />
-      <CardContent sx={{ p: { xs: 1.8, sm: 2.2 }, "&:last-child": { pb: { xs: 1.8, sm: 2.2 } } }}>
-        <Typography variant="body2" color="text.secondary" fontWeight={700} sx={{ lineHeight: 1.5 }}>{title}</Typography>
-        <Typography variant="h5" fontWeight={950} sx={{ mt: 1, fontSize: { xs: "1.25rem", sm: "1.45rem" }, overflowWrap: "anywhere" }}>{value}</Typography>
+    <Card className="reports-print-card" elevation={0} sx={{ height: "100%", borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
+      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+        <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ lineHeight: 1.5, minHeight: 42 }}>{title}</Typography>
+        <Typography variant="h5" fontWeight={800} sx={{ mt: 1, fontSize: { xs: "1.2rem", sm: "1.45rem" }, color: "text.primary", overflowWrap: "anywhere" }}>{value}</Typography>
         {detail && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: .5 }}>{detail}</Typography>}
       </CardContent>
     </Card>
@@ -144,6 +144,7 @@ function MetricCard({ title, value, detail, accent = "primary.main" }) {
 }
 
 function Reports() {
+  const theme = useTheme();
   const { tenantId, storeInfo, loading: tenantLoading } = useTenant();
   const { language, t } = useLanguage();
   const text = COPY[language] || COPY.ar;
@@ -216,9 +217,6 @@ function Reports() {
   const fromLabel = localDateForDisplay(range.from, locale);
   const toLabel = localDateForDisplay(range.to, locale);
   const rangeLabel = range.from === range.to ? fromLabel : `${fromLabel} – ${toLabel}`;
-  const seriesMax = Math.max(1, ...series.map((point) => point.total));
-  const chartMinimumWidth = period === "daily" ? 760 : period === "monthly" ? 700 : 0;
-
   const handleCsvDownload = () => {
     const csv = createCsvText(createReportRows(report, text, range.from, range.to, currency));
     const blobUrl = window.URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -230,12 +228,12 @@ function Reports() {
   };
 
   const metricCards = [
-    { title: text.gross, value: formatMoney(report.gross), accent: "primary.main" },
-    { title: text.net, value: formatMoney(report.net), accent: "secondary.main" },
-    { title: text.vat, value: formatMoney(report.vat), accent: "success.main" },
-    { title: text.orders, value: new Intl.NumberFormat(locale).format(report.orderCount), accent: "info.main" },
-    { title: text.average, value: formatMoney(report.averageOrder), accent: "warning.main" },
-    { title: text.itemQuantity, value: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(report.itemQuantity), accent: "secondary.light" },
+    { title: text.gross, value: formatMoney(report.gross) },
+    { title: text.net, value: formatMoney(report.net) },
+    { title: text.vat, value: formatMoney(report.vat) },
+    { title: text.orders, value: new Intl.NumberFormat(locale).format(report.orderCount) },
+    { title: text.average, value: formatMoney(report.averageOrder) },
+    { title: text.itemQuantity, value: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(report.itemQuantity) },
   ];
 
   return (
@@ -244,13 +242,15 @@ function Reports() {
       <Stack spacing={{ xs: 2, md: 2.5 }}>
         <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" gap={1.5}>
           <Stack direction="row" alignItems="center" spacing={1.2}>
-            <AssessmentOutlinedIcon color="primary" sx={{ fontSize: { xs: 30, sm: 36 } }} />
+            <Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "12px", bgcolor: "rgba(244,121,32,.10)", color: "primary.main", flexShrink: 0 }}>
+              <AssessmentOutlinedIcon sx={{ fontSize: 26 }} />
+            </Box>
             <Box>
-              <Typography variant="h4" component="h1" fontWeight={950} sx={{ fontSize: { xs: "1.6rem", sm: "2rem" } }}>{text.title}</Typography>
+              <Typography variant="h4" component="h1" fontWeight={800} sx={{ fontSize: { xs: "1.5rem", sm: "2rem" }, color: "text.primary", textAlign: "start" }}>{text.title}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: .3 }}>{text.subtitle}</Typography>
             </Box>
           </Stack>
-          <Chip label={`${text.range}: ${rangeLabel}`} color="primary" variant="outlined" sx={{ alignSelf: { xs: "flex-start", md: "center" }, fontWeight: 800, maxWidth: "100%" }} />
+          <Chip label={`${text.range}: ${rangeLabel}`} variant="outlined" sx={{ alignSelf: { xs: "flex-start", md: "center" }, fontWeight: 700, maxWidth: "100%", bgcolor: "background.paper", borderColor: "divider", color: "text.secondary" }} />
         </Stack>
 
         <Stack className="reports-no-print" direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={1.2}>
@@ -260,20 +260,20 @@ function Reports() {
             onChange={(_, value) => { if (value) setPeriod(value); }}
             aria-label={text.range}
             size="small"
-            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" }, bgcolor: "background.paper", flexWrap: "wrap", "& .MuiToggleButton-root": { px: { xs: 1.3, sm: 2.2 }, py: 1, fontWeight: 800, flex: { xs: 1, sm: "initial" } } }}
+            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" }, bgcolor: "background.paper", borderRadius: "10px", border: "1px solid", borderColor: "divider", p: "3px", flexWrap: "wrap", "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "7px !important", m: "2px" }, "& .MuiToggleButton-root": { px: { xs: 1.3, sm: 2.2 }, py: 1, fontWeight: 700, flex: { xs: 1, sm: "initial" } }, "& .MuiToggleButton-root.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } } }}
           >
             <ToggleButton value="daily">{text.daily}</ToggleButton>
             <ToggleButton value="weekly">{text.weekly}</ToggleButton>
             <ToggleButton value="monthly">{text.monthly}</ToggleButton>
           </ToggleButtonGroup>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={refreshReport} disabled={loading} sx={{ fontWeight: 800 }}>
+            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={refreshReport} disabled={loading} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.refresh}
             </Button>
-            <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={handleCsvDownload} disabled={loading || Boolean(error)} sx={{ fontWeight: 800 }}>
+            <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={handleCsvDownload} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.saveCsv}
             </Button>
-            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={() => window.print()} disabled={loading || Boolean(error)} sx={{ fontWeight: 800 }}>
+            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={() => window.print()} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.print}
             </Button>
           </Stack>
@@ -285,52 +285,64 @@ function Reports() {
 
         {error && <Alert severity="error" action={<Button color="inherit" size="small" onClick={refreshReport}>{text.refresh}</Button>}>{error}</Alert>}
         {loading ? (
-          <Card elevation={0} className="reports-print-card" sx={{ borderRadius: 3, border: "1px solid rgba(23,26,47,.08)" }}>
+          <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
             <CardContent><Stack direction="row" alignItems="center" justifyContent="center" spacing={1.2} sx={{ py: 4 }}><CircularProgress size={24} /><Typography color="text.secondary">{text.loading}</Typography></Stack></CardContent>
           </Card>
         ) : !error && report.orderCount === 0 ? (
-          <Alert severity="info" className="reports-print-card" sx={{ borderRadius: 3 }}>{text.noData}</Alert>
+          <Alert severity="info" className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider" }}>{text.noData}</Alert>
         ) : !error ? (
           <>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", xl: "repeat(6, minmax(0, 1fr))" }, gap: 1.2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" }, gap: 2.5 }}>
               {metricCards.map((metric) => <MetricCard key={metric.title} {...metric} />)}
             </Box>
 
-            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: 3, border: "1px solid rgba(23,26,47,.08)" }}>
+            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-                  <Typography variant="h6" fontWeight={900}>{period === "daily" ? text.dailyTrend : text.periodTrend}</Typography>
+                  <Typography variant="h6" fontWeight={800} color="text.primary">{period === "daily" ? text.dailyTrend : text.periodTrend}</Typography>
                   <Typography variant="caption" color="text.secondary">{currency}</Typography>
                 </Stack>
                 <Divider sx={{ my: 1.5 }} />
-                <Box sx={{ overflowX: "auto", pb: .5 }}>
-                  <Stack direction="row" alignItems="flex-end" justifyContent={series.length < 10 ? "space-around" : "flex-start"} spacing={series.length < 10 ? 1 : .5} sx={{ minWidth: chartMinimumWidth, height: 190, px: .5 }}>
-                    {series.map((point) => {
-                      const barHeight = point.total > 0 ? Math.max(4, (point.total / seriesMax) * 125) : 2;
-                      return (
-                        <Tooltip key={point.key} title={`${point.label}: ${formatMoney(point.total)}`} arrow>
-                          <Box aria-label={`${point.label}: ${formatMoney(point.total)}`} sx={{ flex: series.length < 10 ? 1 : "0 0 24px", minWidth: 20, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: .7 }}>
-                            <Box sx={{ width: series.length > 12 ? 12 : { xs: 18, sm: 24 }, height: barHeight, borderRadius: "6px 6px 2px 2px", bgcolor: point.total > 0 ? "primary.main" : "rgba(23,26,47,.10)", transition: "height .2s ease" }} />
-                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: ".66rem", whiteSpace: "nowrap", transform: series.length > 20 ? "rotate(-45deg)" : "none", transformOrigin: "top center" }}>{point.label}</Typography>
-                          </Box>
-                        </Tooltip>
-                      );
-                    })}
-                  </Stack>
+                <Box sx={{ width: "100%", minWidth: 0, height: { xs: 260, sm: 300 } }}>
+                  <BarChart
+                    xAxis={[{
+                      scaleType: "band",
+                      data: series.map((point) => point.label),
+                      disableTicks: true,
+                      tickLabelInterval: (_value, index) => (period === "daily" || period === "monthly")
+                        ? index % 3 === 0 || index === series.length - 1
+                        : true,
+                    }]}
+                    yAxis={[{ disableLine: true, disableTicks: true, valueFormatter: () => "" }]}
+                    series={[{
+                      data: series.map((point) => point.total),
+                      label: period === "daily" ? text.dailyTrend : text.periodTrend,
+                      color: theme.palette.primary.main,
+                      valueFormatter: (value) => formatMoney(Number(value) || 0),
+                    }]}
+                    grid={{ horizontal: false }}
+                    margin={{ left: 0, right: 24, top: 12, bottom: 24 }}
+                    borderRadius={8}
+                    sx={{
+                      ".MuiChartsAxis-bottom .MuiChartsAxis-tickLabel": { fill: theme.palette.text.secondary, fontSize: "0.72rem", fontWeight: 600, fontFamily: theme.typography.fontFamily },
+                      ".MuiChartsAxis-bottom .MuiChartsAxis-line": { stroke: theme.palette.divider, strokeWidth: 1, opacity: 0.7 },
+                      ".MuiChartsAxis-left": { display: "none" },
+                    }}
+                  />
                 </Box>
               </CardContent>
             </Card>
 
-            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: 3, border: "1px solid rgba(23,26,47,.08)" }}>
+            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.2 }}>
-                  <Typography variant="h6" fontWeight={900}>{text.topItems}</Typography>
+                  <Typography variant="h6" fontWeight={800} color="text.primary">{text.topItems}</Typography>
                   <Chip size="small" label={report.topItems.length} variant="outlined" />
                 </Stack>
                 {report.topItems.length ? (
                   <TableContainer sx={{ overflowX: "auto" }}>
                     <Table size="small" sx={{ minWidth: 440 }}>
-                      <TableHead>
+                      <TableHead sx={{ bgcolor: "background.default" }}>
                         <TableRow>
                           <TableCell align="center">{text.rank}</TableCell>
                           <TableCell>{text.item}</TableCell>

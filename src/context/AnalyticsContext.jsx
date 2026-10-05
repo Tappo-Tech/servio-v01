@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { useHistory } from "./HistoryContext";
 import { useLanguage } from "./LanguageContext";
+import { aggregateHourlySales, createHourlyLabels } from "../utils/analyticsUtils";
 
 const AnalyticsContext = createContext();
 
@@ -79,14 +80,9 @@ export function AnalyticsProvider({ children }) {
       .filter((order) => isSameDay(new Date(getSaleDate(order)), date))
       .reduce((sum, order) => sum + Number(order.total_price || 0), 0));
 
-    // توزيع مبيعات اليوم على فترات ساعتين، باستخدام وقت الإكمال نفسه المستخدم في إجمالي المبيعات.
-    const hourlyLabels = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"];
-    const hourlySales = [8, 10, 12, 14, 16, 18, 20, 22].map((hour) => todaysOrders
-      .filter((order) => {
-        const orderHour = new Date(getSaleDate(order)).getHours();
-        return orderHour >= hour && orderHour < hour + 2;
-      })
-      .reduce((sum, order) => sum + Number(order.total_price || 0), 0));
+    // توزيع اليوم على 24 ساعة مستقلة (00:00–23:00) ليلائم اختلاف أوقات دوام الأنشطة.
+    const hourlyLabels = createHourlyLabels();
+    const hourlySales = aggregateHourlySales(todaysOrders);
 
     // بيانات الأصناف التاريخية تستخدم الاسم والكمية والسعر؛ الصور والوصف لا تدخل في التحليل.
     const itemSalesMap = {};
