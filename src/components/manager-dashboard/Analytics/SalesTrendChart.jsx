@@ -90,6 +90,7 @@ function SalesTrendChart() {
                 scaleType: "band",
                 data: currentLabels,
                 disableTicks: true,
+                tickLabelInterval: (_value, index) => !isDaily || index % 3 === 0 || index === currentLabels.length - 1,
               },
             ]}
             yAxis={[
@@ -113,7 +114,7 @@ function SalesTrendChart() {
             sx={{
               ".MuiChartsAxis-bottom .MuiChartsAxis-tickLabel": {
                 fill: theme.palette.text.secondary,
-                fontSize: "3.5rem",
+                fontSize: "0.75rem",
                 fontWeight: 500,
                 fontFamily: theme.typography.fontFamily,
               },
