@@ -6,6 +6,7 @@ import AdminRegister from "./pages/AdminRegister";
 import Home from "./pages/Home";
 import AuthCallback from "./pages/AuthCallback";
 import CashierPOSPage from "./pages/CashierPOSPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
 import NotFound from "./components/NotFound";
 import RequireSession from "./components/RequireSession";
 import { useParams } from "react-router-dom";
@@ -29,6 +30,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/register" element={<AdminRegister />} />
         <Route path="/cashier/:slug" element={<CashierLoginRoute />} />
+        <Route path="/track/:slug/:orderId" element={<OrderTrackingPage />} />
         <Route path="/menu/:slug/:tableNumber?" element={<Menu />} />
         <Route path="/:slug/:tableNumber?" element={<Menu />} />
         {/* لوحتا التشغيل محميتان حسب الدور؛ لا يكفي إخفاء الروابط في الواجهة. */}

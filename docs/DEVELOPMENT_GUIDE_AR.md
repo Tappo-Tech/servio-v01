@@ -13,8 +13,9 @@ SERVIO تطبيق ويب لإدارة طلبات الطاولات للمقاهي
 ```mermaid
 flowchart LR
     Guest[عميل الطاولة] -->|slug + رقم الطاولة| Menu[React Menu + Cart]
-    Menu -->|RPC create_public_order| DB[(Supabase orders)]
+    Menu -->|RPC create_public_order_with_tracking + رمز خاص| DB[(Supabase orders)]
     DB -->|RLS + Postgres Changes| Orders[OrdersContext]
+    DB -->|RPC حالة واحدة مع slug + id + الرمز| Track[OrderTrackingPage]
     Orders -->|لقطة أولية + أحداث أحدث| Live[لوحة الطلبات الحية]
     Live -->|تحديث متفائل ثم UPDATE| DB
     Orders --> History[HistoryContext]
@@ -46,13 +47,14 @@ flowchart LR
 
 | الملف/المجلد | المسؤولية | ما ينبغي فهمه قبل التعديل |
 |---|---|---|
-| `src/App.js` | تعريف المسارات العامة ولوحات الأدوار | `/menu/:slug/:tableNumber?` و`/:slug/:tableNumber?` للمنيو؛ `/dashboard` للكاشير؛ `/manager` للمدير. |
+| `src/App.js` | تعريف المسارات العامة ولوحات الأدوار | `/menu/:slug/:tableNumber?` و`/:slug/:tableNumber?` للمنيو؛ `/track/:slug/:orderId` لتتبع عميل؛ `/dashboard` للكاشير؛ `/manager` للمدير. |
 | `src/context/TenantContext.jsx` | حل slug العام أو جلسة المستخدم والملف والمستأجر | `tenantId` هو شرط قراءة البيانات وسياسات RLS. |
 | `src/context/UserContext.jsx` | تجهيز هوية العرض من Supabase Auth وملف المستخدم | Auth يثبت الهوية؛ بيانات `profiles` توفر الدور والاسم. |
 | `src/supabase.js` | إنشاء عميل Supabase وإعداد الاتصال | مفاتيح المتصفح لا تتضمن مطلقًا `service_role`. |
 | `src/context/MenuContext.jsx` | تحميل الأصناف والفئات وتعديلها | RPCs عامة للمنيو، واستعلامات مقيدة بـ`tenant_id` في الإدارة. |
 | `src/context/CartContext.jsx` | حفظ السلة المحلية قبل الإرسال | لا تجعل السلة مصدر إجمالي مبيعات موثوقًا؛ قاعدة البيانات هي المرجع بعد إنشاء الطلب. |
 | `src/context/OrdersContext.jsx` | المصدر الأساسي للطلبات والـRealtime والإضافة وتغيير الحالة | اقرأ تعليقاته العربية؛ فيه مزامنة اللقطة الأولية مع التغييرات اللحظية والتراجع الآمن عن التحديث المتفائل. |
+| `src/pages/OrderTrackingPage.jsx` | صفحة عامة لتتبع حالة طلب واحد | تستخدم RPC برمز سري ولا تقرأ جدول الطلبات مباشرة؛ توقف التحديث بعد انتهاء الحالة. |
 | `src/context/HistoryContext.jsx` | تصنيف سجل المكتمل/الملغى ونقل حالة التحميل | لا ينشئ استعلامًا موازيًا؛ يعيد استخدام `OrdersContext`. |
 | `src/context/AnalyticsContext.jsx` | حساب مبيعات اليوم/الأسبوع/الساعات ومتوسط الطلب والأصناف | يحتسب الطلبات المكتملة غير الملغاة باستخدام `completed_at` مع رجوع للقديم. |
 | `src/pages/CashierDashboard.jsx` | إجمالي اليوم وسجل الكاشير وقائمة الطلبات | يعرض شرطة عند عدم اكتمال التحميل كي لا يحوّل الخطأ إلى صفر. |
@@ -71,9 +73,10 @@ flowchart LR
 2. `TenantContext` يرى وجود `slug`، ثم يطلب `get_public_tenant` و`get_public_store`.
 3. `MenuContext` يقرأ الفئات والأصناف عبر RPCs عامة مسموح بها للمنيو.
 4. `CartContext` يجمع الأصناف والإضافات محليًا.
-5. `OrdersContext.addOrder()` يختصر عناصر الطلب إلى `id`, `cartItemId`, `name`, `quantity`, `price`، ثم ينادي `create_public_order` مع slug الطاولة والإجمالي والملاحظات.
-6. قاعدة البيانات تضع `tenant_id` من slug موثوق بدل الاعتماد على قيمة يرسلها المتصفح. كما يفرض الترحيل الجديد إزالة حقول الصور والوصف من `items` عند كل إدراج أو تحديث.
-7. بعد وصول الطلب، تبثه Postgres Changes إلى مستأجره؛ تُضاف البطاقة ويُصدر صوت التنبيه مرة واحدة.
+5. `OrdersContext.addOrder()` يختصر عناصر الطلب إلى `id`, `cartItemId`, `name`, `quantity`, `price`، ثم ينادي `create_public_order_with_tracking` مع slug الطاولة والإجمالي والملاحظات.
+6. قاعدة البيانات تضع `tenant_id` من slug موثوق، وتخزن بصمة SHA-256 لرمز عشوائي لا يملكه إلا صاحب هذا التدفق. كما يفرض trigger إزالة حقول الصور والوصف من `items` عند الإدراج أو التحديث.
+7. بعد حفظ الطلب، يخزن `CartDrawer` الرمز في `sessionStorage` وينتقل إلى `/track/:slug/:orderId`؛ لا يظهر السر في الرابط. صفحة التتبع تستعلم حالة هذا الطلب فقط عبر RPC.
+8. بالتوازي يصل الطلب إلى لوحة الفريق عبر Postgres Changes الخاصة بالمستأجر؛ تُضاف البطاقة ويُصدر صوت التنبيه مرة واحدة.
 
 ### 5.2 تحديث حالة الطلب
 
@@ -306,3 +309,19 @@ npm run build
 ## 16. إصلاح رفض إدراج POS في RLS
 
 في 2026-10-04 أظهرت سجلات Supabase أن `POST /rest/v1/orders` رُفض ثلاث مرات بـHTTP 403 مع PostgreSQL SQLSTATE `42501`. كانت سياسة `orders` تسمح بالقراءة والتحديث فقط، ولم توجد سياسة `INSERT`. عولج ذلك بترحيل `20261004130502_orders_staff_insert_rls.sql`: يمنح `INSERT` لدور `authenticated` فقط، ويضيف `WITH CHECK (public.tenant_match(tenant_id))`. لا يضاف منح `anon` ولا يُعطل RLS، ويظل الإدراج محصورًا بملف نشاط المستخدم الحالي. تحقق من السياسة ومن سجل `supabase_migrations.schema_migrations` قبل النشر اليدوي أو دفع ترحيلات أخرى.
+
+## 17. اختيار نوع البيع في شاشة POS
+
+في `src/pages/CashierPOSPage.jsx` يختار الكاشير نوع الطلب بلمسة واحدة من زرين: **محل** أو **سفري**؛ لم يعد نوع الطلب نصًا حرًا. عند اختيار «محل» يظهر حقل اختياري لرقم الطاولة. يحفظ النظام موقع البيع في `orders.table_number` (مثل `محل - 4` أو `سفري`) للمحافظة على توافق الفاتورة وسجل الطلبات من دون إضافة عمود أو مسار كتابة جديد. يبقى البيع مكتملًا فورًا (`served`)، وتظل VAT 15% المضمنة والطباعة التلقائية كما هما.
+
+## 18. صفحة تتبع العميل لطلبه
+
+بعد نجاح طلب الطاولة، يحفظ `CartDrawer.jsx` رمز التتبع الخاص في `sessionStorage` على الجهاز الحالي، ثم ينقل العميل إلى `/track/:slug/:orderId`. لا يحتوي الرابط على السر؛ إعادة فتحه في الجلسة نفسها تسترجع الرمز، بينما لا يكفي رقم الطلب وحده لقراءة الحالة من جهاز آخر.
+
+1. يختصر `OrdersContext.addOrder()` عناصر السلة كما في المسار الحالي، ثم يستدعي `create_public_order_with_tracking` بدل RPC الإنشاء القديم.
+2. تضيف هجرة `20261005040000_public_order_tracking.sql` عمود `tracking_token_hash`، وتولد سرًا عشوائيًا بطول 256 بت عبر `pgcrypto`. يعيد RPC الإنشاء السر للعميل مرة واحدة ويحفظ SHA-256 فقط؛ تبقى RPC `create_public_order` القديمة موجودة للتوافق.
+3. تستدعي `OrderTrackingPage.jsx` دالة `get_public_order_tracking` باستخدام `slug + order_id + الرمز`. تتحقق قاعدة البيانات من تطابق النشاط والطلب والرمز، ولا تعيد إلا رقم الطلب وحالته ووقت إنشائه/اكتماله وموقعه؛ لا تعيد أصنافًا أو مجموعًا أو طلبات أخرى.
+4. تعرض الصفحة مراحل `pending → preparing → ready → served`. تجري قراءة واحدة عند فتح الصفحة ثم تحديثًا كل 10 ثوانٍ فقط ما دامت الصفحة مرئية والطلب غير منتهٍ؛ تتوقف بعد `served` أو `unclaimed` أو `cancelled`. لا تنشئ قناة Realtime عامة ولا تشترك في جدول الطلبات.
+5. يميز `TenantContext` المسار على أنه `isTracking`؛ بذلك لا يحمّل `MenuContext` صورًا/أصنافًا ولا تستعلم `TablesContext` عن قائمة الطاولات، كما يتجنب `StoreInfoContext` تكرار RPC المتجر. يلزم فقط تحميل تعريف النشاط/المتجر العام مرة واحدة لعنوان الصفحة.
+
+**ترتيب الإصدار:** طبّق هجرة التتبع قبل نشر الواجهة التي تستدعي RPC الجديد. لا تغيّر مسارات POS أو VAT أو سياسات RLS القائمة؛ اختبار القراءة يكون من صفحة التتبع عبر RPC المحدود، وليس عبر استعلام عام على `orders`.

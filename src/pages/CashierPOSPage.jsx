@@ -50,8 +50,10 @@ const copy = {
     cart: "سلة البيع",
     empty: "اختر صنفًا من المنيو لبدء البيع.",
     clear: "تفريغ السلة",
-    location: "رقم الطاولة أو نوع الطلب",
-    locationHint: "مثال: 4 أو سفري",
+    dineIn: "محل",
+    takeaway: "سفري",
+    tableNumber: "رقم الطاولة (اختياري)",
+    tableNumberHint: "مثال: 4",
     notes: "ملاحظات على الفاتورة (اختياري)",
     vatNote: "الأسعار شاملة VAT 15%؛ نفصل الضريبة من الإجمالي من دون زيادته.",
     net: "المبلغ قبل الضريبة",
@@ -84,8 +86,10 @@ const copy = {
     cart: "Sale cart",
     empty: "Choose an item from the menu to start a sale.",
     clear: "Clear cart",
-    location: "Table number or order type",
-    locationHint: "For example: 4 or Takeaway",
+    dineIn: "Dine-in",
+    takeaway: "Takeaway",
+    tableNumber: "Table number (optional)",
+    tableNumberHint: "For example: 4",
     notes: "Invoice/order notes (optional)",
     vatNote: "Menu prices include 15% VAT; it is separated from the total without increasing it.",
     net: "Amount before VAT",
@@ -132,6 +136,7 @@ function CashierPOSPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
+  const [orderType, setOrderType] = useState("dineIn");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -221,7 +226,9 @@ function CashierPOSPage() {
         items: cart,
         // المبلغ المحفوظ مستحق شامل VAT؛ والبيع النقدي المكتمل لا يمر بطابور المطبخ.
         total_price: grossAmount,
-        table_number: tableNumber.trim() || text.cashier,
+        table_number: orderType === "takeaway"
+          ? text.takeaway
+          : tableNumber.trim() ? `${text.dineIn} - ${tableNumber.trim()}` : text.dineIn,
         notes: notes.trim() || null,
         completeImmediately: true,
       });
@@ -357,7 +364,15 @@ function CashierPOSPage() {
               </Stack>
             )}
             <Divider sx={{ mb: 1.5 }} />
-            <TextField fullWidth size="small" label={text.location} placeholder={text.locationHint} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} sx={{ mb: 1.2 }} />
+            <Stack direction="row" spacing={1} sx={{ mb: 1.2 }}>
+              <Button fullWidth variant={orderType === "dineIn" ? "contained" : "outlined"} aria-pressed={orderType === "dineIn"} onClick={() => setOrderType("dineIn")} sx={{ minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
+                {text.dineIn}
+              </Button>
+              <Button fullWidth variant={orderType === "takeaway" ? "contained" : "outlined"} aria-pressed={orderType === "takeaway"} onClick={() => setOrderType("takeaway")} sx={{ minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
+                {text.takeaway}
+              </Button>
+            </Stack>
+            {orderType === "dineIn" && <TextField fullWidth size="small" label={text.tableNumber} placeholder={text.tableNumberHint} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} sx={{ mb: 1.2 }} />}
             <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
 
             {cart.length > 0 && (

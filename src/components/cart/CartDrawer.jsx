@@ -15,15 +15,19 @@ import CloseIcon from "@mui/icons-material/Close";
 
 // HOOKS
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // CONTEXTS
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
+import { useTenant } from "../../context/TenantContext";
 import { calculateInclusiveVat, toMinorUnits } from "../../utils/taxUtils";
 
 function CartDrawer({ open, close }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
+  const { slug } = useTenant();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -50,9 +54,17 @@ function CartDrawer({ open, close }) {
     try {
       const result = await addOrder(newOrder);
       if (result?.error || !result?.data) throw result?.error || new Error("لم يصل تأكيد حفظ الطلب");
+      const { order_id: orderId, tracking_token: trackingToken } = result.data;
+      if (!orderId || !trackingToken) throw new Error("لم يصل رمز تتبع الطلب");
+      try {
+        window.sessionStorage.setItem(`servio.orderTracking.${slug}.${orderId}`, trackingToken);
+      } catch {
+        // تمرير الرمز داخل حالة التنقل يبقي الصفحة الحالية قابلة للفتح إذا منع المتصفح التخزين.
+      }
       clearCart();
       setNotes("");
       close();
+      navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken } });
     } catch (error) {
       console.error("تعذر إرسال طلب الطاولة:", { code: error?.code, status: error?.status, message: error?.message });
       setSendError("تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
