@@ -14,17 +14,10 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 function TopSellingProductsCard() {
   const { topProducts } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
-  // بيانات fallback مطابقة للصورة في حال عدم وجود طلبات
-  const displayProducts =
-    topProducts.length > 0
-      ? topProducts
-      : [
-          { name: "Flat White", quantity: 214, totalRevenue: 963.0 },
-          { name: "Iced Matcha Latte", quantity: 158, totalRevenue: 916.4 },
-          { name: "Cinnamon Roll", quantity: 122, totalRevenue: 475.8 },
-        ];
+  // لا نعرض بيانات نموذجية كأنها مبيعات حقيقية عند عدم وجود طلبات.
+  const displayProducts = topProducts;
 
   return (
     <Card
@@ -56,6 +49,11 @@ function TopSellingProductsCard() {
         <Divider sx={{ mb: 2, borderColor: "#f1f5f9" }} />
 
         {/* LIST */}
+        {displayProducts.length === 0 ? (
+          <Typography color="text.secondary" sx={{ py: 2 }}>
+            {language === "ar" ? "لا توجد مبيعات أصناف خلال الفترة." : "No item sales in this period."}
+          </Typography>
+        ) : (
         <List disablePadding>
           {displayProducts.map((product, index) => (
             <ListItem
@@ -130,6 +128,7 @@ function TopSellingProductsCard() {
             </ListItem>
           ))}
         </List>
+        )}
       </CardContent>
     </Card>
   );

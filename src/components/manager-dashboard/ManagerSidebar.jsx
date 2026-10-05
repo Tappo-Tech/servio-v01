@@ -19,6 +19,7 @@ import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
+import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 
 // عناصر القائمة المحدثة لتغطي كل مكونات النظام
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { id: "menu", label: "التحكم في المنيو", translationKey: "menuControl", icon: <TuneOutlinedIcon /> },
   { id: "qrGen", label: "أكواد الطاولات (QR)", translationKey: "qrCodes", icon: <QrCode2OutlinedIcon /> },
   { id: "history", label: "سجل الطلبات", translationKey: "orderHistory", icon: <ReceiptLongOutlinedIcon /> },
+  { id: "reports", label: "التقارير", translationKey: "managerReports", icon: <AssessmentOutlinedIcon /> },
   { id: "settings", label: "الإعدادات", translationKey: "settings", icon: <SettingsOutlinedIcon /> },
   { id: "feedbacks", label: "اراء العملاء", translationKey: "feedbacks", icon: <RateReviewOutlinedIcon /> },
 ];
@@ -54,7 +56,7 @@ function ManagerSidebar({
   const sidebarItems = navItems.map((item) => (
     <SidebarItem
       key={item.id}
-      navItem={{ ...item, label: t(item.translationKey) }}
+      navItem={{ ...item, label: item.id === "reports" ? (language === "ar" ? "التقارير" : "Reports") : t(item.translationKey) }}
       isSelected={activeTab === item.id}
       onSelect={() => handleItemClick(item.id)}
     />
