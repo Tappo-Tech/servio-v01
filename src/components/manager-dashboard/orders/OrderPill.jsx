@@ -39,7 +39,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     }
     if (!autoPrint || !order?.id || autoPrintedOrderRef.current === order.id) return undefined;
 
-    // الإرسال الصامت عبر QZ Tray؛ لا تُفتح نافذة المتصفح تلقائيًا.
+    // يرسل QZ Tray الفاتورة للطابعة المحددة؛ لا تُفتح نافذة المتصفح تلقائيًا.
     const timer = window.setTimeout(() => {
       autoPrintedOrderRef.current = order.id;
       setPrinting(true);
@@ -256,7 +256,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
           {language === "ar" ? "نافذة النظام (بديل)" : "System dialog (fallback)"}
         </Button>
         <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing}>
-          {printing ? (language === "ar" ? "جارٍ الإرسال…" : "Sending…") : (language === "ar" ? "طباعة صامتة" : "Silent print")}
+          {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة" : "Print")}
         </Button>
       </DialogActions>
     </Dialog>

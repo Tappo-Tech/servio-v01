@@ -23,6 +23,7 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { Link as RouterLink } from "react-router-dom";
 import LanguageToggle from "../components/LanguageToggle";
+import TrialNotice from "../components/TrialNotice";
 import { useLanguage } from "../context/LanguageContext";
 
 // محتوى الهوم محفوظ كمفاتيح ترجمة، لذلك تتغير النصوص مع اللغة بدل تغيير الاتجاه فقط.
@@ -970,6 +971,7 @@ export default function Home() {
             {t("homeFooterText")}
           </Typography>
         </Stack>
+        <TrialNotice />
       </Container>
     </Box>
   );

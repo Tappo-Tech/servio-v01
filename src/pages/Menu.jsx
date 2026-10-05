@@ -8,6 +8,7 @@ import FloatingActions from "../components/menu/FloatingActions";
 import ReviewSection from "../components/menu/ReviewSection";
 import CallWaiterConfirm from "../components/menu/CallWaiterConfirm";
 import SuggestionBanner from "../components/menu/SuggestionBanner";
+import TrialNotice from "../components/TrialNotice";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
@@ -54,6 +55,7 @@ function Menu() {
     <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} />
     <ReviewSection open={reviewOpen} close={() => setReviewOpen(false)} tableNumber={tableNumber} />
     <CallWaiterConfirm open={callingWaiterConfirmation} close={() => setCallingWaiterConfirmation(false)} tableNumber={tableNumber} />
+    <TrialNotice />
     </Box>
   );
 }
