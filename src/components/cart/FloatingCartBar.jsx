@@ -13,6 +13,7 @@ function FloatingCartBar({ handleCartOpen }) {
     (total, item) => total + item.price * item.quantity,
     0,
   );
+  const itemCount = cartItems.reduce((total, item) => total + Number(item.quantity || 0), 0);
 
   if (cartItems.length === 0) return null;
 
@@ -47,7 +48,7 @@ function FloatingCartBar({ handleCartOpen }) {
             mb: 0.5,
           }}
         >
-          {cartItems.length} عناصر مختارة
+          {itemCount} عناصر مختارة
         </Typography>
         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
           {totalPrice} ر.س
