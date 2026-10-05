@@ -288,23 +288,15 @@ export const OrdersProvider = ({ children }) => {
     // الإكمال الفوري خيار داخلي لشاشة POS فقط؛ لا نسمح بتحويل طلب ضيف الطاولة إلى بيع مكتمل.
     if (isPublic && newOrder.completeImmediately) return { error: new Error("غير مصرح") };
 
-    // للضيف نستخدم RPC آمن بالـ slug؛ كما يفرض ترحيل قاعدة البيانات ضغط العناصر مهما كان العميل قديمًا.
+    // للضيف ننشئ الطلب عبر RPC محدود بالـ slug، ويعيد رمزًا عشوائيًا لهذا الطلب وحده للتتبع.
     if (isPublic) {
-      const { data, error } = await supabase.rpc("create_public_order", {
+      const { data, error } = await supabase.rpc("create_public_order_with_tracking", {
         p_slug: slug,
         p_items: items,
         p_total_price: Number(newOrder.total_price) || 0,
         p_table_number: String(newOrder.table_number || "غير محدد"),
         p_notes: newOrder.notes ? String(newOrder.notes) : null,
       });
-      if (!error && data) {
-        const formatted = formatOrder(data);
-        if (hasCompleteItems(formatted)) {
-          setOrders((current) => current.some((order) => order.id === formatted.id)
-            ? current.map((order) => order.id === formatted.id ? mergeOrder(order, formatted) : order)
-            : [formatted, ...current]);
-        }
-      }
       return { data, error };
     }
 

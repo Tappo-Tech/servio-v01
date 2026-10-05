@@ -4,13 +4,14 @@ import supabase from "../supabase";
 
 const TenantContext = createContext(null);
 // هذه المسارات تخص التطبيق نفسه وليست معرف متجر؛ جميع المسارات الأخرى قد تحمل slug لمتجر عام.
-const RESERVED_ROUTES = new Set(["login", "register", "dashboard", "manager", "menu", "cashier", "auth"]);
+const RESERVED_ROUTES = new Set(["login", "register", "dashboard", "manager", "menu", "cashier", "auth", "track"]);
 
 function getRouteContext(pathname) {
   const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] === "menu") return { slug: parts[1] || null, tableNumber: parts[2] || null };
-  if (parts[0] && !RESERVED_ROUTES.has(parts[0])) return { slug: parts[0], tableNumber: parts[1] || null };
-  return { slug: null, tableNumber: null };
+  if (parts[0] === "track") return { slug: parts[1] || null, tableNumber: null, isTracking: true };
+  if (parts[0] === "menu") return { slug: parts[1] || null, tableNumber: parts[2] || null, isTracking: false };
+  if (parts[0] && !RESERVED_ROUTES.has(parts[0])) return { slug: parts[0], tableNumber: parts[1] || null, isTracking: false };
+  return { slug: null, tableNumber: null, isTracking: false };
 }
 
 export function TenantProvider({ children }) {
@@ -84,6 +85,7 @@ export function TenantProvider({ children }) {
   const value = useMemo(() => ({
     slug: route.slug,
     tableNumber: route.tableNumber,
+    isTracking: route.isTracking,
     tenant,
     tenantId: tenant?.id || profile?.tenant_id || null,
     storeInfo,

@@ -7,7 +7,7 @@ const MenuContext = createContext();
 const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,recommendation_item_ids";
 
 export const MenuProvider = ({ children }) => {
-  const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
+  const { slug, tenantId, isPublic, isTracking, loading: tenantLoading } = useTenant();
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +34,16 @@ export const MenuProvider = ({ children }) => {
     setMenuError(null);
     if (tenantLoading) {
       setMenuLoading(true);
+      reloadRef.current = null;
+      return () => { active = false; };
+    }
+
+    if (isTracking) {
+      setItems([]);
+      setCategoriesList([]);
+      setMenuLoading(false);
+      setMenuRefreshing(false);
+      setMenuError(null);
       reloadRef.current = null;
       return () => { active = false; };
     }
@@ -179,7 +189,7 @@ export const MenuProvider = ({ children }) => {
       if (reloadRef.current === fetchMenu) reloadRef.current = null;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [slug, tenantId, isPublic, tenantLoading]);
+  }, [slug, tenantId, isPublic, isTracking, tenantLoading]);
 
   // تستدعيها شاشة إدارة المنيو عند فتح تبويبها؛ مزود المنيو يبقى مركبًا في الخلفية.
   const refreshMenu = useCallback(() => {
