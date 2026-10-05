@@ -511,31 +511,76 @@ function CashierPOSPage() {
                 sx={{ fontWeight: 900, borderRadius: 1.5 }}
               />
             </Stack>
-            <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.8}>
+            <Box
+              role="group"
+              aria-label={language === "ar" ? "الإضافات المتاحة" : "Available add-ons"}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 165px), 1fr))",
+                gap: 1,
+                minWidth: 0,
+              }}
+            >
               {addonDialogChoices.map((choice) => {
                 const selected = selectedAddonKeys.has(choice.key);
                 const atLimit = normalizedAddonDraft.length >= addonDialogLimit;
                 return (
                   <Button
                     key={choice.key}
+                    fullWidth
                     variant={selected ? "contained" : "outlined"}
                     color={selected ? "primary" : "inherit"}
                     disabled={!selected && atLimit}
+                    aria-pressed={selected}
                     startIcon={selected ? <CheckCircleRoundedIcon /> : <AddCircleOutlineRoundedIcon />}
                     onClick={() => setAddonDraft((current) => toggleSelectedAddon(current, choice, addonDialogChoices, addonDialogLimit))}
-                    sx={{ borderRadius: 2, fontWeight: 800, whiteSpace: "nowrap", textTransform: "none" }}
+                    sx={{
+                      minWidth: 0,
+                      minHeight: 50,
+                      px: 1.25,
+                      py: 1,
+                      borderRadius: 2.5,
+                      fontWeight: 800,
+                      justifyContent: "flex-start",
+                      textAlign: "start",
+                      textTransform: "none",
+                      whiteSpace: "normal",
+                      lineHeight: 1.3,
+                      overflowWrap: "anywhere",
+                      "& .MuiButton-startIcon": { flex: "0 0 auto" },
+                      ...(selected
+                        ? { boxShadow: "0 5px 14px rgba(244,121,32,.2)" }
+                        : {
+                            borderColor: "divider",
+                            color: "text.primary",
+                            bgcolor: "background.paper",
+                            "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
+                          }),
+                    }}
                   >
-                    {choice.name}
+                    <Box component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>{choice.name}</Box>
                   </Button>
                 );
               })}
-            </Stack>
+            </Box>
             <Typography variant="caption" color="text.secondary">{text.addonsHint}</Typography>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={closeAddonDialog} color="inherit">{text.cancel}</Button>
-          <Button onClick={confirmAddonSelection} variant="contained" sx={{ fontWeight: 850 }}>{text.addToSale}</Button>
+        <DialogActions
+          sx={{
+            p: 2,
+            gap: 1,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+            "& .MuiButton-root": { minHeight: 44, borderRadius: 2, whiteSpace: "normal" },
+          }}
+        >
+          <Button onClick={closeAddonDialog} color="inherit" sx={{ flex: { sm: "0 0 auto" } }}>
+            {text.cancel}
+          </Button>
+          <Button onClick={confirmAddonSelection} variant="contained" sx={{ fontWeight: 850, flex: { sm: "1 1 auto" } }}>
+            {text.addToSale}
+          </Button>
         </DialogActions>
       </Dialog>
 
