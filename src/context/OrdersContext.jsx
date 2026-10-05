@@ -3,7 +3,7 @@ import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
-import { normalizeOrderAddons } from "../utils/menuItemOptions";
+import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
 
 const OrdersContext = createContext();
 
@@ -22,52 +22,6 @@ const isTransientError = (error) => {
   const message = String(error?.message || "");
   return status >= 500 || ["57014", "53300", "57P01", "08000", "08001", "08003", "08006"].includes(code) || /timeout|timed out|network|fetch failed|temporar/i.test(message);
 };
-
-// يحول صيغ عناصر الطلب القديمة أو القادمة كنص JSON إلى مصفوفة متوقعة في الواجهة.
-const parseOrderItems = (items) => {
-  if (Array.isArray(items)) {
-    return items.flatMap((item) => {
-      if (item && typeof item === "object") return [item];
-      if (typeof item !== "string") return [];
-      try {
-        const parsed = JSON.parse(item);
-        return parsed && typeof parsed === "object" ? (Array.isArray(parsed) ? parsed : [parsed]) : [];
-      } catch {
-        return [];
-      }
-    });
-  }
-
-  if (typeof items === "string") {
-    try {
-      return parseOrderItems(JSON.parse(items));
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
-};
-
-// صور المنيو والوصف لا تُستخدم في بطاقة الطلب أو الفاتورة؛ نحفظ أقل بيانات لازمة للطلب.
-const compactOrderItems = (items) => parseOrderItems(items)
-  .map((item) => {
-    const selectedAddons = normalizeOrderAddons(
-      item.selected_addons,
-      item.addon_options,
-      item.free_addon_item_ids,
-      item.max_addons,
-    );
-    return {
-      id: item.id || item.cartItemId || null,
-      cartItemId: item.cartItemId || item.id || null,
-      name: String(item.name || "").trim(),
-      quantity: Number(item.quantity) || 1,
-      price: Number(item.price) || 0,
-      ...(selectedAddons.length ? { selected_addons: selectedAddons } : {}),
-    };
-  })
-  .filter((item) => item.name);
 
 // توحيد التواريخ والعناصر القادمة من REST أو Realtime قبل إدخالها في حالة React.
 const formatOrder = (order = {}) => ({

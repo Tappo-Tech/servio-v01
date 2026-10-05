@@ -12,7 +12,7 @@ export const MenuProvider = ({ children }) => {
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState(["all"]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuRefreshing, setMenuRefreshing] = useState(false);
   const [menuError, setMenuError] = useState(null);
@@ -255,14 +255,14 @@ export const MenuProvider = ({ children }) => {
 
   const addCategory = (newCategory) => guard("menu:add-category", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, tenant_id: tenantId }]).select("*").single();
+    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, separate_print: Boolean(newCategory.separate_print), tenant_id: tenantId }]).select("*").single();
     if (!error && data) setCategoriesList((prev) => [data, ...prev.filter((entry) => entry.id !== data.id)]);
     return { data, error };
   });
 
   const updateCategory = (cat) => guard(`menu:update-category:${cat.id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").update({ name: cat.name }).eq("id", cat.id).eq("tenant_id", tenantId).select("*").maybeSingle();
+    const { data, error } = await supabase.from("categories").update({ name: cat.name, separate_print: Boolean(cat.separate_print) }).eq("id", cat.id).eq("tenant_id", tenantId).select("*").maybeSingle();
     if (!error && data) setCategoriesList((prev) => prev.map((entry) => entry.id === cat.id ? data : entry));
     return { data, error: error || (!data ? new Error("التصنيف غير موجود") : null) };
   });
@@ -274,11 +274,11 @@ export const MenuProvider = ({ children }) => {
     return { error };
   });
 
-  const handleAlignment = (_, newCategories) => { if (newCategories?.length) setSelectedCategories(newCategories); };
-  const filteredMenu = useMemo(() => items.filter((item) => (selectedCategories.includes("all") || selectedCategories.includes(item.category_id)) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategories, searchQuery]);
+  const handleAlignment = (_, newCategory) => { if (newCategory) setSelectedCategory(newCategory); };
+  const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, selectedCategories, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, deleteCategory, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, deleteCategory, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
       {children}
     </MenuContext.Provider>
   );

@@ -212,6 +212,7 @@ function CashierPOSPage() {
     const selectionSignature = getAddonSelectionSignature(normalizedAddons);
     const newLine = {
       id: menuItem.id,
+      category_id: menuItem.category_id || null,
       cartItemId: uuidV4(),
       name: menuItem.name,
       price: roundMoney(menuItem.price),
