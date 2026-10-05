@@ -5,6 +5,7 @@ import { useLanguage } from "../context/LanguageContext";
 import ManagerSidebar from "../components/manager-dashboard/ManagerSidebar";
 import ManagerHeader from "../components/manager-dashboard/ManagerHeader";
 import Analytics from "../components/manager-dashboard/Analytics";
+import Reports from "../components/manager-dashboard/Reports";
 import MenuControl from "../components/manager-dashboard/menu-control/MenuControl";
 import QRCodeGenerate from "../components/manager-dashboard/settings/QRCodesGenerate";
 import OrdersHistory from "../components/manager-dashboard/orders/OrdersHistory";
@@ -73,6 +74,7 @@ function ManagerDashboard() {
         <Box sx={{ flexGrow: 1, p: { xs: 1.25, sm: 2.5, lg: 3 }, pt: { xs: 2, md: 2.5 } }}>
           {activeTab === "manager" && <Analytics />}
           {activeTab === "history" && <OrdersHistory />}
+          {activeTab === "reports" && <Reports />}
           {activeTab === "menu" && <MenuControl />}
           {activeTab === "settings" && <SettingsLayout />}
           {activeTab === "qrGen" && <QRCodeGenerate />}
