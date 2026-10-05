@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // MUI COMPONENTS
 import {
@@ -9,6 +9,7 @@ import {
   Typography,
   Divider,
   Button,
+  Alert,
 } from "@mui/material";
 
 // ICONS
@@ -21,32 +22,55 @@ import dayjs from "dayjs";
 import { useStore } from "../../../context/StoreInfoContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
+import { getPrinterSettings, printReceipt } from "../../../utils/qzPrinting";
 
 function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false }) {
   const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
   const autoPrintedOrderRef = useRef(null);
+  const [printState, setPrintState] = useState(null);
+  const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
     if (!open) {
       autoPrintedOrderRef.current = null;
+      setPrintState(null);
       return undefined;
     }
     if (!autoPrint || !order?.id || autoPrintedOrderRef.current === order.id) return undefined;
 
-    // نافذة الطباعة يحددها المتصفح/نظام التشغيل؛ يبقى زر الطباعة اليدوي متاحًا كمسار احتياطي.
+    // الإرسال الصامت عبر QZ Tray؛ لا تُفتح نافذة المتصفح تلقائيًا.
     const timer = window.setTimeout(() => {
       autoPrintedOrderRef.current = order.id;
-      window.print();
+      setPrinting(true);
+      printReceipt(order, storeInfo, { language, currency: storeInfo.currency || t("currencySar"), isTest })
+        .then(({ printers }) => setPrintState({ severity: "success", message: language === "ar" ? `أُرسلت الفاتورة إلى: ${printers.join("، ")}` : `Receipt sent to: ${printers.join(", ")}` }))
+        .catch((error) => setPrintState({ severity: "error", message: error?.message || (language === "ar" ? "تعذرت الطباعة عبر QZ Tray" : "QZ Tray printing failed") }))
+        .finally(() => setPrinting(false));
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [autoPrint, open, order?.id]);
+  }, [autoPrint, open, order?.id, order, storeInfo, language, isTest, t]);
 
   if (!order) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const paperWidth = getPrinterSettings().paperWidth;
+  const browserPageSize = paperWidth === "A4" ? "A4 portrait" : `${paperWidth} auto`;
+  const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth;
+
+  const handlePrint = async () => {
+    setPrinting(true);
+    setPrintState(null);
+    try {
+      const { printers } = await printReceipt(order, storeInfo, { language, currency: storeInfo.currency || t("currencySar"), isTest });
+      setPrintState({ severity: "success", message: language === "ar" ? `أُرسلت الفاتورة إلى: ${printers.join("، ")}` : `Receipt sent to: ${printers.join(", ")}` });
+    } catch (error) {
+      setPrintState({ severity: "error", message: error?.message || (language === "ar" ? "تعذرت الطباعة عبر QZ Tray" : "QZ Tray printing failed") });
+    } finally {
+      setPrinting(false);
+    }
   };
+
+  const handleBrowserFallback = () => window.print();
 
   const currency = storeInfo.currency || t("currencySar");
   const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
@@ -58,6 +82,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
       <style>
         {`
           @media print {
+            @page { size: ${browserPageSize}; margin: 2mm; }
             body * {
               visibility: hidden !important;
             }
@@ -68,14 +93,16 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
               position: absolute !important;
               left: 0 !important;
               top: 0 !important;
-              width: 100% !important;
-              padding: 0 !important;
+              width: ${browserReceiptWidth} !important;
+              max-width: ${browserReceiptWidth} !important;
+              padding: 2mm !important;
             }
           }
         `}
       </style>
 
       <DialogContent id="printable-invoice">
+        {printState && <Alert severity={printState.severity} sx={{ mb: 1.5, "@media print": { display: "none" } }}>{printState.message}</Alert>}
         <Box sx={{ textAlign: "center", mb: 2 }}>
           {storeInfo.logo_url && (
             <Box
@@ -225,13 +252,11 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
         <Button onClick={onClose} color="inherit">
           {language === "ar" ? "إغلاق" : "Close"}
         </Button>
-        <Button
-          variant="contained"
-          startIcon={<PrintIcon />}
-          onClick={handlePrint}
-          color="primary"
-        >
-          {language === "ar" ? "طباعة" : "Print"}
+        <Button variant="text" onClick={handleBrowserFallback} color="inherit">
+          {language === "ar" ? "نافذة النظام (بديل)" : "System dialog (fallback)"}
+        </Button>
+        <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing}>
+          {printing ? (language === "ar" ? "جارٍ الإرسال…" : "Sending…") : (language === "ar" ? "طباعة صامتة" : "Silent print")}
         </Button>
       </DialogActions>
     </Dialog>

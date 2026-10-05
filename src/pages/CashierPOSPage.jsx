@@ -6,17 +6,11 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  FormControlLabel,
   IconButton,
   InputAdornment,
   Paper,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -35,6 +29,7 @@ import { useStore } from "../context/StoreInfoContext";
 import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
+import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
@@ -69,9 +64,9 @@ const copy = {
     image: "صورة الصنف",
     cashier: "طلب كاشير",
     printerSetup: "إعداد الطابعة",
-    autoPrint: "استدعاء الطباعة تلقائيًا بعد حفظ البيع",
-    printerHelp: "اختبار الطباعة يفتح نافذة الطباعة في المتصفح/النظام لاختيار الطابعة. لا يستطيع الموقع اكتشاف الطابعة أو التحقق من اتصالها. إذا لم تُضبط طابعة افتراضية، اخترها من النافذة؛ وقد تظهر النافذة مع كل فاتورة. الطباعة الصامتة تحتاج إعدادًا خاصًا على جهاز الكاشير.",
-    testPrint: "اختبار الطابعة / اختيارها",
+    autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع عبر QZ Tray",
+    printerHelp: "تُرسل الفاتورة بصمت إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
+    testPrint: "اكتشاف الطابعات / اختبار الفاتورة",
     close: "إغلاق",
     printerTestItem: "اختبار الطباعة",
     printerTestLocation: "اختبار طابعة — لا يوجد طلب",
@@ -105,9 +100,9 @@ const copy = {
     image: "Item image",
     cashier: "Cashier sale",
     printerSetup: "Printer setup",
-    autoPrint: "Open printing automatically after saving a sale",
-    printerHelp: "Printer test opens the browser/system print window so you can choose a printer. The website cannot detect or verify a connected printer. If no default printer is configured, choose one in the print window; it may appear for every invoice. Silent printing requires special setup on the cashier device.",
-    testPrint: "Test / choose printer",
+    autoPrint: "Send the receipt automatically through QZ Tray after saving a sale",
+    printerHelp: "The receipt is sent silently to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
+    testPrint: "Discover printers / test receipt",
     close: "Close",
     printerTestItem: "Printer test",
     printerTestLocation: "Printer test — no order",
@@ -395,20 +390,14 @@ function CashierPOSPage() {
         </Box>
       </Box>
 
-      <Dialog open={printerSetupOpen} onClose={() => setPrinterSetupOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle dir={language === "ar" ? "rtl" : "ltr"}>{text.printerSetup}</DialogTitle>
-        <DialogContent dir={language === "ar" ? "rtl" : "ltr"}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>{text.printerHelp}</Typography>
-          <FormControlLabel
-            control={<Switch checked={autoPrintAfterSave} onChange={handleAutoPrintChange} />}
-            label={text.autoPrint}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: "space-between" }}>
-          <Button onClick={() => setPrinterSetupOpen(false)} color="inherit">{text.close}</Button>
-          <Button variant="contained" startIcon={<PrintRoundedIcon />} onClick={openPrinterTest}>{text.testPrint}</Button>
-        </DialogActions>
-      </Dialog>
+      <PrinterSetupDialog
+        open={printerSetupOpen}
+        onClose={() => setPrinterSetupOpen(false)}
+        language={language}
+        autoPrint={autoPrintAfterSave}
+        onAutoPrintChange={handleAutoPrintChange}
+        onTest={openPrinterTest}
+      />
 
       <InvoiceModal
         open={Boolean(invoiceOrder)}
