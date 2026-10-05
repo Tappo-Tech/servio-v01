@@ -24,17 +24,22 @@ export function buildReceiptHtml({
   currency = "ر.س",
   paperWidth = "80mm",
   isTest = false,
+  receiptTitle = null,
+  taxBreakdown = null,
 }) {
   const paper = PAPER_SIZES[paperWidth] || PAPER_SIZES["80mm"];
   const direction = language === "en" ? "ltr" : "rtl";
   const labels = language === "en"
-    ? { invoice: "Sales receipt", order: "Order", table: "Order type / table", notes: "Notes", addons: "Add-ons", net: "Before VAT", vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE", amountNote: "Prices include 15% Saudi VAT." }
-    : { invoice: "فاتورة مبيعات", order: "رقم الطلب", table: "نوع الطلب / الطاولة", notes: "ملاحظات", addons: "إضافات", net: "المبلغ قبل الضريبة", vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع", amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." };
+    ? { invoice: "Sales receipt", order: "Order", table: "Order type / table", notes: "Notes", addons: "Add-ons", adjustment: "Order adjustment", net: "Before VAT", vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE", amountNote: "Prices include 15% Saudi VAT." }
+    : { invoice: "فاتورة مبيعات", order: "رقم الطلب", table: "نوع الطلب / الطاولة", notes: "ملاحظات", addons: "إضافات", adjustment: "تسوية الطلب", net: "المبلغ قبل الضريبة", vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع", amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." };
+  const hasTaxBreakdown = taxBreakdown && ["net", "vat", "gross"].every((key) => Number.isFinite(Number(taxBreakdown[key])));
+  const amounts = hasTaxBreakdown
+    ? { net: Number(taxBreakdown.net), vat: Number(taxBreakdown.vat), gross: Number(taxBreakdown.gross) }
+    : calculateInclusiveVat(order?.total_price);
   const formatMoney = (value) => `${new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(value) || 0)} ${escapeReceiptHtml(currency)}`;
-  const amounts = calculateInclusiveVat(order?.total_price);
   const shortId = String(order?.id || "").slice(-6).toUpperCase();
   const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const rows = (Array.isArray(order?.items) ? order.items : []).map((item) => {
@@ -56,6 +61,10 @@ export function buildReceiptHtml({
   const notes = order?.notes ? `<div class="notes"><strong>${labels.notes}:</strong> ${escapeReceiptHtml(order.notes)}</div>` : "";
   const tableNumber = escapeReceiptHtml(order?.table_number || "—");
   const footer = escapeReceiptHtml(storeInfo.receipt_footer || (language === "en" ? "Thank you for your visit" : "شكرًا لزيارتكم"));
+  const receiptAdjustment = roundMoney(Number(order?.receipt_adjustment) || 0);
+  const adjustmentRow = receiptAdjustment
+    ? `<div class="row amount-row"><span>${labels.adjustment}</span><span>${formatMoney(receiptAdjustment)}</span></div>`
+    : "";
 
   return `<!doctype html><html lang="${language === "en" ? "en" : "ar"}" dir="${direction}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
     @page { size: ${paper.page}mm auto; margin: 2mm; }
@@ -80,10 +89,10 @@ export function buildReceiptHtml({
     .notes { margin: 2mm 0; }
     .footer { margin-top: 4mm; font-weight: 700; }
   </style></head><body><main class="receipt">
-    <header class="center"><h1 class="store">${storeName}</h1>${taxNumber}${address}<div class="muted">${labels.invoice}</div>${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
+    <header class="center"><h1 class="store">${storeName}</h1>${taxNumber}${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
     <hr class="rule"><div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
     <hr class="rule"><section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>${notes}
-    <hr class="rule"><div class="muted">${labels.amountNote}</div><div class="row amount-row"><span>${labels.net}</span><span>${formatMoney(amounts.net)}</span></div><div class="row amount-row"><span>${labels.vat}</span><span>${formatMoney(amounts.vat)}</span></div>
+    <hr class="rule"><div class="muted">${labels.amountNote}</div>${adjustmentRow}<div class="row amount-row"><span>${labels.net}</span><span>${formatMoney(amounts.net)}</span></div><div class="row amount-row"><span>${labels.vat}</span><span>${formatMoney(amounts.vat)}</span></div>
     <hr class="rule"><div class="row total"><span>${labels.total}</span><span>${formatMoney(amounts.gross)}</span></div><hr class="rule">
     <footer class="center muted">${contact}<div class="footer">${footer}</div></footer>
   </main></body></html>`;

@@ -97,7 +97,7 @@ function MenuControl() {
     if (editingCategory) {
       result = updateCategory ? await updateCategory({ ...editingCategory, name: newCategoryTitle.trim() }) : null;
     } else {
-      result = addCategory ? await addCategory({ id: uuidV4(), name: newCategoryTitle.trim() }) : null;
+      result = addCategory ? await addCategory({ id: uuidV4(), name: newCategoryTitle.trim(), separate_print: false }) : null;
     }
     if (result?.error) {
       setCategoryError(result.error.message || "تعذر حفظ التصنيف");
@@ -107,6 +107,22 @@ function MenuControl() {
     setCategorySaving(false);
     setEditingCategory(null);
     setNewCategoryTitle("");
+  };
+
+  const handleToggleCategorySeparatePrint = async (category) => {
+    if (busyId) return;
+    setCategoryError("");
+    setBusyId(category.id);
+    try {
+      const result = updateCategory
+        ? await updateCategory({ ...category, separate_print: !Boolean(category.separate_print) })
+        : null;
+      if (result?.error) setCategoryError(result.error.message || (language === "en" ? "Could not update category printing." : "تعذر تحديث إعداد طباعة التصنيف"));
+    } catch (error) {
+      setCategoryError(error?.message || (language === "en" ? "Could not update category printing." : "تعذر تحديث إعداد طباعة التصنيف"));
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const handleStartEditCategory = (cat) => {
@@ -393,33 +409,53 @@ function MenuControl() {
             {categoriesList.map((cat) => (
               <ListItem
                 key={cat.id || cat.name}
+                disableGutters
                 sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1,
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1.5,
                   mb: 1,
-                  py: 0.5,
+                  py: 0.75,
+                  px: 1,
                 }}
-                secondaryAction={
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleStartEditCategory(cat)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={async () => { if (busyId) return; setBusyId(cat.id); await (deleteCategory && deleteCategory(cat.id)); setBusyId(null); }}
-                      disabled={busyId === cat.id}
-                    >
-                      <DeleteOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                }
               >
-                <ListItemText primary={cat.name} />
+                <ListItemText primary={cat.name} sx={{ minWidth: 0, my: 0 }} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
+                  <FormControlLabel
+                    label={language === "en" ? "Separate" : "منفصلة"}
+                    control={(
+                      <Switch
+                        size="small"
+                        checked={Boolean(cat.separate_print)}
+                        onChange={() => handleToggleCategorySeparatePrint(cat)}
+                        disabled={Boolean(busyId)}
+                        inputProps={{ "aria-label": language === "en" ? `Print ${cat.name} separately` : `طباعة تصنيف ${cat.name} منفصلًا` }}
+                      />
+                    )}
+                    sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.72rem", whiteSpace: "nowrap" } }}
+                  />
+                  <IconButton
+                    size="small"
+                    aria-label={language === "en" ? `Edit ${cat.name}` : `تعديل ${cat.name}`}
+                    onClick={() => handleStartEditCategory(cat)}
+                    disabled={Boolean(busyId)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label={language === "en" ? `Delete ${cat.name}` : `حذف ${cat.name}`}
+                    onClick={async () => { if (busyId) return; setBusyId(cat.id); await (deleteCategory && deleteCategory(cat.id)); setBusyId(null); }}
+                    disabled={Boolean(busyId)}
+                  >
+                    <DeleteOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </ListItem>
             ))}
           </List>

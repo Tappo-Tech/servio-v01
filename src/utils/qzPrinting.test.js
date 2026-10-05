@@ -4,7 +4,7 @@ jest.mock("../supabase", () => ({
 }));
 
 import supabase from "../supabase";
-import { discoverPrinters, printReceipt, savePrinterSettings } from "./qzPrinting";
+import { discoverPrinters, printReceipt, printReceiptGroups, savePrinterSettings } from "./qzPrinting";
 
 function makeQzMock() {
   return {
@@ -108,5 +108,44 @@ describe("QZ Tray printer integration", () => {
       failedPrinters: ["Virtual Thermal 58mm"],
     });
     expect(qz.print).toHaveBeenCalledTimes(2);
+  });
+
+  test("prints every category receipt as a separate job to each selected printer", async () => {
+    const settings = savePrinterSettings({ printers: ["Virtual Thermal 58mm", "Virtual Laser A4"], paperWidth: "80mm" });
+    const groups = [
+      {
+        order: { id: "order-3", created_at: "2026-10-05T03:00:00Z", table_number: "4", total_price: 10, items: [{ id: "meal", name: "Meal", price: 10, quantity: 1 }] },
+        receiptTitle: null,
+        amounts: { gross: 10, net: 8.7, vat: 1.3 },
+      },
+      {
+        order: { id: "order-3", created_at: "2026-10-05T03:00:00Z", table_number: "4", total_price: 5, items: [{ id: "drink", name: "Drink", price: 5, quantity: 1 }] },
+        receiptTitle: "Separate receipt — Drinks",
+        amounts: { gross: 5, net: 4.35, vat: 0.65 },
+      },
+    ];
+
+    const result = await printReceiptGroups(groups, { store_name: "SERVIO" }, { settings, language: "en", currency: "SAR" });
+
+    expect(result).toEqual({ printers: settings.printers, paperWidth: "80mm", receiptCount: 2 });
+    expect(qz.print).toHaveBeenCalledTimes(4);
+    expect(qz.print.mock.calls.map(([config]) => config.printer)).toEqual([
+      "Virtual Thermal 58mm", "Virtual Laser A4", "Virtual Thermal 58mm", "Virtual Laser A4",
+    ]);
+    expect(qz.print.mock.calls.some(([, data]) => data[0].data.includes("Separate receipt — Drinks"))).toBe(true);
+  });
+
+  test("reports how many grouped receipts were already sent if a later receipt fails", async () => {
+    const settings = savePrinterSettings({ printers: ["Virtual Thermal 58mm"], paperWidth: "80mm" });
+    qz.print.mockResolvedValueOnce().mockRejectedValueOnce(new Error("second receipt offline"));
+    const groups = [
+      { order: { total_price: 1, items: [{ name: "First", price: 1, quantity: 1 }] }, amounts: { gross: 1, net: 0.87, vat: 0.13 } },
+      { order: { total_price: 1, items: [{ name: "Second", price: 1, quantity: 1 }] }, amounts: { gross: 1, net: 0.87, vat: 0.13 } },
+    ];
+
+    await expect(printReceiptGroups(groups, {}, { settings })).rejects.toMatchObject({
+      printedReceiptCount: 1,
+      totalReceiptCount: 2,
+    });
   });
 });

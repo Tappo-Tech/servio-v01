@@ -33,4 +33,21 @@ describe("receipt HTML", () => {
     expect(html).toContain("15.00 SAR");
     expect(html).toContain("115.00 SAR");
   });
+
+  test("escapes a separate category receipt title and prints its allocated adjustment and VAT totals", () => {
+    const html = buildReceiptHtml({
+      order: { ...order, total_price: 19, receipt_adjustment: -1 },
+      language: "en",
+      currency: "SAR",
+      receiptTitle: "Separate receipt — Drinks <fresh>",
+      taxBreakdown: { gross: 19, net: 16.52, vat: 2.48 },
+    });
+
+    expect(html).toContain("Separate receipt — Drinks &lt;fresh&gt;");
+    expect(html).toContain("Order adjustment");
+    expect(html).toContain("-1.00 SAR");
+    expect(html).toContain("16.52 SAR");
+    expect(html).toContain("2.48 SAR");
+    expect(html).toContain("19.00 SAR");
+  });
 });

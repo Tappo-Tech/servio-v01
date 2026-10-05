@@ -1,17 +1,21 @@
-// MUI COMPONENTS
-import { ToggleButton, ToggleButtonGroup, Box } from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
 
-// CONTEXTS
 import { useMenu } from "../../context/MenuContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 function MenuFilterTabs() {
-  const { categoriesList = [], selectedCategories, handleAlignment } = useMenu();
-
-  const filterTabs = categoriesList.map((category) => (
-    <ToggleButton key={category.id} value={category.id}>
-      {category.name}
-    </ToggleButton>
-  ));
+  const { categoriesList = [], selectedCategory = "all", handleAlignment } = useMenu();
+  const { language } = useLanguage();
+  const isEnglish = language === "en";
+  const filters = [
+    { id: "all", label: isEnglish ? "All" : "الكل" },
+    ...categoriesList.map((category) => ({
+      id: category.id,
+      label: isEnglish ? (category.name_en || category.name) : category.name,
+    })),
+  ];
 
   return (
     <Box
@@ -24,40 +28,33 @@ function MenuFilterTabs() {
         scrollbarWidth: "none",
       }}
     >
-      <ToggleButtonGroup
-        value={selectedCategories}
-        onChange={handleAlignment}
-        aria-label="menu categories"
-        sx={{
-          display: "flex",
-          gap: 1,
-          width: "max-content",
-          "& .MuiToggleButton-root": {
-            borderRadius: "999px",
-            border: "1px solid",
-            borderColor: "divider",
-            px: { xs: 2, sm: 2.5 },
-            py: 0.7,
-            fontSize: "0.875rem",
-            textTransform: "none",
-            fontWeight: 500,
-            whiteSpace: "nowrap",
-            color: "text.secondary",
-            backgroundColor: "background.default",
-            "&.Mui-selected": {
-              backgroundColor: "primary.main",
-              color: "primary.contrastText",
-              borderColor: "primary.main",
-              "&:hover": {
-                backgroundColor: "primary.dark",
-              },
-            },
-          },
-        }}
+      <Stack
+        direction="row"
+        spacing={0.8}
+        role="group"
+        aria-label={isEnglish ? "Menu categories" : "تصنيفات المنيو"}
+        sx={{ width: "max-content", minWidth: "100%", pb: 0.5 }}
       >
-        <ToggleButton value="all">الكل</ToggleButton>
-        {filterTabs}
-      </ToggleButtonGroup>
+        {filters.map((filter) => {
+          const selected = selectedCategory === filter.id;
+          return (
+            <Chip
+              key={filter.id}
+              label={filter.label}
+              clickable
+              color={selected ? "primary" : "default"}
+              variant={selected ? "filled" : "outlined"}
+              aria-pressed={selected}
+              onClick={() => handleAlignment(null, filter.id)}
+              sx={{
+                flexShrink: 0,
+                fontWeight: selected ? 700 : 500,
+                transition: "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
+              }}
+            />
+          );
+        })}
+      </Stack>
     </Box>
   );
 }

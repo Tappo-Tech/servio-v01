@@ -177,3 +177,33 @@ export async function printReceipt(order, storeInfo, options = {}) {
   }
   return { printers: succeeded, paperWidth: width };
 }
+
+// كل مجموعة تُرسل كوظيفة طباعة مستقلة إلى الطابعات المختارة؛ لا تُكرر أصناف المجموعات.
+export async function printReceiptGroups(groups, storeInfo, options = {}) {
+  if (!Array.isArray(groups) || groups.length === 0) {
+    throw new Error("لا توجد فواتير جاهزة للطباعة.");
+  }
+
+  let lastResult = null;
+  let printedReceiptCount = 0;
+  for (const group of groups) {
+    try {
+      lastResult = await printReceipt(group.order, storeInfo, {
+        ...options,
+        receiptTitle: group.receiptTitle,
+        taxBreakdown: group.amounts,
+      });
+      printedReceiptCount += 1;
+    } catch (error) {
+      const groupError = new Error(error?.message || "تعذرت طباعة إحدى الفواتير.");
+      groupError.code = error?.code || "QZ_RECEIPT_GROUP_PRINT_FAILURE";
+      groupError.succeededPrinters = error?.succeededPrinters || [];
+      groupError.failedPrinters = error?.failedPrinters || [];
+      groupError.printedReceiptCount = printedReceiptCount;
+      groupError.totalReceiptCount = groups.length;
+      throw groupError;
+    }
+  }
+
+  return { ...lastResult, receiptCount: printedReceiptCount };
+}
