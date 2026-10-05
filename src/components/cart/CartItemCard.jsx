@@ -21,7 +21,7 @@ import {
 } from "../../utils/menuItemOptions";
 
 function CartItemCard({ cartItemDetails }) {
-  const { updatedQuantity, toggleCartItemAddon, addSeparateCartItem } = useCart();
+  const { updatedQuantity, toggleCartItemAddon, addSeparateCartItem, separateCartLineIntoUnits } = useCart();
   const { language } = useLanguage();
   const { items = [] } = useMenu();
   const isArabic = language === "ar";
@@ -30,6 +30,7 @@ function CartItemCard({ cartItemDetails }) {
   const selectedAddons = normalizeSelectedAddons(cartItemDetails.selected_addons, addonChoices, maxAddons);
   const selectedKeys = new Set(selectedAddons.map((addon) => addon.id ? `item:${addon.id}` : `text:${addon.name.toLocaleLowerCase()}`));
   const lineId = getCartLineKey(cartItemDetails);
+  const quantity = Math.max(1, Math.floor(Number(cartItemDetails.quantity) || 1));
 
   return (
     <Card
@@ -115,9 +116,13 @@ function CartItemCard({ cartItemDetails }) {
             </Box>
 
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.66rem", lineHeight: 1.4 }}>
-              {isArabic
-                ? "الاختيارات تنطبق على كامل كمية هذا السطر. اضغط الإضافة المحددة لإزالتها."
-                : "Choices apply to the full quantity on this line. Tap a selected add-on to remove it."}
+              {quantity > 1
+                ? (isArabic
+                  ? `الإضافات الحالية تنطبق على كامل الكمية (${quantity}). استخدم «تخصيص إضافات كل قطعة» لاختيار إضافات مستقلة.`
+                  : `Current add-ons apply to all ${quantity} units. Use “Customize each unit’s add-ons” to choose independently.`)
+                : (isArabic
+                  ? "إضافات هذه القطعة مستقلة. اضغط الإضافة المحددة لإزالتها."
+                  : "This unit’s add-ons are independent. Tap a selected add-on to remove it.")}
             </Typography>
           </Box>
         )}
@@ -125,15 +130,32 @@ function CartItemCard({ cartItemDetails }) {
         {maxAddons > 0 && addonChoices.length > 0 && (
           <Button
             size="small"
-            variant="text"
+            variant={quantity > 1 ? "outlined" : "text"}
             startIcon={<ControlPointDuplicateRoundedIcon fontSize="small" />}
-            onClick={() => addSeparateCartItem(lineId)}
-            aria-label={isArabic ? `فصل وحدة أو إضافة وحدة منفصلة من ${cartItemDetails.name} بإضافات مختلفة` : `Split or add a separate ${cartItemDetails.name} line with different add-ons`}
-            sx={{ alignSelf: isArabic ? "flex-start" : "flex-end", mt: 0.35, borderRadius: "9px", fontSize: "0.7rem", fontWeight: 850, minHeight: 30 }}
+            onClick={() => (quantity > 1 ? separateCartLineIntoUnits(lineId) : addSeparateCartItem(lineId))}
+            aria-label={isArabic
+              ? (quantity > 1 ? `فصل ${quantity} وحدات من ${cartItemDetails.name} لتخصيص إضافات كل قطعة` : `إضافة وحدة أخرى من ${cartItemDetails.name} بإضافات مستقلة`)
+              : (quantity > 1 ? `Separate all ${quantity} ${cartItemDetails.name} units to customize each unit’s add-ons` : `Add another ${cartItemDetails.name} unit with independent add-ons`)}
+            sx={{
+              alignSelf: "stretch",
+              mt: 0.5,
+              px: 1,
+              py: 0.6,
+              borderRadius: "10px",
+              fontSize: "0.72rem",
+              fontWeight: 850,
+              minHeight: 36,
+              justifyContent: "flex-start",
+              textAlign: "start",
+              textTransform: "none",
+              whiteSpace: "normal",
+              lineHeight: 1.35,
+              ...(quantity > 1 ? { borderColor: "primary.main" } : {}),
+            }}
           >
             {isArabic
-              ? (Number(cartItemDetails.quantity) > 1 ? "فصل وحدة بإضافات مستقلة" : "إضافة وحدة بإضافات مستقلة")
-              : (Number(cartItemDetails.quantity) > 1 ? "Split one unit for different add-ons" : "Add one unit with different add-ons")}
+              ? (quantity > 1 ? "تخصيص إضافات كل قطعة" : "إضافة وحدة بإضافات مستقلة")
+              : (quantity > 1 ? "Customize each unit’s add-ons" : "Add a unit with independent add-ons")}
           </Button>
         )}
 

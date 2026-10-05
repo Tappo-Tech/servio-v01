@@ -37,3 +37,24 @@ export function splitCartLine(cartItems, lineId, newLineId) {
     selected_addons: [],
   }];
 }
+
+export function splitCartLineIntoUnits(cartItems, lineId, newLineIds) {
+  const sourceIndex = cartItems.findIndex((item) => getCartLineKey(item) === String(lineId));
+  if (sourceIndex < 0) return cartItems;
+
+  const source = cartItems[sourceIndex];
+  const sourceQuantity = Math.max(1, Math.floor(Number(source.quantity) || 1));
+  if (sourceQuantity <= 1) return cartItems;
+  if (!Array.isArray(newLineIds) || newLineIds.length < sourceQuantity - 1) return cartItems;
+
+  return cartItems.flatMap((item, index) => {
+    if (index !== sourceIndex) return [item];
+
+    return Array.from({ length: sourceQuantity }, (_, unitIndex) => ({
+      ...source,
+      cartItemId: unitIndex === 0 ? source.cartItemId : newLineIds[unitIndex - 1],
+      quantity: 1,
+      selected_addons: Array.isArray(source.selected_addons) ? [...source.selected_addons] : [],
+    }));
+  });
+}

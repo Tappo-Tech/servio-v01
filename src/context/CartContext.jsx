@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { v4 as uuidV4 } from "uuid";
 import { toggleSelectedAddon } from "../utils/menuItemOptions";
-import { getAddonSelectionSignature, getCartLineKey, splitCartLine } from "../utils/cartItemUtils";
+import { getAddonSelectionSignature, getCartLineKey, splitCartLine, splitCartLineIntoUnits } from "../utils/cartItemUtils";
 
 const CartContext = createContext();
 
@@ -60,6 +60,15 @@ export const CartProvider = ({ children }) => {
     setCartItems((previousItems) => splitCartLine(previousItems, lineId, uuidV4()));
   };
 
+  const separateCartLineIntoUnits = (lineId) => {
+    const source = cartItems.find((item) => getCartLineKey(item) === String(lineId));
+    const quantity = Math.max(1, Math.floor(Number(source?.quantity) || 1));
+    if (quantity <= 1) return;
+
+    const newLineIds = Array.from({ length: quantity - 1 }, () => uuidV4());
+    setCartItems((previousItems) => splitCartLineIntoUnits(previousItems, lineId, newLineIds));
+  };
+
   const removeFromCart = (lineId) => {
     setCartItems((previousItems) => previousItems.filter((item) => getCartLineKey(item) !== String(lineId)));
   };
@@ -92,7 +101,7 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ tableNumber, setTable, cartItems, addToCart, addSeparateCartItem, removeFromCart, updatedQuantity, toggleCartItemAddon, clearCart }}
+      value={{ tableNumber, setTable, cartItems, addToCart, addSeparateCartItem, separateCartLineIntoUnits, removeFromCart, updatedQuantity, toggleCartItemAddon, clearCart }}
     >
       {children}
     </CartContext.Provider>

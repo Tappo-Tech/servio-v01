@@ -1,4 +1,4 @@
-import { getAddonSelectionSignature, getCartLineKey, splitCartLine } from "./cartItemUtils";
+import { getAddonSelectionSignature, getCartLineKey, splitCartLine, splitCartLineIntoUnits } from "./cartItemUtils";
 
 describe("cart line identity", () => {
   test("allows the same menu item to occupy separately editable cart lines", () => {
@@ -33,5 +33,21 @@ describe("cart line identity", () => {
     const next = splitCartLine([{ id: "tea", cartItemId: "original", quantity: 1 }], "original", "separate");
     expect(next.map((item) => item.cartItemId)).toEqual(["original", "separate"]);
     expect(next.map((item) => item.quantity)).toEqual([1, 1]);
+  });
+
+  test("splits the full quantity into independent units and preserves current add-ons on each", () => {
+    const honey = { id: "honey", name: "عسل" };
+    const cart = [
+      { id: "tea", cartItemId: "original", quantity: 3, selected_addons: [honey] },
+      { id: "cake", cartItemId: "other-line", quantity: 1, selected_addons: [] },
+    ];
+
+    const next = splitCartLineIntoUnits(cart, "original", ["unit-two", "unit-three"]);
+
+    expect(next.map((item) => getCartLineKey(item))).toEqual(["original", "unit-two", "unit-three", "other-line"]);
+    expect(next.slice(0, 3).map((item) => item.quantity)).toEqual([1, 1, 1]);
+    expect(next.slice(0, 3).map((item) => item.selected_addons)).toEqual([[honey], [honey], [honey]]);
+    expect(next[0].selected_addons).not.toBe(next[1].selected_addons);
+    expect(next.slice(0, 3).reduce((sum, item) => sum + item.quantity, 0)).toBe(3);
   });
 });
