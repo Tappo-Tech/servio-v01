@@ -45,7 +45,8 @@ const copy = {
     cart: "سلة البيع",
     empty: "اختر صنفًا من المنيو لبدء البيع.",
     clear: "تفريغ السلة",
-    dineIn: "محل",
+    orderType: "نوع الطلب",
+    dineIn: "محلي",
     takeaway: "سفري",
     tableNumber: "رقم الطاولة (اختياري)",
     tableNumberHint: "مثال: 4",
@@ -65,7 +66,7 @@ const copy = {
     cashier: "طلب كاشير",
     printerSetup: "إعداد الطابعة",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع عبر QZ Tray",
-    printerHelp: "تُرسل الفاتورة بصمت إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
+    printerHelp: "تُرسل الفاتورة إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
     testPrint: "اكتشاف الطابعات / اختبار الفاتورة",
     close: "إغلاق",
     printerTestItem: "اختبار الطباعة",
@@ -81,6 +82,7 @@ const copy = {
     cart: "Sale cart",
     empty: "Choose an item from the menu to start a sale.",
     clear: "Clear cart",
+    orderType: "Order type",
     dineIn: "Dine-in",
     takeaway: "Takeaway",
     tableNumber: "Table number (optional)",
@@ -101,7 +103,7 @@ const copy = {
     cashier: "Cashier sale",
     printerSetup: "Printer setup",
     autoPrint: "Send the receipt automatically through QZ Tray after saving a sale",
-    printerHelp: "The receipt is sent silently to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
+    printerHelp: "The receipt is sent to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
     testPrint: "Discover printers / test receipt",
     close: "Close",
     printerTestItem: "Printer test",
@@ -115,8 +117,8 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
 ).format(Number(value) || 0);
 
 /**
- * شاشة بيع للكاشير: سلة مستقلة، حفظ كمكتمل، وإصدار فاتورة فورًا.
- * الطباعة تمر عبر نافذة النظام التي يديرها المتصفح؛ لا يتيح الموقع تعداد الطابعات.
+ * شاشة بيع للكاشير: اختيار سريع لنوع الطلب، سلة مستقلة، وإتمام البيع مع الفاتورة.
+ * إعداد الطابعات محفوظ لكل متصفح/جهاز، والطباعة تمر عبر QZ Tray عند تهيئته.
  */
 function CashierPOSPage() {
   const navigate = useNavigate();
@@ -269,6 +271,26 @@ function CashierPOSPage() {
           </Stack>
         </Paper>
 
+        {/* وضع نوع الطلب قبل شبكة المنيو والسلة يضمن ظهوره دون تمرير، خصوصًا على الهاتف. */}
+        <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 280px" }, gap: 1.5, alignItems: "center" }}>
+            <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} spacing={1.2}>
+              <Typography variant="body2" color="text.secondary" fontWeight={850} sx={{ minWidth: { sm: 82 } }}>{text.orderType}</Typography>
+              <Stack direction="row" spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
+                <Button fullWidth variant={orderType === "dineIn" ? "contained" : "outlined"} aria-pressed={orderType === "dineIn"} onClick={() => setOrderType("dineIn")} sx={{ minWidth: { sm: 130 }, minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
+                  {text.dineIn}
+                </Button>
+                <Button fullWidth variant={orderType === "takeaway" ? "contained" : "outlined"} aria-pressed={orderType === "takeaway"} onClick={() => setOrderType("takeaway")} sx={{ minWidth: { sm: 130 }, minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
+                  {text.takeaway}
+                </Button>
+              </Stack>
+            </Stack>
+            {orderType === "dineIn" && (
+              <TextField fullWidth size="small" label={text.tableNumber} placeholder={text.tableNumberHint} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} />
+            )}
+          </Box>
+        </Paper>
+
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.55fr) minmax(330px, .75fr)" }, gap: 2.2, alignItems: "start" }}>
           <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
             <TextField
@@ -359,15 +381,6 @@ function CashierPOSPage() {
               </Stack>
             )}
             <Divider sx={{ mb: 1.5 }} />
-            <Stack direction="row" spacing={1} sx={{ mb: 1.2 }}>
-              <Button fullWidth variant={orderType === "dineIn" ? "contained" : "outlined"} aria-pressed={orderType === "dineIn"} onClick={() => setOrderType("dineIn")} sx={{ minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
-                {text.dineIn}
-              </Button>
-              <Button fullWidth variant={orderType === "takeaway" ? "contained" : "outlined"} aria-pressed={orderType === "takeaway"} onClick={() => setOrderType("takeaway")} sx={{ minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
-                {text.takeaway}
-              </Button>
-            </Stack>
-            {orderType === "dineIn" && <TextField fullWidth size="small" label={text.tableNumber} placeholder={text.tableNumberHint} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} sx={{ mb: 1.2 }} />}
             <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
 
             {cart.length > 0 && (

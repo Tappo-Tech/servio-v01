@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -22,11 +22,19 @@ import {
 } from "@mui/material";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import { discoverPrinters, getPrinterSettings, savePrinterSettings } from "../../utils/qzPrinting";
+import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
+import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
+import {
+  createPrinterSettingsFile,
+  discoverPrinters,
+  getPrinterSettings,
+  parsePrinterSettingsFile,
+  savePrinterSettings,
+} from "../../utils/qzPrinting";
 
 const COPY = {
   ar: {
-    title: "إعداد الطباعة الصامتة",
+    title: "إعداد الطابعة",
     help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم تأكد أن الطابعة مضافة في نظام التشغيل. يتيح ذلك استخدام طابعات USB أو Bluetooth أو الشبكة عبر تعريفاتها. اختر حتى طابعتين لإرسال الفاتورة إليهما معًا.",
     certificate: "QZ Tray مجاني؛ لا يلزم اشتراك عند استخدام شهادة SERVIO الذاتية. لإخفاء التنبيهات يلزم تثبيت الشهادة مرة واحدة بصلاحية مسؤول وإضافة المفتاح الخاص إلى Vercel. راجع خطوات التفعيل في دليل التطوير.",
     refresh: "الاتصال واكتشاف الطابعات",
@@ -44,9 +52,14 @@ const COPY = {
     limit: "يمكن تحديد طابعتين كحد أقصى.",
     sizes: { "58mm": "لفة حرارية 58 مم", "80mm": "لفة حرارية 80 مم", A4: "ورق A4 (ليزر/مكتبي)" },
     saved: "تم حفظ إعدادات الطباعة على هذا الجهاز.",
+    importFile: "استيراد ملف الإعداد",
+    exportFile: "تنزيل ملف الإعداد",
+    imported: "تم استيراد الملف. اتصل لاكتشاف الطابعات والتحقق من أسمائها.",
+    exported: "تم تنزيل ملف إعداد الطابعة.",
+    importError: "تعذر قراءة ملف الإعداد. استخدم ملف SERVIO بصيغة JSON.",
   },
   en: {
-    title: "Silent printing setup",
+    title: "Printer setup",
     help: "Install and run QZ Tray on the cashier device, then make sure the printer is installed in the operating system. This supports USB, Bluetooth, or network printers through their drivers. Select up to two printers to receive each receipt.",
     certificate: "QZ Tray is free; the SERVIO self-signed certificate avoids a QZ subscription. To suppress prompts, install the certificate once as an administrator and add the private signing key in Vercel. See the development guide.",
     refresh: "Connect and discover printers",
@@ -64,11 +77,17 @@ const COPY = {
     limit: "Select up to two printers.",
     sizes: { "58mm": "58 mm thermal roll", "80mm": "80 mm thermal roll", A4: "A4 paper (laser/office)" },
     saved: "Printing settings saved on this device.",
+    importFile: "Import settings file",
+    exportFile: "Download settings file",
+    imported: "Settings file imported. Connect to discover printers and verify their names.",
+    exported: "Printer settings file downloaded.",
+    importError: "Could not read the settings file. Use a SERVIO JSON file.",
   },
 };
 
 export default function PrinterSetupDialog({ open, onClose, language = "ar", autoPrint, onAutoPrintChange, onTest }) {
   const text = COPY[language] || COPY.ar;
+  const fileInputRef = useRef(null);
   const [settings, setSettings] = useState(() => getPrinterSettings());
   const [availablePrinters, setAvailablePrinters] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -129,6 +148,45 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
     }
   };
 
+  const importSettingsFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const parsed = parsePrinterSettingsFile(await file.text());
+      const saved = savePrinterSettings(parsed.settings);
+      setSettings(saved);
+      setAvailablePrinters(saved.printers);
+      setConnected(false);
+      if (typeof parsed.autoPrintAfterSave === "boolean") {
+        onAutoPrintChange?.({ target: { checked: parsed.autoPrintAfterSave } });
+      }
+      setNotice(text.imported);
+      setError("");
+    } catch (cause) {
+      setError(cause?.message || text.importError);
+      setNotice("");
+    } finally {
+      // السماح باختيار الملف نفسه مرة أخرى بعد تصحيح محتواه.
+      event.target.value = "";
+    }
+  };
+
+  const exportSettingsFile = () => {
+    try {
+      const contents = createPrinterSettingsFile(settings, autoPrint);
+      const url = window.URL.createObjectURL(new Blob([contents], { type: "application/json;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "servio-printer-settings.json";
+      link.click();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 0);
+      setNotice(text.exported);
+      setError("");
+    } catch (cause) {
+      setError(cause?.message || text.importError);
+    }
+  };
+
   const handleTest = () => {
     const saved = save();
     if (!saved) return;
@@ -171,6 +229,15 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
               <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>{text.noPrinters}</Typography>
             )}
           </Box>
+          <input ref={fileInputRef} type="file" accept=".json,application/json" hidden onChange={importSettingsFile} />
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <Button fullWidth variant="outlined" startIcon={<UploadFileRoundedIcon />} onClick={() => fileInputRef.current?.click()}>
+              {text.importFile}
+            </Button>
+            <Button fullWidth variant="text" startIcon={<DownloadRoundedIcon />} onClick={exportSettingsFile}>
+              {text.exportFile}
+            </Button>
+          </Stack>
           <FormControlLabel control={<Switch checked={autoPrint} onChange={onAutoPrintChange} />} label={text.autoPrint} />
           {error && <Alert severity="error">{error}</Alert>}
           {notice && <Alert severity="success">{notice}</Alert>}

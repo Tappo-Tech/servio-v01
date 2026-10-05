@@ -1,0 +1,7 @@
+{
+  "app": "SERVIO",
+  "schemaVersion": 1,
+  "printers": [],
+  "paperWidth": "80mm",
+  "autoPrintAfterSave": true
+}

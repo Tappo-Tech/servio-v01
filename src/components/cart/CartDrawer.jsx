@@ -64,7 +64,8 @@ function CartDrawer({ open, close }) {
       clearCart();
       setNotes("");
       close();
-      navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken } });
+      // تمرير رقم الطاولة يتيح زر الرجوع إعادة فتح المنيو من نفس الطاولة فورًا.
+      navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken, tableNumber: tableNumber || null } });
     } catch (error) {
       console.error("تعذر إرسال طلب الطاولة:", { code: error?.code, status: error?.status, message: error?.message });
       setSendError("تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
