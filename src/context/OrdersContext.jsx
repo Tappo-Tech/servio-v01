@@ -3,6 +3,7 @@ import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
+import { normalizeOrderAddons } from "../utils/menuItemOptions";
 
 const OrdersContext = createContext();
 
@@ -50,13 +51,22 @@ const parseOrderItems = (items) => {
 
 // صور المنيو والوصف لا تُستخدم في بطاقة الطلب أو الفاتورة؛ نحفظ أقل بيانات لازمة للطلب.
 const compactOrderItems = (items) => parseOrderItems(items)
-  .map((item) => ({
-    id: item.id || item.cartItemId || null,
-    cartItemId: item.cartItemId || item.id || null,
-    name: String(item.name || "").trim(),
-    quantity: Number(item.quantity) || 1,
-    price: Number(item.price) || 0,
-  }))
+  .map((item) => {
+    const selectedAddons = normalizeOrderAddons(
+      item.selected_addons,
+      item.addon_options,
+      item.free_addon_item_ids,
+      item.max_addons,
+    );
+    return {
+      id: item.id || item.cartItemId || null,
+      cartItemId: item.cartItemId || item.id || null,
+      name: String(item.name || "").trim(),
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0,
+      ...(selectedAddons.length ? { selected_addons: selectedAddons } : {}),
+    };
+  })
   .filter((item) => item.name);
 
 // توحيد التواريخ والعناصر القادمة من REST أو Realtime قبل إدخالها في حالة React.

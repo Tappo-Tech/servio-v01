@@ -28,8 +28,8 @@ export function buildReceiptHtml({
   const paper = PAPER_SIZES[paperWidth] || PAPER_SIZES["80mm"];
   const direction = language === "en" ? "ltr" : "rtl";
   const labels = language === "en"
-    ? { invoice: "Sales receipt", order: "Order", table: "Order type / table", notes: "Notes", net: "Before VAT", vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE", amountNote: "Prices include 15% Saudi VAT." }
-    : { invoice: "فاتورة مبيعات", order: "رقم الطلب", table: "نوع الطلب / الطاولة", notes: "ملاحظات", net: "المبلغ قبل الضريبة", vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع", amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." };
+    ? { invoice: "Sales receipt", order: "Order", table: "Order type / table", notes: "Notes", addons: "Add-ons", net: "Before VAT", vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE", amountNote: "Prices include 15% Saudi VAT." }
+    : { invoice: "فاتورة مبيعات", order: "رقم الطلب", table: "نوع الطلب / الطاولة", notes: "ملاحظات", addons: "إضافات", net: "المبلغ قبل الضريبة", vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع", amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." };
   const formatMoney = (value) => `${new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -40,7 +40,14 @@ export function buildReceiptHtml({
   const rows = (Array.isArray(order?.items) ? order.items : []).map((item) => {
     const quantity = Number(item.quantity || 1);
     const lineTotal = roundMoney(Number(item.price || 0) * quantity);
-    return `<div class="row item"><span>${escapeReceiptHtml(item.name)} × ${escapeReceiptHtml(quantity)}</span><strong>${formatMoney(lineTotal)}</strong></div>`;
+    const selectedAddons = (Array.isArray(item.selected_addons) ? item.selected_addons : [])
+      .map((addon) => typeof addon === "string" ? addon : addon?.name)
+      .filter(Boolean)
+      .map(escapeReceiptHtml);
+    const addonLine = selectedAddons.length
+      ? `<div class="muted addons">${labels.addons}: ${selectedAddons.join(language === "en" ? ", " : "، ")}</div>`
+      : "";
+    return `<div class="item-group"><div class="row item"><span>${escapeReceiptHtml(item.name)} × ${escapeReceiptHtml(quantity)}</span><strong>${formatMoney(lineTotal)}</strong></div>${addonLine}</div>`;
   }).join("");
   const storeName = escapeReceiptHtml(storeInfo.store_name || (language === "en" ? "SERVIO Store" : "متجر SERVIO"));
   const taxNumber = storeInfo.tax_number ? `<div>${language === "en" ? "VAT No." : "الرقم الضريبي"}: ${escapeReceiptHtml(storeInfo.tax_number)}</div>` : "";
@@ -62,9 +69,11 @@ export function buildReceiptHtml({
     .test { color: #9a3412; font-weight: 900; margin: 2mm 0; }
     .rule { border: 0; border-top: 1px dashed #333; margin: 3mm 0; }
     .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 2mm; }
-    .item { margin: 1.8mm 0; }
+    .item-group { margin: 1.8mm 0; }
+    .item { margin: 0; }
     .item span { min-width: 0; }
     .item strong { white-space: nowrap; }
+    .addons { margin-top: .4mm; padding-inline-start: 2mm; }
     .meta { font-weight: 700; }
     .amount-row { margin: 1.5mm 0; }
     .total { font-weight: 900; font-size: 12pt; }

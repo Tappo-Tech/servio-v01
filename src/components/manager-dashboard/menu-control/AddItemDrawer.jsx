@@ -16,10 +16,13 @@ import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AddIcon from "@mui/icons-material/Add";
 
 // OTHERS
 import { v4 as uuidV4 } from "uuid";
 import { compressImage } from "../../../utils/compressImage";
+import FreeAddonItemsDrawer from "./FreeAddonItemsDrawer";
+import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../../../utils/menuItemOptions";
 
 const COMMON_ALLERGENS = [
   "حليب / ألبان",
@@ -62,6 +65,9 @@ const INITIAL_FORM_STATE = {
   allergens: [],
   tags: [],
   recommendation_item_ids: [],
+  addon_options: [],
+  free_addon_item_ids: [],
+  max_addons: 0,
   available: true,
 };
 
@@ -69,6 +75,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const { addNewItem, updateItem, categoriesList = [], items = [] } = useMenu();
   const { language, t } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [freeAddonDrawerOpen, setFreeAddonDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) setFreeAddonDrawerOpen(false);
+  }, [open]);
 
   useEffect(() => {
     if (itemToEdit) {
@@ -81,6 +92,9 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         allergens: itemToEdit.allergens || [],
         tags: itemToEdit.tags || [],
         recommendation_item_ids: itemToEdit.recommendation_item_ids || [],
+        addon_options: normalizeAddonOptions(itemToEdit.addon_options),
+        free_addon_item_ids: normalizeAddonItemIds(itemToEdit.free_addon_item_ids),
+        max_addons: normalizeAddonLimit(itemToEdit.max_addons, normalizeAddonOptions(itemToEdit.addon_options).length + normalizeAddonItemIds(itemToEdit.free_addon_item_ids).length),
         available: itemToEdit.available ?? true,
       });
     } else {
@@ -91,6 +105,34 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const updateAddonOptions = (values) => {
+    const addonOptions = normalizeAddonOptions(values);
+    setFormData((prev) => {
+      const currentCount = prev.addon_options.length + prev.free_addon_item_ids.length;
+      const nextCount = addonOptions.length + prev.free_addon_item_ids.length;
+      const currentLimit = normalizeAddonLimit(prev.max_addons, currentCount);
+      return {
+        ...prev,
+        addon_options: addonOptions,
+        max_addons: currentCount === 0 && nextCount > 0 ? 1 : Math.min(currentLimit, nextCount),
+      };
+    });
+  };
+
+  const updateFreeAddonItems = (ids) => {
+    const freeAddonItemIds = normalizeAddonItemIds(ids).filter((id) => id !== itemToEdit?.id);
+    setFormData((prev) => {
+      const currentCount = prev.addon_options.length + prev.free_addon_item_ids.length;
+      const nextCount = prev.addon_options.length + freeAddonItemIds.length;
+      const currentLimit = normalizeAddonLimit(prev.max_addons, currentCount);
+      return {
+        ...prev,
+        free_addon_item_ids: freeAddonItemIds,
+        max_addons: currentCount === 0 && nextCount > 0 ? 1 : Math.min(currentLimit, nextCount),
+      };
+    });
   };
 
   const handleImageChange = async (e) => {
@@ -123,6 +165,12 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       allergens: formData.allergens,
       tags: formData.tags,
       recommendation_item_ids: formData.recommendation_item_ids,
+      addon_options: normalizeAddonOptions(formData.addon_options),
+      free_addon_item_ids: normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id),
+      max_addons: normalizeAddonLimit(
+        formData.max_addons,
+        normalizeAddonOptions(formData.addon_options).length + normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id).length,
+      ),
       available: formData.available,
     };
 
@@ -138,7 +186,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
     onClose();
   };
 
+  const addonChoiceCount = formData.addon_options.length + formData.free_addon_item_ids.length;
+  const addonLimitOptions = Math.min(addonChoiceCount, 20);
+
   return (
+    <>
     <SwipeableDrawer
       anchor={language === "ar" ? "right" : "left"}
       open={open}
@@ -317,6 +369,67 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           fullWidth
         />
 
+        <Box sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider", bgcolor: "rgba(244,121,32,.035)", display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+              {language === "ar" ? "إضافات اختيارية ضمن السعر" : "Optional add-ons included in price"}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {language === "ar" ? "لا تزيد الإضافات المحددة سعر هذا الصنف." : "Selected add-ons do not increase this item’s price."}
+            </Typography>
+          </Box>
+
+          <Autocomplete
+            multiple
+            freeSolo
+            options={[]}
+            value={formData.addon_options}
+            onChange={(_, newValue) => updateAddonOptions(newValue)}
+            renderTags={(value, getTagProps) => value.map((option, index) => {
+              const { key, ...tagProps } = getTagProps({ index });
+              return <Chip key={key} label={option} size="small" color="primary" variant="outlined" {...tagProps} />;
+            })}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label={language === "ar" ? "إضافات مكتوبة" : "Named add-ons"}
+                placeholder={language === "ar" ? "اكتب اسم الإضافة واضغط Enter" : "Type an add-on and press Enter"}
+                helperText={language === "ar" ? "مثال: صوص، عسل، ليمون" : "Example: sauce, honey, lemon"}
+              />
+            )}
+            fullWidth
+          />
+
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => setFreeAddonDrawerOpen(true)}
+            sx={{ alignSelf: "flex-start", borderRadius: 2, fontWeight: 800, textAlign: "start" }}
+          >
+            {language === "ar"
+              ? `اختيار أصناف مجانية من المنيو (${formData.free_addon_item_ids.length})`
+              : `Choose free menu add-ons (${formData.free_addon_item_ids.length})`}
+          </Button>
+
+          <TextField
+            select
+            size="small"
+            fullWidth
+            disabled={addonChoiceCount === 0}
+            label={language === "ar" ? "الحد الأعلى للإضافات لكل وحدة" : "Maximum add-ons per item"}
+            value={String(normalizeAddonLimit(formData.max_addons, addonChoiceCount))}
+            onChange={(event) => setFormData((previous) => ({ ...previous, max_addons: event.target.value }))}
+            helperText={language === "ar" ? "يُطبّق الاختيار نفسه على كل كمية هذا الصنف في السلة." : "The same selection applies to the full quantity of this item in the cart."}
+          >
+            {Array.from({ length: addonLimitOptions + 1 }, (_, limit) => (
+              <MenuItem key={limit} value={String(limit)}>
+                {language === "ar" ? `${limit} إضافات` : `${limit} add-ons`}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+
         <Autocomplete
           multiple
           options={COMMON_ALLERGENS}
@@ -373,6 +486,16 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         </Box>
       </Box>
     </SwipeableDrawer>
+    <FreeAddonItemsDrawer
+      open={freeAddonDrawerOpen}
+      onClose={() => setFreeAddonDrawerOpen(false)}
+      items={items}
+      selectedIds={formData.free_addon_item_ids}
+      excludeId={itemToEdit?.id}
+      language={language}
+      onSave={updateFreeAddonItems}
+    />
+    </>
   );
 }
 

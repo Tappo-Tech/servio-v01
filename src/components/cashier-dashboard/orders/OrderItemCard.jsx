@@ -122,6 +122,12 @@ function OrderItemCard({ order }) {
                     {item.quantity}x
                   </Box>{" "}
                   {item.name}
+                  {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
+                    <Box component="span" sx={{ display: "block", color: "text.secondary", fontSize: "0.72rem", fontWeight: 600, mt: 0.25 }}>
+                      {language === "ar" ? "إضافات: " : "Add-ons: "}
+                      {item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}
+                    </Box>
+                  )}
                 </Typography>
 
                 <Typography
