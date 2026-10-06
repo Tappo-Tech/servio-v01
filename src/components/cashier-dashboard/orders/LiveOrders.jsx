@@ -1,5 +1,7 @@
 // COMPONENTS
 import OrderItemCard from "./OrderItemCard";
+import PrinterSetupDialog from "../PrinterSetupDialog";
+import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 
 // MUI COMPONENTS
 import Grid from "@mui/material/Grid";
@@ -9,6 +11,7 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
+import { useState } from "react";
 
 // ANIMATION
 import { AnimatePresence } from "framer-motion";
@@ -18,7 +21,10 @@ import { useOrders } from "../../../context/OrdersContext";
 
 // ICONS
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import { useLanguage } from "../../../context/LanguageContext";
+
+const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
 const COLUMNS = [
   { key: "pending", title: "newOrder", color: "warning" },
@@ -29,6 +35,28 @@ const COLUMNS = [
 function LiveOrders() {
   const { orders, ordersLoading, ordersLoadError, reloadOrders } = useOrders();
   const { t, language } = useLanguage();
+  const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
+  const [testInvoice, setTestInvoice] = useState(null);
+  const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
+    try { return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false"; } catch { return true; }
+  });
+  const handleAutoPrintChange = (event) => {
+    const checked = Boolean(event?.target?.checked);
+    setAutoPrintAfterSave(checked);
+    try { window.localStorage.setItem(AUTO_PRINT_KEY, String(checked)); } catch { /* local preference is optional */ }
+  };
+  const openPrinterTest = () => {
+    setPrinterSetupOpen(false);
+    setTestInvoice({
+      id: `test-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      table_number: language === "ar" ? "اختبار طابعة" : "Printer test",
+      notes: language === "ar" ? "هذه فاتورة اختبار وليست عملية بيع." : "Test receipt only; not a sale.",
+      total_price: 0,
+      payment_status: "unpaid",
+      items: [{ id: "servio-printer-test", name: language === "ar" ? "اختبار اتصال الطابعة" : "Printer connection test", quantity: 1, price: 0 }],
+    });
+  };
 
   const activeOrders = orders.filter((order) => (
     !order.is_completed &&
@@ -51,6 +79,17 @@ function LiveOrders() {
 
   return (
     <Grid container spacing={3}>
+      <Grid size={{ xs: 12 }}>
+        <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography fontWeight={900}>{language === "ar" ? "الطباعة على جهاز الكاشير" : "Printing on this cashier device"}</Typography>
+            <Typography variant="caption" color="text.secondary">{language === "ar" ? "اضبط طابعة المطبخ، واختبر الطباعة من هنا." : "Set the kitchen printer and test printing here."}</Typography>
+          </Box>
+          <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2, fontWeight: 850, whiteSpace: "nowrap" }}>
+            {language === "ar" ? "إعداد الطابعات" : "Printer setup"}
+          </Button>
+        </Paper>
+      </Grid>
       {ordersLoadError && (
         <Grid size={{ xs: 12 }}>
           <Paper elevation={0} role="status" sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, border: "1px solid", borderColor: "error.light" }}>
@@ -117,6 +156,20 @@ function LiveOrders() {
           </Grid>
         );
       })}
+      <PrinterSetupDialog
+        open={printerSetupOpen}
+        onClose={() => setPrinterSetupOpen(false)}
+        language={language}
+        autoPrint={autoPrintAfterSave}
+        onAutoPrintChange={handleAutoPrintChange}
+        onTest={openPrinterTest}
+      />
+      <InvoiceModal
+        open={Boolean(testInvoice)}
+        onClose={() => setTestInvoice(null)}
+        order={testInvoice}
+        isTest
+      />
     </Grid>
   );
 }

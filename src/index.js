@@ -12,6 +12,7 @@ import { OrdersProvider } from "./context/OrdersContext";
 import { HistoryProvider } from "./context/HistoryContext";
 import { StoreInfoProvider } from "./context/StoreInfoContext";
 import { UserProvider } from "./context/UserContext";
+import { ShiftProvider } from "./context/ShiftContext";
 import { AnalyticsProvider } from "./context/AnalyticsContext";
 import { TablesProvider } from "./context/TablesContext";
 import { FeedbacksProvider } from "./context/FeedbackContext";
@@ -37,6 +38,7 @@ function autoRoot() {
                 <HistoryProvider>
                   <StoreInfoProvider>
                     <UserProvider>
+                      <ShiftProvider>
                       <AnalyticsProvider>
                         <TablesProvider>
                           <FeedbacksProvider>
@@ -51,6 +53,7 @@ function autoRoot() {
                           </FeedbacksProvider>
                         </TablesProvider>
                       </AnalyticsProvider>
+                      </ShiftProvider>
                     </UserProvider>
                   </StoreInfoProvider>
                 </HistoryProvider>

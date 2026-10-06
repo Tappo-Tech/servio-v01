@@ -4,6 +4,8 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 // COMPONENTS
 import AddItemDrawer from "./AddItemDrawer";
+import CategoryPrintRoutingDrawer from "./CategoryPrintRoutingDrawer";
+import AddonComplementDrawer from "./AddonComplementDrawer";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -32,6 +34,8 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import CategoryIcon from "@mui/icons-material/Category";
+import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
+import SpaRoundedIcon from "@mui/icons-material/SpaRounded";
 import CloseIcon from "@mui/icons-material/Close";
 
 // OTHERS
@@ -44,6 +48,8 @@ function MenuControl() {
 
   // حالات إدارة التصنيفات/الفلاتر
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [isPrinterRoutingOpen, setPrinterRoutingOpen] = useState(false);
+  const [isComplementDrawerOpen, setComplementDrawerOpen] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
@@ -53,6 +59,7 @@ function MenuControl() {
   const {
     filteredMenu = [],
     categoriesList = [],
+    addonComplements = [],
     searchQuery,
     setSearchQuery,
     deleteItem,
@@ -60,6 +67,8 @@ function MenuControl() {
     addCategory,      // دالة إضافة تصنيف في Context
     updateCategory,   // دالة تعديل تصنيف في Context
     deleteCategory,   // دالة حذف تصنيف في Context
+    addAddonComplement,
+    deleteAddonComplement,
     menuLoading,
     menuRefreshing,
     menuError,
@@ -109,22 +118,6 @@ function MenuControl() {
     setNewCategoryTitle("");
   };
 
-  const handleToggleCategorySeparatePrint = async (category) => {
-    if (busyId) return;
-    setCategoryError("");
-    setBusyId(category.id);
-    try {
-      const result = updateCategory
-        ? await updateCategory({ ...category, separate_print: !Boolean(category.separate_print) })
-        : null;
-      if (result?.error) setCategoryError(result.error.message || (language === "en" ? "Could not update category printing." : "تعذر تحديث إعداد طباعة التصنيف"));
-    } catch (error) {
-      setCategoryError(error?.message || (language === "en" ? "Could not update category printing." : "تعذر تحديث إعداد طباعة التصنيف"));
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   const handleStartEditCategory = (cat) => {
     setEditingCategory(cat);
     setNewCategoryTitle(cat.name);
@@ -168,6 +161,24 @@ function MenuControl() {
             }}
           >
             {t("menuCategories")}
+          </Button>
+
+          <Button
+            onClick={() => setPrinterRoutingOpen(true)}
+            variant="outlined"
+            startIcon={<PrintRoundedIcon />}
+            sx={{ fontWeight: 700, borderRadius: "8px", px: 2 }}
+          >
+            {language === "ar" ? "طابعات التصنيفات" : "Category printers"}
+          </Button>
+
+          <Button
+            onClick={() => setComplementDrawerOpen(true)}
+            variant="outlined"
+            startIcon={<SpaRoundedIcon />}
+            sx={{ fontWeight: 700, borderRadius: "8px", px: 2 }}
+          >
+            {language === "ar" ? `المكملات (${addonComplements.length})` : `Complements (${addonComplements.length})`}
           </Button>
 
           <Button
@@ -354,6 +365,19 @@ function MenuControl() {
         onClose={handleDrawerClose}
         itemToEdit={itemToEdit}
       />
+      <CategoryPrintRoutingDrawer
+        open={isPrinterRoutingOpen}
+        onClose={() => setPrinterRoutingOpen(false)}
+        categories={categoriesList}
+        onUpdateCategory={updateCategory}
+      />
+      <AddonComplementDrawer
+        open={isComplementDrawerOpen}
+        onClose={() => setComplementDrawerOpen(false)}
+        items={addonComplements}
+        onAdd={addAddonComplement}
+        onDelete={deleteAddonComplement}
+      />
 
       {/* DIALOG إدﺍﺭﺓ التصنيفات والفلاتر */}
       <Dialog
@@ -425,19 +449,6 @@ function MenuControl() {
               >
                 <ListItemText primary={cat.name} sx={{ minWidth: 0, my: 0 }} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
-                  <FormControlLabel
-                    label={language === "en" ? "Separate" : "منفصلة"}
-                    control={(
-                      <Switch
-                        size="small"
-                        checked={Boolean(cat.separate_print)}
-                        onChange={() => handleToggleCategorySeparatePrint(cat)}
-                        disabled={Boolean(busyId)}
-                        inputProps={{ "aria-label": language === "en" ? `Print ${cat.name} separately` : `طباعة تصنيف ${cat.name} منفصلًا` }}
-                      />
-                    )}
-                    sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.72rem", whiteSpace: "nowrap" } }}
-                  />
                   <IconButton
                     size="small"
                     aria-label={language === "en" ? `Edit ${cat.name}` : `تعديل ${cat.name}`}

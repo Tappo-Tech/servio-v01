@@ -34,6 +34,37 @@ describe("receipt HTML", () => {
     expect(html).toContain("115.00 SAR");
   });
 
+  test("includes the store logo and payment state on the cashier receipt", () => {
+    const html = buildReceiptHtml({
+      order: { ...order, payment_status: "paid", payment_method: "card" },
+      storeInfo: { store_name: "Cafe", logo_url: "data:image/png;base64,QUJD" },
+    });
+    expect(html).toContain('src="data:image/png;base64,QUJD"');
+    expect(html).toContain("حالة الدفع");
+    expect(html).toContain("مدفوع");
+    expect(html).toContain("طريقة الدفع");
+    expect(html).toContain("بطاقة / شبكة (مدى)");
+  });
+
+  test("builds a kitchen ticket with only the order, table, items, quantities, add-ons, and notes", () => {
+    const html = buildReceiptHtml({
+      order: { ...order, notes: "بدون سكر" },
+      storeInfo: { store_name: "Cafe", logo_url: "data:image/png;base64,QUJD" },
+      receiptType: "kitchen",
+    });
+    expect(html).toContain('dir="rtl"');
+    expect(html).toContain("تذكرة المطبخ");
+    expect(html).toContain("رقم الطلب");
+    expect(html).toContain("الطاولة");
+    expect(html).toContain("بدون سكر");
+    expect(html).toContain("شاي &lt;script&gt;");
+    expect(html).toContain("عسل &lt;b&gt;");
+    expect(html).not.toContain("src=\"data:image/png");
+    expect(html).not.toContain("المبلغ قبل الضريبة");
+    expect(html).not.toContain("ضريبة القيمة المضافة");
+    expect(html).not.toContain("115.00");
+  });
+
   test("escapes a separate category receipt title and prints its allocated adjustment and VAT totals", () => {
     const html = buildReceiptHtml({
       order: { ...order, total_price: 19, receipt_adjustment: -1 },

@@ -4,12 +4,13 @@ import { useTenant } from "./TenantContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
+import { createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/paymentStatus";
 
 const OrdersContext = createContext();
 
 // نطلب الأعمدة التي تحتاجها البطاقات والفواتير والتحليلات فقط، بدل جلب كل أعمدة الجدول.
-const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id";
-const UPDATE_COLUMNS = "id,status,is_completed,completed_at";
+const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id,payment_status,paid_at,payment_method";
+const UPDATE_COLUMNS = "id,status,is_completed,completed_at,payment_status,paid_at,payment_method";
 const RETRY_DELAYS_MS = [250, 650];
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
 
@@ -29,6 +30,7 @@ const formatOrder = (order = {}) => ({
   items: parseOrderItems(order.items),
   created_at: order.created_at ? new Date(order.created_at) : null,
   completed_at: order.completed_at ? new Date(order.completed_at) : null,
+  paid_at: order.paid_at ? new Date(order.paid_at) : null,
 });
 
 const hasCompleteItems = (order) => (
@@ -55,6 +57,9 @@ const mergeOrder = (existing, incoming = {}) => {
     status: incoming.status || existing.status,
     is_completed: typeof incoming.is_completed === "boolean" ? incoming.is_completed : existing.is_completed,
     completed_at: Object.prototype.hasOwnProperty.call(incoming, "completed_at") ? next.completed_at : existing.completed_at,
+    payment_status: Object.prototype.hasOwnProperty.call(incoming, "payment_status") ? next.payment_status : existing.payment_status,
+    paid_at: Object.prototype.hasOwnProperty.call(incoming, "paid_at") ? next.paid_at : existing.paid_at,
+    payment_method: Object.prototype.hasOwnProperty.call(incoming, "payment_method") ? next.payment_method : existing.payment_method,
   });
 };
 
@@ -265,6 +270,12 @@ export const OrdersProvider = ({ children }) => {
     }
 
     if (!tenantId) return { error: new Error("لم يكتمل تحميل النشاط بعد") };
+    let paymentMethodUpdate;
+    try {
+      paymentMethodUpdate = createPaymentMethodUpdate(newOrder.payment_method);
+    } catch (error) {
+      return { error };
+    }
     const completedAt = newOrder.completeImmediately ? new Date().toISOString() : null;
     const { data, error } = await supabase
       .from("orders")
@@ -277,6 +288,8 @@ export const OrdersProvider = ({ children }) => {
         status: completedAt ? "served" : "pending",
         is_completed: Boolean(completedAt),
         completed_at: completedAt,
+        ...createPaymentStatusUpdate(newOrder.payment_status === "paid" ? "paid" : "unpaid"),
+        ...paymentMethodUpdate,
       }])
       .select(ORDER_COLUMNS)
       .single();
@@ -338,6 +351,86 @@ export const OrdersProvider = ({ children }) => {
     return { data: result.data, error: null };
   });
 
+  const updateOrderPaymentStatus = (orderId, newStatus) => guard(`orders:payment:${orderId}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const target = orders.find((order) => order.id === orderId);
+    if (!target) return { error: new Error("الطلب غير موجود") };
+
+    let paymentUpdate;
+    try {
+      paymentUpdate = createPaymentStatusUpdate(newStatus);
+    } catch (error) {
+      return { error };
+    }
+    const optimistic = { ...target, ...paymentUpdate, paid_at: paymentUpdate.paid_at ? new Date(paymentUpdate.paid_at) : null };
+    setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
+
+    let result = { data: null, error: null };
+    for (let attempt = 0; attempt < RETRY_DELAYS_MS.length + 1; attempt += 1) {
+      try {
+        result = await supabase
+          .from("orders")
+          .update(paymentUpdate)
+          .eq("id", orderId)
+          .eq("tenant_id", tenantId)
+          .select("id,payment_status,paid_at")
+          .maybeSingle();
+      } catch (networkError) {
+        result = { data: null, error: networkError };
+      }
+      if (!result.error || !isTransientError(result.error) || attempt >= RETRY_DELAYS_MS.length) break;
+      await wait(RETRY_DELAYS_MS[attempt]);
+    }
+
+    const finalError = result.error || (!result.data ? new Error("لم يتم تحديث حالة الدفع؛ تحقق من الاتصال والصلاحية") : null);
+    if (finalError) {
+      setOrders((current) => current.map((order) => order.id === orderId && order === optimistic ? mergeOrder(order, target) : order));
+      return { error: finalError };
+    }
+    setOrders((current) => current.map((order) => order.id === orderId ? mergeOrder(order, result.data) : order));
+    return { data: result.data, error: null };
+  });
+
+  const updateOrderPaymentMethod = (orderId, newMethod) => guard(`orders:payment-method:${orderId}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const target = orders.find((order) => order.id === orderId);
+    if (!target) return { error: new Error("الطلب غير موجود") };
+
+    let paymentUpdate;
+    try {
+      paymentUpdate = createPaymentMethodUpdate(newMethod);
+    } catch (error) {
+      return { error };
+    }
+    const optimistic = { ...target, ...paymentUpdate };
+    setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
+
+    let result = { data: null, error: null };
+    for (let attempt = 0; attempt < RETRY_DELAYS_MS.length + 1; attempt += 1) {
+      try {
+        result = await supabase
+          .from("orders")
+          .update(paymentUpdate)
+          .eq("id", orderId)
+          .eq("tenant_id", tenantId)
+          .select("id,payment_method")
+          .maybeSingle();
+      } catch (networkError) {
+        result = { data: null, error: networkError };
+      }
+      if (!result.error || !isTransientError(result.error) || attempt >= RETRY_DELAYS_MS.length) break;
+      await wait(RETRY_DELAYS_MS[attempt]);
+    }
+
+    const finalError = result.error || (!result.data ? new Error("لم يتم تحديث طريقة الدفع؛ تحقق من الاتصال والصلاحية") : null);
+    if (finalError) {
+      setOrders((current) => current.map((order) => order.id === orderId && order === optimistic ? mergeOrder(order, target) : order));
+      return { error: finalError };
+    }
+    setOrders((current) => current.map((order) => order.id === orderId ? mergeOrder(order, result.data) : order));
+    return { data: result.data, error: null };
+  });
+
   const reloadOrders = useCallback(() => reloadOrdersRef.current?.() || Promise.resolve(), []);
 
   return (
@@ -346,6 +439,8 @@ export const OrdersProvider = ({ children }) => {
       ordersLoading,
       ordersLoadError,
       reloadOrders,
+      updateOrderPaymentStatus,
+      updateOrderPaymentMethod,
       finishedOrders: orders.filter((order) => order.is_completed && order.status !== "cancelled"),
       cancelledOrders: orders.filter((order) => order.status === "cancelled"),
       addOrder,

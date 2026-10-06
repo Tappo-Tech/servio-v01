@@ -23,18 +23,37 @@ import { formatTimeAgo } from "../../../utils/helpers";
 import { useOrders } from "../../../context/OrdersContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
+import PaymentStatusControl from "./PaymentStatusControl";
 
 function OrderItemCard({ order }) {
-  const { updateOrderStatus } = useOrders();
+  const { updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
   const [, setTimeTick] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
   const changeStatus = async (status) => { if (sending) return; setSending(true); await updateOrderStatus(order.id, status); setSending(false); };
+  const changePaymentStatus = async (status) => {
+    if (paymentSaving) return;
+    setPaymentSaving(true);
+    setPaymentError("");
+    const result = await updateOrderPaymentStatus(order.id, status);
+    if (result?.error) setPaymentError(language === "ar" ? "تعذر حفظ حالة الدفع. أعد المحاولة." : "Could not save payment status. Retry.");
+    setPaymentSaving(false);
+  };
+  const changePaymentMethod = async (method) => {
+    if (paymentSaving) return;
+    setPaymentSaving(true);
+    setPaymentError("");
+    const result = await updateOrderPaymentMethod(order.id, method);
+    if (result?.error) setPaymentError(language === "ar" ? "تعذر حفظ طريقة الدفع. أعد المحاولة." : "Could not save payment method. Retry.");
+    setPaymentSaving(false);
+  };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
 
   return (
@@ -95,6 +114,11 @@ function OrderItemCard({ order }) {
           >
             {formatTimeAgo(order.created_at, language, t)}
           </Typography>
+        </Box>
+
+        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1.2, display: "flex", flexDirection: "column", gap: 0.6 }}>
+          <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />
+          {paymentError && <Typography variant="caption" color="error">{paymentError}</Typography>}
         </Box>
 
         <Divider sx={{ borderStyle: "dashed" }} />
