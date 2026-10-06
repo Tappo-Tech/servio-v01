@@ -23,7 +23,7 @@ import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
 import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
-  const shortOrderId = String(order?.id || "").slice(-6).toUpperCase();
+  const shortOrderId = order?.displayOrderNumber || order?.order_number || String(order?.id || "").slice(-6).toUpperCase();
   const invoiceAmounts = amounts || calculateInclusiveVat(order?.total_price);
   const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
     minimumFractionDigits: 2,
@@ -179,7 +179,7 @@ function getPrintRetryState(error, orderId) {
   return null;
 }
 
-function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false }) {
+function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false, printMode = "order" }) {
   const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
   const { categoriesList = [], items: menuItems = [], menuLoading, menuError, refreshMenu } = useMenu();
@@ -227,6 +227,14 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     if (menuLoading) throw new Error(language === "ar" ? "جارٍ تحميل إعدادات التصنيفات، حاول بعد لحظات." : "Category settings are still loading; try again shortly.");
     if (menuError) throw new Error(language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد تحميل المنيو قبل الطباعة." : "Category settings could not be loaded. Reload the menu before printing.");
     const settings = getPrinterSettings();
+    if (printMode === "cashier") {
+      return printReceipt(order, storeInfo, {
+        language,
+        currency,
+        settings,
+        printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter),
+      });
+    }
     if (isTest) return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest, settings });
     return printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings });
   };

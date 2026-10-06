@@ -8,6 +8,10 @@ import CardContent from "@mui/material/CardContent";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
 // ANIMATION
 import { motion } from "framer-motion";
@@ -25,13 +29,15 @@ import { useLanguage } from "../../../context/LanguageContext";
 import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 import PaymentStatusControl from "./PaymentStatusControl";
 
-function OrderItemCard({ order }) {
+function OrderItemCard({ order, onEdit }) {
   const { updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [receiptConfirmed, setReceiptConfirmed] = useState(false);
+  const [confirmingStatus, setConfirmingStatus] = useState(null);
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
   const isAwaitingPayment = order.status === "awaiting_payment" || (order.status === "ready" && !isPaid);
@@ -39,12 +45,20 @@ function OrderItemCard({ order }) {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const changeStatus = async (status) => {
+  const performStatusChange = async (status) => {
     if (sending) return;
     setSending(true);
-    const nextStatus = !isPaid && ["ready", "served"].includes(status) ? "awaiting_payment" : status;
+    const nextStatus = !isPaid && status === "served" ? "awaiting_payment" : status;
     await updateOrderStatus(order.id, nextStatus);
+    if (nextStatus === "awaiting_payment") setReceiptConfirmed(true);
     setSending(false);
+  };
+  const changeStatus = (status) => {
+    if (status === "served") {
+      setConfirmingStatus(status);
+      return;
+    }
+    void performStatusChange(status);
   };
   const changePaymentStatus = async (status) => {
     if (paymentSaving) return;
@@ -110,7 +124,7 @@ function OrderItemCard({ order }) {
             variant="subtitle1"
             sx={{ fontWeight: 900, color: "text.primary", fontSize: { xs: "0.98rem", sm: "1.05rem" }, minWidth: 0, overflowWrap: "anywhere" }}
           >
-            {t("table")} {order.table_number}
+            #{order.displayOrderNumber || order.order_number || "—"} · {t("table")} {order.table_number}
           </Typography>
 
           <Typography
@@ -134,7 +148,7 @@ function OrderItemCard({ order }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: "1px solid", borderColor: "divider", bgcolor: "grey.50", display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />
+          {(!isAwaitingPayment || receiptConfirmed) && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />}
           {paymentError && <Typography variant="caption" color="error" sx={{ px: 0.25, overflowWrap: "anywhere" }}>{paymentError}</Typography>}
         </Box>
 
@@ -308,17 +322,26 @@ function OrderItemCard({ order }) {
               <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 800 }}>
                 {t("paymentRequired")}
               </Typography>
-              <Button color="success" variant="contained" onClick={() => changeStatus("served")} disabled={!isPaid || sending}>
+              <Button color="success" variant="contained" onClick={() => changeStatus("served")} disabled={sending}>
                 {t("markDelivered")}
               </Button>
-              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={!isPaid || sending}>
+              {onEdit && <Button variant="outlined" onClick={() => onEdit(order)} disabled={sending}>{language === "ar" ? "تعديل الطلب" : "Edit order"}</Button>}
+              {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>
                 {t("printInvoice")}
-              </Button>
+              </Button>}
             </Box>
           )}
         </CardActions>
       </Card>
-      <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} autoPrint={order.status === "pending" ? "kitchen" : false} />
+      <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} autoPrint={order.status === "pending" ? "kitchen" : false} printMode={order.status === "pending" ? "order" : "cashier"} />
+      <Dialog open={Boolean(confirmingStatus)} onClose={() => !sending && setConfirmingStatus(null)} fullWidth maxWidth="xs">
+        <DialogTitle>{language === "ar" ? "تأكيد الاستلام" : "Confirm receipt"}</DialogTitle>
+        <DialogContent>{language === "ar" ? "هل تؤكد أن العميل استلم الطلب؟ سيتم نقل الطلب غير المدفوع إلى انتظار السداد." : "Confirm that the customer received the order? Unpaid orders will remain awaiting payment."}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmingStatus(null)} disabled={sending}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+          <Button variant="contained" color="success" onClick={async () => { const next = confirmingStatus; setConfirmingStatus(null); await performStatusChange(next); }} disabled={sending}>{language === "ar" ? "تأكيد الاستلام" : "Confirm receipt"}</Button>
+        </DialogActions>
+      </Dialog>
     </motion.div>
   );
 }

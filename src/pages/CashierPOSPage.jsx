@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -168,6 +168,7 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
  */
 function CashierPOSPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoutes } = useMenu();
   const { addOrder, updateOrderPaymentStatus } = useOrders();
   const { storeInfo = {} } = useStore();
@@ -198,6 +199,7 @@ function CashierPOSPage() {
   const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [unpaidOrders, setUnpaidOrders] = useState([]);
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
     try {
       return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false";
@@ -220,6 +222,17 @@ function CashierPOSPage() {
     if (!tenantId) return;
     try { window.localStorage.setItem(`servio.pos.unpaidOrders.${tenantId}`, JSON.stringify(unpaidOrders)); } catch { /* storage is optional */ }
   }, [tenantId, unpaidOrders]);
+
+  useEffect(() => {
+    const editOrder = location.state?.editOrder;
+    if (!editOrder?.id || editingOrderId === editOrder.id) return;
+    setCart(Array.isArray(editOrder.items) ? editOrder.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
+    setPaymentStatus(editOrder.payment_status === "paid" ? "paid" : "unpaid");
+    setPaymentMethod(editOrder.payment_method || null);
+    setNotes(editOrder.notes || "");
+    setEditingOrderId(editOrder.id);
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  }, [location.state, editingOrderId]);
 
   const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
   const addonChoiceCounts = useMemo(() => new Map(availableItems.map((item) => (
@@ -359,10 +372,12 @@ function CashierPOSPage() {
       setInvoiceIsTest(false);
       setInvoiceOrder(result.data);
       if (paymentStatus !== "paid") setUnpaidOrders((current) => [...current.filter((row) => row.id !== result.data.id), result.data]);
+      if (editingOrderId) setUnpaidOrders((current) => current.filter((row) => row.id !== editingOrderId));
       setCart([]);
       setNotes("");
       setPaymentStatus("unpaid");
       setPaymentMethod(null);
+      setEditingOrderId(null);
       setCartDrawerOpen(false);
       setSavedMessage(text.saved);
     } catch (error) {

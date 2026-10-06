@@ -11,7 +11,8 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // ANIMATION
 import { AnimatePresence } from "framer-motion";
@@ -34,6 +35,7 @@ const COLUMNS = [
 ];
 
 function LiveOrders() {
+  const navigate = useNavigate();
   const { orders, ordersLoading, ordersLoadError, reloadOrders } = useOrders();
   const { t, language } = useLanguage();
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
@@ -65,6 +67,12 @@ function LiveOrders() {
     order.items.length > 0 &&
     order.items.every((item) => item && String(item.name || "").trim() && item.quantity != null && item.price != null)
   ));
+
+  const orderNumbers = useMemo(() => new Map(
+    [...orders]
+      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+      .map((order, index) => [order.id, index + 1]),
+  ), [orders]);
 
   const getOrdersByStatus = (status) => activeOrders.filter((order) => (
     status === "awaiting_payment"
@@ -153,7 +161,11 @@ function LiveOrders() {
             <Box sx={{ minHeight: "200px" }}>
               <AnimatePresence mode="popLayout">
                 {columnOrders.map((order) => (
-                  <OrderItemCard key={order.id} order={order} />
+                  <OrderItemCard
+                    key={order.id}
+                    order={{ ...order, displayOrderNumber: orderNumbers.get(order.id) }}
+                    onEdit={(pendingOrder) => navigate("/dashboard/pos", { state: { editOrder: pendingOrder } })}
+                  />
                 ))}
               </AnimatePresence>
             </Box>
