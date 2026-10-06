@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -182,6 +182,9 @@ function CashierPOSPage() {
 
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [categoryOrder, setCategoryOrder] = useState([]);
+  const [draggingCategory, setDraggingCategory] = useState(null);
+  const holdTimerRef = useRef(null);
   const [cart, setCart] = useState([]);
   const [orderType, setOrderType] = useState("dineIn");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
@@ -224,6 +227,21 @@ function CashierPOSPage() {
   }, [tenantId, unpaidOrders]);
 
   useEffect(() => {
+    if (!tenantId) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(`servio.pos.categoryOrder.${tenantId}`) || "[]");
+      setCategoryOrder(Array.isArray(saved) ? saved.map(String) : []);
+    } catch {
+      setCategoryOrder([]);
+    }
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    try { window.localStorage.setItem(`servio.pos.categoryOrder.${tenantId}`, JSON.stringify(categoryOrder)); } catch { /* storage is optional */ }
+  }, [tenantId, categoryOrder]);
+
+  useEffect(() => {
     const editOrder = location.state?.editOrder;
     if (!editOrder?.id || editingOrderId === editOrder.id) return;
     setCart(Array.isArray(editOrder.items) ? editOrder.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
@@ -241,6 +259,32 @@ function CashierPOSPage() {
   const categories = useMemo(() => categoriesList.filter((category) => (
     availableItems.some((item) => item.category_id === category.id)
   )), [categoriesList, availableItems]);
+  const orderedCategories = useMemo(() => {
+    const byId = new Map(categories.map((category) => [String(category.id), category]));
+    const saved = categoryOrder.map((id) => byId.get(String(id))).filter(Boolean);
+    const savedIds = new Set(saved.map((category) => String(category.id)));
+    return [...saved, ...categories.filter((category) => !savedIds.has(String(category.id)))];
+  }, [categories, categoryOrder]);
+
+  const startCategoryHold = (categoryId) => {
+    window.clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = window.setTimeout(() => setDraggingCategory(String(categoryId)), 420);
+  };
+  const stopCategoryHold = () => {
+    window.clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = null;
+    setDraggingCategory(null);
+  };
+  const moveCategoryBefore = (targetId) => {
+    if (!draggingCategory || String(targetId) === draggingCategory) return;
+    const ids = orderedCategories.map((category) => String(category.id));
+    const fromIndex = ids.indexOf(draggingCategory);
+    const targetIndex = ids.indexOf(String(targetId));
+    if (fromIndex < 0 || targetIndex < 0) return;
+    ids.splice(fromIndex, 1);
+    ids.splice(targetIndex, 0, draggingCategory);
+    setCategoryOrder(ids);
+  };
   const categoryPrinterNames = useMemo(() => categoriesList
     .map((category) => category.printer_name)
     .filter((name) => typeof name === "string" && name.trim()), [categoriesList]);
@@ -598,8 +642,20 @@ function CashierPOSPage() {
             />
             <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
-              {categories.map((category) => (
-                <Chip key={category.id} label={language === "en" ? (category.name_en || category.name) : category.name} clickable color={selectedCategory === category.id ? "primary" : "default"} variant={selectedCategory === category.id ? "filled" : "outlined"} onClick={() => setSelectedCategory(category.id)} />
+              {orderedCategories.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={language === "en" ? (category.name_en || category.name) : category.name}
+                  clickable
+                  color={selectedCategory === category.id ? "primary" : "default"}
+                  variant={selectedCategory === category.id ? "filled" : "outlined"}
+                  onClick={() => setSelectedCategory(category.id)}
+                  onPointerDown={() => startCategoryHold(category.id)}
+                  onPointerUp={stopCategoryHold}
+                  onPointerCancel={stopCategoryHold}
+                  onPointerEnter={() => moveCategoryBefore(category.id)}
+                  sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none" }}
+                />
               ))}
             </Stack>
 
