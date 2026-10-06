@@ -35,6 +35,14 @@ if (-not $qzDirectory) {
     }
 }
 
+$qzExecutable = @(
+    (Join-Path $qzDirectory "QZ Tray.exe"),
+    (Join-Path $qzDirectory "qz-tray.exe")
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if (-not $qzExecutable) {
+    throw "لم أجد QZ Tray.exe داخل المجلد المحدد: $qzDirectory. اختر مجلد تثبيت QZ Tray الفعلي."
+}
+
 $targetCertificate = Join-Path $qzDirectory "override.crt"
 if (Test-Path -LiteralPath $targetCertificate) {
     $backupPath = "$targetCertificate.servio-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -43,6 +51,32 @@ if (Test-Path -LiteralPath $targetCertificate) {
 }
 Copy-Item -LiteralPath $certificatePath -Destination $targetCertificate -Force
 Write-Host "ثُبّتت شهادة SERVIO العامة في: $targetCertificate"
+
+$installedCertificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($targetCertificate)
+if ($installedCertificate.Thumbprint -ne $certificate.Thumbprint) {
+    throw "بصمة شهادة QZ بعد النسخ لا تطابق شهادة SERVIO؛ لم أتابع الإعداد."
+}
+
+# Explicitly point QZ Tray at the same public trust certificate. QZ documents
+# authcert.override as an alternative to the default override.crt location.
+$propertiesPath = Join-Path $qzDirectory "qz-tray.properties"
+$existingProperties = @()
+if (Test-Path -LiteralPath $propertiesPath -PathType Leaf) {
+    $backupPropertiesPath = "$propertiesPath.servio-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item -LiteralPath $propertiesPath -Destination $backupPropertiesPath
+    $existingProperties = @([System.IO.File]::ReadAllLines($propertiesPath))
+    Write-Host "تم الاحتفاظ بنسخة احتياطية من إعدادات QZ Tray: $backupPropertiesPath"
+}
+$properties = @($existingProperties | Where-Object { $_ -notmatch '^\s*authcert\.override\s*[:=]' })
+$escapedCertificatePath = $targetCertificate.Replace('\', '/')
+$properties += "authcert.override=$escapedCertificatePath"
+[System.IO.File]::WriteAllLines(
+    $propertiesPath,
+    [string[]]$properties,
+    [System.Text.UTF8Encoding]::new($false)
+)
+Write-Host "ضُبط مسار الثقة صراحةً في: $propertiesPath"
+Write-Host "بصمة SERVIO SHA-1: $($installedCertificate.Thumbprint)"
 
 $installedPrinters = @()
 if (Get-Command Get-Printer -ErrorAction SilentlyContinue) {
