@@ -3,6 +3,7 @@ import { buildReceiptHtml, escapeReceiptHtml } from "./receiptHtml";
 describe("receipt HTML", () => {
   const order = {
     id: "order-123456",
+    order_number: 7,
     created_at: "2026-10-05T03:00:00Z",
     table_number: "محل - 4",
     total_price: 115,
@@ -17,6 +18,13 @@ describe("receipt HTML", () => {
     expect(html).toContain("&lt;SERVIO&gt;");
     expect(html).toContain("إضافات: عسل &lt;b&gt;");
     expect(html).not.toContain("عسل <b>");
+  });
+
+  test("prints the sequential order number instead of the UUID suffix", () => {
+    const html = buildReceiptHtml({ order, language: "ar" });
+    expect(html).toContain("رقم الطلب");
+    expect(html).toContain("#7");
+    expect(html).not.toContain("#123456");
   });
 
   test.each([["58mm", "58mm"], ["80mm", "80mm"], ["A4", "210mm"]])("uses the requested %s width", (paperWidth, expectedCssWidth) => {

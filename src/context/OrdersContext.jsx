@@ -68,6 +68,12 @@ const getRealtimeOrder = (eventType, payload) => {
   return payload?.new || payload?.record || null;
 };
 
+const attachSequentialOrderNumbers = (orderList) => {
+  const sorted = [...orderList].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  const numbers = new Map(sorted.map((order, index) => [order.id, order.order_number || index + 1]));
+  return orderList.map((order) => ({ ...order, order_number: numbers.get(order.id) }));
+};
+
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
   const [orders, setOrders] = useState([]);
@@ -147,7 +153,7 @@ export const OrdersProvider = ({ children }) => {
               }
             });
             realtimeChanges.clear();
-            setOrders(Array.from(mergedById.values()));
+            setOrders(attachSequentialOrderNumbers(Array.from(mergedById.values())));
             successfulSnapshot = true;
             lastError = null;
             setOrdersLoadError(null);
@@ -198,6 +204,7 @@ export const OrdersProvider = ({ children }) => {
       setOrders((current) => {
         const existing = current.find((order) => order.id === incoming.id);
         const merged = mergeOrder(existing, incoming);
+        if (!existing) merged.order_number = Math.max(0, ...current.map((order) => Number(order.order_number) || 0)) + 1;
 
         if (eventType === "INSERT" && !existing && hasCompleteItems(incoming) && !notifiedRealtimeOrders.current.has(incoming.id)) {
           notifiedRealtimeOrders.current.add(incoming.id);
@@ -295,10 +302,11 @@ export const OrdersProvider = ({ children }) => {
       .single();
 
     if (!error && data) {
-      const formatted = formatOrder(data);
+      const formatted = { ...formatOrder(data), order_number: Math.max(0, ...orders.map((order) => Number(order.order_number) || 0)) + 1 };
       setOrders((current) => current.some((order) => order.id === formatted.id)
         ? current.map((order) => order.id === formatted.id ? mergeOrder(order, formatted) : order)
         : [formatted, ...current]);
+      return { data: formatted, error: null };
     }
     return { data, error };
   });
@@ -331,7 +339,7 @@ export const OrdersProvider = ({ children }) => {
       setOrders((current) => current.map((order) => order.id === orderId ? target : order));
       return { error: error || new Error("تعذر تحديث الطلب") };
     }
-    const formatted = formatOrder(data);
+    const formatted = { ...formatOrder(data), order_number: target.order_number };
     setOrders((current) => current.map((order) => order.id === orderId ? mergeOrder(order, formatted) : order));
     return { data: formatted, error: null };
   });

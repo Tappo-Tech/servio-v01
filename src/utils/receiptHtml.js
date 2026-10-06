@@ -76,7 +76,7 @@ export function buildReceiptHtml({
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemCount = orderItems.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 1)), 0);
-  const shortId = String(order?.id || "").slice(-6).toUpperCase();
+  const shortId = order?.displayOrderNumber || order?.order_number || String(order?.id || "").slice(-6).toUpperCase();
   const tableNumber = escapeReceiptHtml(order?.table_number || "—");
   const notes = order?.notes ? `<div class="notes"><strong>${labels.notes}:</strong> ${escapeReceiptHtml(order.notes)}</div>` : "";
   const formatMoney = (value) => `${new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
