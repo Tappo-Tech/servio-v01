@@ -55,7 +55,7 @@ const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 const copy = {
   ar: {
     title: "كاشير — بيع جديد",
-    subtitle: "اختر الأصناف وعدّل السلة ثم اعتمد البيع مكتملًا وأصدر الفاتورة؛ لا يُرسل هذا الطلب للمطبخ.",
+    subtitle: "اختر الأصناف وعدّل السلة ثم اعتمد الطلب؛ تُطبع تذكرة المطبخ دائمًا، وتُضاف فاتورة الكاشير إذا كان مدفوعًا.",
     back: "العودة للطلبات",
     search: "ابحث عن صنف",
     all: "الكل",
@@ -95,7 +95,7 @@ const copy = {
     cancel: "إلغاء",
     cashier: "طلب كاشير",
     printerSetup: "إعداد الطابعة",
-    autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع عبر QZ Tray",
+    autoPrint: "طباعة اختبار الطابعة تلقائيًا عبر QZ Tray",
     printerHelp: "تُرسل الفاتورة إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
     testPrint: "اكتشاف الطابعات / اختبار الفاتورة",
     close: "إغلاق",
@@ -106,7 +106,7 @@ const copy = {
   },
   en: {
     title: "Cashier — New sale",
-    subtitle: "Choose items, edit the cart, then save the sale as completed and issue its invoice; it is not sent to a kitchen.",
+    subtitle: "Choose items and save the sale; a kitchen ticket always prints, and paid sales also print the cashier invoice.",
     back: "Back to orders",
     search: "Search menu items",
     all: "All",
@@ -146,7 +146,7 @@ const copy = {
     cancel: "Cancel",
     cashier: "Cashier sale",
     printerSetup: "Printer setup",
-    autoPrint: "Send the receipt automatically through QZ Tray after saving a sale",
+    autoPrint: "Automatically print the printer test through QZ Tray",
     printerHelp: "The receipt is sent to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
     testPrint: "Discover printers / test receipt",
     close: "Close",
@@ -469,12 +469,12 @@ function CashierPOSPage() {
       {checkoutError && <Alert severity="error" sx={{ mt: 1.2 }}>{checkoutError}</Alert>}
       {unpaidOrders.length > 0 && (
         <Box sx={{ mt: 1.5, p: 1.35, borderRadius: 2.2, bgcolor: "rgba(244,121,32,.07)", border: "1px solid", borderColor: "warning.light" }}>
-          <Typography fontWeight={900} sx={{ mb: .35 }}>{language === "ar" ? "طلبات غير مدفوعة" : "Unpaid orders"}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{language === "ar" ? "تبقى هنا حتى تسجيل السداد، ثم تتاح فاتورة الكاشير." : "They stay here until payment is recorded; then the cashier invoice becomes available."}</Typography>
+          <Typography fontWeight={900} sx={{ mb: .35 }}>{language === "ar" ? "أصناف معلقة — بانتظار الدفع" : "Pending items — awaiting payment"}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{language === "ar" ? "تظل الطلبات هنا بعد طباعة تذكرة المطبخ حتى تسجيل السداد، ثم تُطبع فاتورة الكاشير." : "Orders stay here after the kitchen ticket prints until payment is recorded, then the cashier invoice prints."}</Typography>
           <Stack spacing={.8}>
             {unpaidOrders.map((order) => (
               <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
-                <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{String(order.id).slice(-6).toUpperCase()} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
+                <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{String(order.id).slice(-6).toUpperCase()} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
                 <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
               </Box>
             ))}
@@ -756,7 +756,7 @@ function CashierPOSPage() {
         open={Boolean(invoiceOrder)}
         onClose={closeInvoice}
         order={invoiceOrder}
-        autoPrint={autoPrintAfterSave || invoiceIsTest}
+        autoPrint={invoiceIsTest ? autoPrintAfterSave : true}
         isTest={invoiceIsTest}
       />
     </Box>
