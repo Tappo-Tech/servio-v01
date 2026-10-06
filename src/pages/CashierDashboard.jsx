@@ -29,6 +29,7 @@ import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-con
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import { useMenu } from "../context/MenuContext";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -82,7 +83,8 @@ function Dashboard() {
   };
 
   return (
-    <Box sx={{ width: "100%", minHeight: "100vh", backgroundColor: "#f8fafc", py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3, md: 5 } }}>
+    <Box sx={{ width: "100%", minHeight: "100vh", background: "radial-gradient(circle at 88% 8%, rgba(244,121,32,.14), transparent 24%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 44%, #eef1f7 100%)", py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3, md: 5 } }}>
+      <NewTableOrderAlert />
       <Container maxWidth="xl" disableGutters>
         <Stack spacing={{ xs: 1.5, md: 2.25 }}>
           <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.72)", background: "rgba(255,255,255,.78)", backdropFilter: "blur(18px)", boxShadow: "0 14px 42px rgba(23,26,47,.06)" }}>

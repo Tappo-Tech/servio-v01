@@ -26,7 +26,7 @@ function ManagerDashboard() {
   };
 
   return (
-    <Box data-language={language} sx={{ display: "flex", minHeight: "100vh", width: "100%", minWidth: 0, overflowX: "clip" }}>
+    <Box data-language={language} sx={{ display: "flex", minHeight: "100vh", width: "100%", minWidth: 0, overflowX: "clip", background: "radial-gradient(circle at 82% 5%, rgba(244,121,32,.13), transparent 24%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 48%, #eef1f7 100%)" }}>
       {/* الشريط الجانبي */}
       <ManagerSidebar
         mobileOpen={mobileOpen}
@@ -42,7 +42,7 @@ function ManagerDashboard() {
           flexGrow: 1,
           minWidth: 0,
           minHeight: "100vh",
-          backgroundColor: "background.default",
+          background: "transparent",
           display: "flex",
           flexDirection: "column",
         }}

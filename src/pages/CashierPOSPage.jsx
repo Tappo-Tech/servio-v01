@@ -46,6 +46,7 @@ import PrinterBridgeStatus from "../components/cashier-dashboard/PrinterBridgeSt
 import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-control/CategoryPrintRoutingDrawer";
 import { useShift } from "../context/ShiftContext";
 import { useUser } from "../context/UserContext";
+import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
@@ -591,7 +592,8 @@ function CashierPOSPage() {
   );
 
   return (
-    <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, bgcolor: "#f6f7f9", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 } }}>
+    <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, background: "radial-gradient(circle at 84% 4%, rgba(244,121,32,.14), transparent 23%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 46%, #eef1f7 100%)", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 } }}>
+      <NewTableOrderAlert />
       <Box sx={{ maxWidth: 1500, minWidth: 0, mx: "auto" }}>
         <CashierShiftGate />
         <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>

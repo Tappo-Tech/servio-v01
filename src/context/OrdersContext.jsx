@@ -79,6 +79,7 @@ export const OrdersProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersLoadError, setOrdersLoadError] = useState(null);
+  const [newTableOrderAlert, setNewTableOrderAlert] = useState(null);
   const guard = useRef(createRequestGuard()).current;
   const reloadOrdersRef = useRef(null);
   const notifiedRealtimeOrders = useRef(new Set());
@@ -89,6 +90,7 @@ export const OrdersProvider = ({ children }) => {
     // لا نعرض إجماليًا صفريًا قبل انتهاء تهيئة الجلسة والمستأجر.
     if (tenantLoading) {
       setOrders([]);
+      setNewTableOrderAlert(null);
       setOrdersLoading(!isPublic);
       setOrdersLoadError(null);
       return () => { active = false; };
@@ -96,6 +98,7 @@ export const OrdersProvider = ({ children }) => {
 
     if (isPublic || !tenantId) {
       setOrders([]);
+      setNewTableOrderAlert(null);
       setOrdersLoading(false);
       setOrdersLoadError(null);
       reloadOrdersRef.current = null;
@@ -104,6 +107,7 @@ export const OrdersProvider = ({ children }) => {
 
     // يبدأ التحميل بعد معرفة المستأجر، لا بطلب REST ينتهي بـ tenant_id=null.
     setOrders([]);
+    setNewTableOrderAlert(null);
     setOrdersLoading(true);
     setOrdersLoadError(null);
 
@@ -209,6 +213,9 @@ export const OrdersProvider = ({ children }) => {
         if (eventType === "INSERT" && !existing && hasCompleteItems(incoming) && !notifiedRealtimeOrders.current.has(incoming.id)) {
           notifiedRealtimeOrders.current.add(incoming.id);
           playRealtimeNotification("order");
+          const tableValue = String(incoming.table_number || "").trim().toLowerCase();
+          const isPosOrder = !tableValue || /pos|cashier|takeaway|سفري|محل/.test(tableValue);
+          if (!isPosOrder) setNewTableOrderAlert(incoming);
         }
 
         return existing
@@ -483,12 +490,15 @@ export const OrdersProvider = ({ children }) => {
   });
 
   const reloadOrders = useCallback(() => reloadOrdersRef.current?.() || Promise.resolve(), []);
+  const dismissNewTableOrderAlert = useCallback(() => setNewTableOrderAlert(null), []);
 
   return (
     <OrdersContext.Provider value={{
       orders,
       ordersLoading,
       ordersLoadError,
+      newTableOrderAlert,
+      dismissNewTableOrderAlert,
       reloadOrders,
       updateOrderPaymentStatus,
       deleteOrder,
