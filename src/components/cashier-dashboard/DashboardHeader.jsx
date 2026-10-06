@@ -26,7 +26,7 @@ function DashboardHeader({ handleNotificationOpen }) {
           justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
-          gap: 2,
+          gap: { xs: 1, sm: 2 },
         }}
       >
         <Box sx={{ textAlign: "start", minWidth: 0 }}>
@@ -56,12 +56,13 @@ function DashboardHeader({ handleNotificationOpen }) {
               fontWeight: 600,
               color: "text.secondary",
               mt: 0.45,
+              display: { xs: "none", sm: "block" },
             }}
           >
             {currentDate} · {t("cashierKitchen")}
           </Typography>
         </Box>
-        <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.65, sm: 0.9 } }}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.45, sm: 0.9 }, flex: "0 0 auto" }}>
           <LanguageToggle compact />
           <IconButton
             onClick={handleNotificationOpen}

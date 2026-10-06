@@ -69,6 +69,7 @@ function OrderItemCard({ order }) {
         elevation={0}
         sx={{
           width: "100%",
+          minWidth: 0,
           border: "1px solid",
           borderColor: "divider",
           borderRadius: "18px",
@@ -91,6 +92,8 @@ function OrderItemCard({ order }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            minWidth: 0,
+            gap: 1,
           }}
         >
           <Typography
@@ -116,7 +119,7 @@ function OrderItemCard({ order }) {
           </Typography>
         </Box>
 
-        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1.2, display: "flex", flexDirection: "column", gap: 0.6 }}>
+        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1.2, display: "flex", flexDirection: "column", gap: 0.6, minWidth: 0 }}>
           <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />
           {paymentError && <Typography variant="caption" color="error">{paymentError}</Typography>}
         </Box>
@@ -130,18 +133,20 @@ function OrderItemCard({ order }) {
               <Box
                 key={item.cartItemId || item.id}
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0,1fr) auto",
+                  gap: 1,
                   alignItems: "center",
+                  minWidth: 0,
                 }}
               >
                 <Typography
                   variant="body2"
-                  sx={{ fontWeight: 600, color: "text.primary" }}
+                    sx={{ fontWeight: 600, color: "text.primary", minWidth: 0, overflowWrap: "anywhere" }}
                 >
                   <Box
                     component="span"
-                    sx={{ color: "primary.main", fontWeight: 800, mr: 0.5 }}
+                    sx={{ color: "primary.main", fontWeight: 800, mr: 0.5, whiteSpace: "nowrap" }}
                   >
                     {item.quantity}x
                   </Box>{" "}
@@ -156,7 +161,7 @@ function OrderItemCard({ order }) {
 
                 <Typography
                   variant="body2"
-                  sx={{ color: "text.secondary", fontWeight: 600 }}
+                  sx={{ color: "text.secondary", fontWeight: 600, whiteSpace: "nowrap" }}
                 >
                   {item.price} {language === "ar" ? "ر.س" : "SAR"}
                 </Typography>
@@ -193,9 +198,9 @@ function OrderItemCard({ order }) {
         </CardContent>
 
         {/* أزرار الإجراءات */}
-        <CardActions sx={{ p: 1.5, pt: 0.5 }}>
+        <CardActions sx={{ p: { xs: 1.25, sm: 1.5 }, pt: 0.5, minWidth: 0 }}>
           {order.status === "pending" && (
-            <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "minmax(0,1fr) auto auto" }, gap: .8, width: "100%", minWidth: 0 }}>
               <Button
                 color="primary"
                 fullWidth
@@ -203,7 +208,7 @@ function OrderItemCard({ order }) {
                 variant="contained"
                 disableElevation
                 onClick={() => changeStatus("preparing")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
+                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0, borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
                 {sending ? "جاري الإرسال..." : t("startPreparing")}
               </Button>
@@ -212,7 +217,7 @@ function OrderItemCard({ order }) {
                 variant="outlined"
                 startIcon={<PrintRoundedIcon />}
                 onClick={() => setIsInvoiceOpen(true)}
-                sx={{ borderRadius: "10px", fontWeight: 800, minWidth: "fit-content" }}
+                sx={{ borderRadius: "10px", fontWeight: 800, minWidth: 0, whiteSpace: "normal" }}
               >
                 {t("printInvoice")}
               </Button>
@@ -221,7 +226,7 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="outlined"
                 onClick={() => changeStatus("cancelled")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "75px" }}
+                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: 0 }}
               >
                 {t("cancel")}
               </Button>
@@ -248,7 +253,7 @@ function OrderItemCard({ order }) {
           )}
 
           {order.status === "ready" && (
-            <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: .8, width: "100%", minWidth: 0 }}>
               <Button
                 color="success"
                 fullWidth
@@ -256,7 +261,7 @@ function OrderItemCard({ order }) {
                 variant="contained"
                 disableElevation
                 onClick={() => changeStatus("served")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, py: 0.9 }}
+                sx={{ minWidth: 0, borderRadius: "10px", fontWeight: 700, py: 0.9 }}
               >
                 {t("received")}
               </Button>
@@ -265,7 +270,7 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="outlined"
                 onClick={() => changeStatus("unclaimed")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: "90px" }}
+                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: 0, whiteSpace: "normal" }}
               >
                 {t("unclaimed")}
               </Button>

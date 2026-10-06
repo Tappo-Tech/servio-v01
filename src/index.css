@@ -1,11 +1,102 @@
-html, body, #root { direction: rtl; }
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  direction: rtl;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  min-width: 320px;
   direction: rtl;
   text-align: right;
   font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
 }
-* { box-sizing: border-box; }
-code { font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace; }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+.App {
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  text-align: start;
+  overflow-x: clip;
+}
+
+.App[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+.App[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.MuiContainer-root,
+.MuiPaper-root,
+.MuiCard-root {
+  min-width: 0;
+}
+
+.MuiTableContainer-root {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+}
+
+.MuiDialog-paper {
+  max-width: calc(100vw - 24px);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+@media (max-width: 599.95px) {
+  .MuiButton-root {
+    min-height: 44px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
+  .MuiIconButton-root {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .MuiInputBase-input,
+  .MuiNativeSelect-select {
+    font-size: 16px !important;
+  }
+
+  .MuiTableContainer-root {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiDialog-paper {
+    width: calc(100% - 24px);
+    max-width: calc(100vw - 24px);
+    margin: 12px;
+  }
+}

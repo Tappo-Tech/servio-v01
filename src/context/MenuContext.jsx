@@ -303,6 +303,17 @@ export const MenuProvider = ({ children }) => {
     return { data, error: error || (!data ? new Error("التصنيف غير موجود") : null) };
   });
 
+  const updateCategoryPrintRoute = (cat) => guard(`menu:print-route:${cat.id}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const { data, error } = await supabase.rpc("save_category_print_route", {
+      p_category_id: cat.id,
+      p_separate_print: Boolean(cat.separate_print),
+      p_printer_name: String(cat.printer_name || "").trim() || null,
+    });
+    if (!error && data) setCategoriesList((prev) => prev.map((entry) => entry.id === cat.id ? data : entry));
+    return { data, error: error || (!data ? new Error("التصنيف غير موجود أو لا تملك صلاحية تعديله") : null) };
+  });
+
   const deleteCategory = (id) => guard(`menu:delete-category:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const { error } = await supabase.from("categories").delete().eq("id", id).eq("tenant_id", tenantId);
@@ -314,7 +325,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, updateCategoryPrintRoute, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
       {children}
     </MenuContext.Provider>
   );

@@ -152,6 +152,21 @@ describe("QZ Tray printer integration", () => {
     expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Cashier Printer", "Drinks Printer"]);
   });
 
+  test("prefers the saved store category route without requiring a cashier to select it again", async () => {
+    const settings = savePrinterSettings({ printers: ["Cashier Printer"], categoryPrinters: { drinks: "Old local choice" } });
+    const groups = [{
+      categoryId: "drinks",
+      printerName: "Shared Drinks Queue",
+      order: { total_price: 5, items: [{ name: "Drink", price: 5, quantity: 1 }] },
+      amounts: { gross: 5, net: 4.35, vat: 0.65 },
+    }];
+
+    const result = await printReceiptGroups(groups, {}, { settings });
+
+    expect(result.printers).toEqual(["Shared Drinks Queue"]);
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Shared Drinks Queue"]);
+  });
+
   test("prints kitchen tickets without prices to kitchen and category printers", async () => {
     const settings = savePrinterSettings({ paperWidth: "80mm", kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drinks Printer" } });
     const groups = [

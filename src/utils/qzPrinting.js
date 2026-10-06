@@ -218,8 +218,8 @@ export async function printReceiptGroups(groups, storeInfo, options = {}) {
     try {
       lastResult = await printReceipt(group.order, storeInfo, {
         ...options,
-        settings: group.categoryId && baseSettings.categoryPrinters?.[String(group.categoryId)]
-          ? { ...baseSettings, printers: [baseSettings.categoryPrinters[String(group.categoryId)]] }
+        settings: group.categoryId && (group.printerName || baseSettings.categoryPrinters?.[String(group.categoryId)])
+          ? { ...baseSettings, printers: [group.printerName || baseSettings.categoryPrinters[String(group.categoryId)]] }
           : baseSettings,
         receiptTitle: group.receiptTitle,
         taxBreakdown: group.amounts,
@@ -249,7 +249,7 @@ export async function printKitchenTicketGroups(groups, storeInfo, options = {}) 
   const sentPrinters = new Set();
 
   for (const group of groups) {
-    const categoryPrinter = group.categoryId ? settings.categoryPrinters?.[String(group.categoryId)] : "";
+    const categoryPrinter = group.categoryId ? (group.printerName || settings.categoryPrinters?.[String(group.categoryId)]) : "";
     const printer = categoryPrinter || settings.kitchenPrinter;
     if (!printer) {
       const error = new Error("حدد طابعة المطبخ من إعداد الطابعة، أو عيّن طابعة للتصنيف المنفصل.");

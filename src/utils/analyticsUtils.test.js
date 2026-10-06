@@ -25,4 +25,22 @@ describe("24-hour sales trend", () => {
     expect(sales[23]).toBe(7.5);
     expect(sales.reduce((sum, value) => sum + value, 0)).toBe(37.75);
   });
+
+  test("starts the chart at the configured workday hour and excludes outside hours", () => {
+    const start = new Date(2026, 9, 5, 18, 10, 0).toISOString();
+    const late = new Date(2026, 9, 6, 0, 30, 0).toISOString();
+    const afterShift = new Date(2026, 9, 6, 5, 30, 0).toISOString();
+    const labels = createHourlyLabels(18 * 60, 10 * 60);
+    const sales = aggregateHourlySales([
+      { completed_at: start, total_price: 10 },
+      { completed_at: late, total_price: 12 },
+      { completed_at: afterShift, total_price: 90 },
+    ], { startMinutes: 18 * 60, durationMinutes: 10 * 60 });
+    expect(labels[0]).toBe("18:00");
+    expect(labels[9]).toBe("03:00");
+    expect(sales).toHaveLength(10);
+    expect(sales[0]).toBe(10);
+    expect(sales[6]).toBe(12);
+    expect(sales.reduce((sum, value) => sum + value, 0)).toBe(22);
+  });
 });

@@ -48,14 +48,13 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
       }}
     >
       <Box sx={{ textAlign: "center", mb: 2 }}>
-        {storeInfo.logo_url && (
-          <Box
-            component="img"
-            src={storeInfo.logo_url}
-            alt={storeInfo.store_name || "Logo"}
-            sx={{ width: 80, height: 80, borderRadius: 2, objectFit: "cover", mx: "auto", mb: 1 }}
-          />
-        )}
+        <Box
+          component="img"
+          src={storeInfo.logo_url || "/logo-icon.webp"}
+          alt={storeInfo.store_name || "SERVIO"}
+          onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/logo-icon.webp"; }}
+          sx={{ width: 80, height: 80, borderRadius: 2, objectFit: "contain", mx: "auto", mb: 1 }}
+        />
         <Typography variant="h6" sx={{ fontWeight: 900 }}>
           {storeInfo.store_name || (language === "ar" ? "متجر SERVIO" : "SERVIO Store")}
         </Typography>
@@ -65,8 +64,8 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
           </Typography>
         )}
         {storeInfo.address && (
-          <Typography variant="caption" display="block" color="text.secondary">
-            {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}
+        <Typography variant="caption" display="block" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
+          {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}
           </Typography>
         )}
         <Typography variant="caption" color="text.secondary" display="block">
@@ -83,7 +82,7 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
       </Box>
 
       <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, gap: 1 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0,1fr) auto" }, mb: 1, gap: 1 }}>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {language === "ar" ? "رقم الطلب" : "Order"}: #{shortOrderId}
         </Typography>
@@ -95,9 +94,9 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
 
       <Box sx={{ my: 2 }}>
         {(Array.isArray(order?.items) ? order.items : []).map((item, index) => (
-          <Box key={`${item.id || item.cartItemId || item.name}-${index}`} sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 1 }}>
+          <Box key={`${item.id || item.cartItemId || item.name}-${index}`} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, mb: 1, minWidth: 0 }}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body2">{item.name} × {item.quantity}</Typography>
+              <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>{item.name} × {item.quantity}</Typography>
               {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
                 <Typography variant="caption" display="block" color="text.secondary">
                   {language === "ar" ? "إضافات: " : "Add-ons: "}
@@ -138,9 +137,9 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
           <Typography variant="body2">{money(invoiceAmounts.vat)}</Typography>
         </Box>
         <Divider sx={{ borderStyle: "dashed", my: 1 }} />
-        <Box sx={{ display: "flex", justifyContent: "space-between", pt: 0.3, gap: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>{language === "ar" ? "الإجمالي المستحق (شامل الضريبة)" : "Total due (VAT included)"}</Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900, whiteSpace: "nowrap" }}>{money(invoiceAmounts.gross)}</Typography>
+        <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "start", pt: 0.3, gap: 1 }}>
+          <Typography variant="subtitle1" sx={{ minWidth: 0, fontWeight: 900, fontSize: { xs: ".92rem", sm: "1rem" }, overflowWrap: "anywhere" }}>{language === "ar" ? "الإجمالي المستحق (شامل الضريبة)" : "Total due (VAT included)"}</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 900, whiteSpace: "nowrap", fontSize: { xs: ".92rem", sm: "1rem" } }}>{money(invoiceAmounts.gross)}</Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1, gap: 1 }}>
           <Typography variant="body2" fontWeight={800}>{language === "ar" ? "حالة الدفع" : "Payment"}</Typography>
@@ -319,12 +318,12 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
         ))}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+      <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, flexWrap: "wrap", gap: 1, "& .MuiButton-root": { minWidth: { xs: "100%", sm: "auto" } } }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
         <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError)}>
           {language === "ar" ? "نافذة النظام (بديل)" : "System dialog (fallback)"}
         </Button>
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError)}>
             {language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket"}
           </Button>

@@ -243,7 +243,7 @@ function OrdersHistory() {
             width: { xs: "100%", sm: "auto" },
           }}
         >
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
             <InputLabel id="status-filter-label">{t("managerStatus")}</InputLabel>
             <Select
               labelId="status-filter-label"
@@ -279,8 +279,11 @@ function OrdersHistory() {
         </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: { xs: 2.5, md: 3.5 }, boxShadow: "0 14px 40px rgba(23,26,47,.055)", border: "1px solid rgba(255,255,255,.75)", overflow: "hidden" }}>
-        <Table>
+      <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" }, mb: .7, textAlign: "start" }}>
+        {language === "ar" ? "اسحب الجدول أفقيًا لعرض بقية التفاصيل." : "Swipe the table horizontally to view all details."}
+      </Typography>
+      <TableContainer component={Paper} sx={{ maxWidth: "100%", borderRadius: { xs: 2.5, md: 3.5 }, boxShadow: "0 14px 40px rgba(23,26,47,.055)", border: "1px solid rgba(255,255,255,.75)", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch" }}>
+        <Table sx={{ minWidth: { xs: 680, sm: 760 } }}>
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
               <TableCell width={50} />

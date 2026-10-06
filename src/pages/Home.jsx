@@ -189,14 +189,14 @@ export default function Home() {
                 gap: 2,
               }}
             >
-              <Stack direction="row" sx={{ alignItems: "center", gap: 1.1 }}>
+              <Stack direction="row" sx={{ alignItems: "center", gap: { xs: .7, sm: 1.1 }, minWidth: 0 }}>
                 <Box
                   component="img"
                   src="/logo-icon.webp"
                   alt="SERVIO"
-                  sx={{ width: 40, height: 40, objectFit: "contain" }}
+                  sx={{ width: { xs: 32, sm: 40 }, height: { xs: 32, sm: 40 }, objectFit: "contain", flex: "0 0 auto" }}
                 />
-                <Box>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
                     sx={{ fontWeight: 950, color: "secondary.main", lineHeight: 1 }}
                   >
@@ -204,7 +204,7 @@ export default function Home() {
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ color: "text.secondary", fontWeight: 700 }}
+                    sx={{ color: "text.secondary", fontWeight: 700, display: { xs: "none", sm: "block" } }}
                   >
                     {t("homeSubtitle")}
                   </Typography>
@@ -216,6 +216,7 @@ export default function Home() {
                 sx={{
                   alignItems: "center",
                   gap: { xs: 0.5, sm: 1 },
+                  flex: "0 0 auto",
                 }}
               >
                 <LanguageToggle compact />
@@ -223,7 +224,7 @@ export default function Home() {
                   component={RouterLink}
                   to="/login"
                   variant="text"
-                  sx={{ fontWeight: 800, minWidth: "auto", px: { xs: 1, sm: 1.5 } }}
+                  sx={{ display: { xs: "none", sm: "inline-flex" }, fontWeight: 800, minWidth: "auto", px: { xs: 1, sm: 1.5 } }}
                 >
                   {t("homeLogin")}
                 </Button>
@@ -234,7 +235,9 @@ export default function Home() {
                   sx={{
                     fontWeight: 850,
                     borderRadius: 2.5,
-                    px: { xs: 1.5, sm: 2.2 },
+                    minWidth: "auto",
+                    fontSize: { xs: ".76rem", sm: "0.875rem" },
+                    px: { xs: 1, sm: 2.2 },
                     boxShadow: "none",
                   }}
                 >
@@ -271,7 +274,7 @@ export default function Home() {
               component="h1"
               sx={{
                 maxWidth: 760,
-                fontSize: { xs: "2.7rem", sm: "3.8rem", md: "5.25rem" },
+                fontSize: { xs: "clamp(2.1rem, 9.5vw, 2.65rem)", sm: "3.8rem", md: "5.25rem" },
                 lineHeight: { xs: 1.08, md: 1.02 },
                 fontWeight: 950,
                 letterSpacing: "-0.055em",

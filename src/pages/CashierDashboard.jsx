@@ -19,10 +19,15 @@ import Paper from "@mui/material/Paper";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import { useMemo, useState } from "react";
-import dayjs from "dayjs";
+import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
+import { toLocalDateKey } from "../utils/salesReportUtils";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import CashierShiftGate from "../components/cashier-dashboard/CashierShiftGate";
+import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-control/CategoryPrintRoutingDrawer";
+import ShiftReports from "../components/manager-dashboard/ShiftReports";
+import { useMenu } from "../context/MenuContext";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -31,14 +36,21 @@ function Dashboard() {
   const [isSalesHistoryOpen, setIsSalesHistoryOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
+  const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
   const [testInvoice, setTestInvoice] = useState(null);
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { storeInfo = {} } = useStore();
+  const { categoriesList = [], updateCategoryPrintRoute } = useMenu();
   const { t, language } = useLanguage();
+  const schedule = useMemo(() => getWorkdaySchedule(storeInfo), [storeInfo]);
+  const operationalToday = shiftBusinessDate(new Date(), schedule.startMinutes) || new Date();
+  const operationalTodayKey = toLocalDateKey(operationalToday);
   const todayOrders = useMemo(() => finishedOrders.filter((order) => (
     order.status !== "cancelled" &&
-    dayjs(order.completed_at || order.created_at).isSame(dayjs(), "day")
-  )), [finishedOrders]);
+    Number.isFinite(new Date(order.completed_at || order.created_at).getTime()) &&
+    getWorkdayOffsetMinutes(new Date(order.completed_at || order.created_at), schedule.startMinutes) < schedule.durationMinutes &&
+    toLocalDateKey(shiftBusinessDate(new Date(order.completed_at || order.created_at), schedule.startMinutes)) === operationalTodayKey
+  )), [finishedOrders, schedule, operationalTodayKey]);
   const totalSales = todayOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
   const currency = storeInfo.currency || "ر.س";
 
@@ -76,7 +88,7 @@ function Dashboard() {
           <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2, md: 2.25 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.68)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(18px)", boxShadow: "0 16px 48px rgba(23,26,47,.06)" }}>
             <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 2 }}>
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800 }}>{t("totalSales")} · {language === "ar" ? "اليوم" : "Today"}</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800 }}>{t("totalSales")} · {language === "ar" ? "اليوم التشغيلي" : "Workday"}</Typography>
                 <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mt: .2 }}>
                   <Typography sx={{ fontSize: { xs: "1.45rem", sm: "1.8rem" }, fontWeight: 950, color: "text.primary", letterSpacing: "-.04em" }}>{ordersLoading || ordersLoadError ? "—" : totalSales.toFixed(2)}</Typography>
                   <Typography variant="body2" fontWeight={800} color="text.secondary">{currency}</Typography>
@@ -95,12 +107,13 @@ function Dashboard() {
 
           <CashierShiftGate />
 
-          <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 2, md: 2.5 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.68)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(18px)", boxShadow: "0 16px 48px rgba(23,26,47,.06)", minHeight: "calc(100vh - 168px)" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 2, md: 2.5 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.68)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(18px)", boxShadow: "0 16px 48px rgba(23,26,47,.06)", minHeight: { xs: 0, md: "calc(100vh - 168px)" }, minWidth: 0 }}>
             <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} variant="scrollable" scrollButtons="auto" aria-label={language === "ar" ? "تبويبات الكاشير" : "Cashier tabs"} sx={{ mb: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root": { fontWeight: 850, minHeight: 48 } }}>
               <Tab value="orders" label={language === "ar" ? "الطلبات الواردة" : "Incoming orders"} />
               <Tab value="printing" icon={<PrintRoundedIcon />} iconPosition="start" label={language === "ar" ? "إعدادات الطباعة" : "Printer settings"} />
+              <Tab value="shifts" icon={<AccessTimeRoundedIcon />} iconPosition="start" label={language === "ar" ? "الورديات" : "Shifts"} />
             </Tabs>
-            {activeTab === "orders" ? <LiveOrders /> : (
+            {activeTab === "orders" ? <LiveOrders /> : activeTab === "shifts" ? <ShiftReports /> : (
               <Box sx={{ maxWidth: 760, mx: "auto", py: { xs: 2, md: 4 } }}>
                 <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider", background: "rgba(255,255,255,.82)" }}>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
@@ -108,9 +121,14 @@ function Dashboard() {
                       <Typography variant="h6" fontWeight={950}>{language === "ar" ? "إعداد طابعات هذا الجهاز" : "Printer settings for this device"}</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: .6 }}>{language === "ar" ? "حدد طابعات فواتير الكاشير وتذكرة المطبخ، ومقاس الورق، والطباعة التلقائية." : "Choose cashier and kitchen printers, paper size, and automatic printing."}</Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 900, whiteSpace: "nowrap" }}>
-                      {language === "ar" ? "فتح إعدادات الطباعة" : "Open printer setup"}
-                    </Button>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                      <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setCategoryRoutingOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 900, whiteSpace: "nowrap" }}>
+                        {language === "ar" ? "طابعات التصنيفات" : "Category printers"}
+                      </Button>
+                      <Button variant="contained" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 900, whiteSpace: "nowrap" }}>
+                        {language === "ar" ? "إعدادات طباعة الجهاز" : "Device printer setup"}
+                      </Button>
+                    </Stack>
                   </Stack>
                 </Paper>
               </Box>
@@ -127,6 +145,7 @@ function Dashboard() {
             onAutoPrintChange={handleAutoPrintChange}
             onTest={openPrinterTest}
           />
+          <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategory={updateCategoryPrintRoute} />
           <InvoiceModal open={Boolean(testInvoice)} onClose={() => setTestInvoice(null)} order={testInvoice} isTest />
         </Stack>
       </Container>

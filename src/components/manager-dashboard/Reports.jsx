@@ -27,6 +27,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import supabase from "../../supabase";
 import { useTenant } from "../../context/TenantContext";
+import { useStore } from "../../context/StoreInfoContext";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   aggregateSalesReport,
@@ -35,6 +36,7 @@ import {
   getPresetDateRange,
   getUtcDateBounds,
 } from "../../utils/salesReportUtils";
+import { getWorkdaySchedule } from "../../utils/workdayUtils";
 
 const PAGE_SIZE = 500;
 
@@ -145,14 +147,16 @@ function MetricCard({ title, value, detail }) {
 
 function Reports() {
   const theme = useTheme();
-  const { tenantId, storeInfo, loading: tenantLoading } = useTenant();
+  const { tenantId, loading: tenantLoading } = useTenant();
+  const { storeInfo = {} } = useStore();
   const { language, t } = useLanguage();
   const text = COPY[language] || COPY.ar;
   const locale = language === "ar" ? "ar-SA" : "en-SA";
   const [period, setPeriod] = useState("daily");
   const [refreshKey, setRefreshKey] = useState(0);
   const [reportClock, setReportClock] = useState(() => new Date());
-  const range = useMemo(() => getPresetDateRange(period, reportClock), [period, reportClock]);
+  const schedule = useMemo(() => getWorkdaySchedule(storeInfo), [storeInfo]);
+  const range = useMemo(() => getPresetDateRange(period, reportClock, schedule.startMinutes), [period, reportClock, schedule.startMinutes]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -176,7 +180,7 @@ function Reports() {
       setError("");
       setOrders([]);
       try {
-        const { start, endExclusive } = getUtcDateBounds(range.from, range.to);
+        const { start, endExclusive } = getUtcDateBounds(range.from, range.to, schedule.startMinutes);
         // نقرأ الأعمدة الضرورية فقط ونقسم النتائج؛ لا نحمّل تاريخًا خارج الفترة ولا نطلب صور الأصناف.
         const saleDateFilter = `and(completed_at.gte.${start},completed_at.lt.${endExclusive}),and(completed_at.is.null,created_at.gte.${start},created_at.lt.${endExclusive})`;
         const allRows = [];
@@ -208,10 +212,10 @@ function Reports() {
     };
     void loadReportOrders();
     return () => { active = false; };
-  }, [tenantId, tenantLoading, range.from, range.to, refreshKey, text.error]);
+  }, [tenantId, tenantLoading, range.from, range.to, refreshKey, text.error, schedule.startMinutes]);
 
-  const report = useMemo(() => aggregateSalesReport(orders), [orders]);
-  const series = useMemo(() => createSalesSeries(orders, range.from, range.to, period, locale), [orders, range.from, range.to, period, locale]);
+  const report = useMemo(() => aggregateSalesReport(orders, schedule), [orders, schedule]);
+  const series = useMemo(() => createSalesSeries(orders, range.from, range.to, period, locale, schedule), [orders, range.from, range.to, period, locale, schedule]);
   const currency = storeInfo?.currency || t("currencySar") || text.currency;
   const formatMoney = (value) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency}`;
   const fromLabel = localDateForDisplay(range.from, locale);

@@ -53,4 +53,26 @@ describe("sales report calculations", () => {
     expect(hours).toHaveLength(24);
     expect(hours[10].total).toBe(50);
   });
+
+  test("aligns daily report buckets to configured work hours and handles overnight sales", () => {
+    const schedule = { startMinutes: 18 * 60, durationMinutes: 10 * 60 };
+    const inRange = new Date(2026, 9, 5, 23, 15, 0).toISOString();
+    const afterMidnight = new Date(2026, 9, 6, 2, 15, 0).toISOString();
+    const outside = new Date(2026, 9, 6, 5, 15, 0).toISOString();
+    const bounds = getUtcDateBounds("2026-10-05", "2026-10-05", schedule.startMinutes);
+    const end = new Date(bounds.endExclusive);
+    expect(end.getDate()).toBe(6);
+    expect(end.getHours()).toBe(18);
+    const orders = [
+      { status: "served", total_price: 20, completed_at: inRange },
+      { status: "served", total_price: 15, completed_at: afterMidnight },
+      { status: "served", total_price: 100, completed_at: outside },
+    ];
+    const series = createSalesSeries(orders, "2026-10-05", "2026-10-05", "daily", "en-US", schedule);
+    expect(series[0].label).toBe("18:00");
+    expect(series[6].label).toBe("00:00");
+    expect(series[8].total).toBe(15);
+    expect(series.reduce((sum, point) => sum + point.total, 0)).toBe(35);
+    expect(aggregateSalesReport(orders, schedule).gross).toBe(35);
+  });
 });

@@ -1,20 +1,20 @@
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "./taxUtils";
+import { createWorkdayHourBuckets, getWorkdayOffsetMinutes, shiftBusinessDate } from "./workdayUtils";
 
 const SALES_STATUSES = new Set(["served", "unclaimed"]);
 const pad = (value) => String(value).padStart(2, "0");
 
-// يتبع التقرير التقويم المحلي للجهاز مثل لوحة التحليلات الحالية.
 export function toLocalDateKey(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export function getPresetDateRange(period, now = new Date()) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+export function getPresetDateRange(period, now = new Date(), workdayStartMinutes = 0) {
+  const operationalToday = shiftBusinessDate(now, workdayStartMinutes) || now;
+  const today = new Date(operationalToday.getFullYear(), operationalToday.getMonth(), operationalToday.getDate());
   let from = new Date(today);
-  if (period === "weekly") from.setDate(today.getDate() - today.getDay()); // أسبوع العمل يبدأ الأحد.
+  if (period === "weekly") from.setDate(today.getDate() - today.getDay());
   if (period === "monthly") from = new Date(today.getFullYear(), today.getMonth(), 1);
-  const todayKey = toLocalDateKey(today);
-  return { from: toLocalDateKey(from), to: todayKey };
+  return { from: toLocalDateKey(from), to: toLocalDateKey(today) };
 }
 
 function parseLocalDateKey(value) {
@@ -25,12 +25,21 @@ function parseLocalDateKey(value) {
   return date;
 }
 
-// حدود الاستعلام محلية شاملة لبداية ونهاية اليوم، وUTC-exclusive لنهاية اليوم كي لا تُفقد الطلبات.
-export function getUtcDateBounds(from, to) {
+function setClock(date, minuteOfDay = 0) {
+  const safeMinute = Math.max(0, Math.min(1439, Math.floor(Number(minuteOfDay) || 0)));
+  date.setHours(Math.floor(safeMinute / 60), safeMinute % 60, 0, 0);
+  return date;
+}
+
+// حدود اليوم التشغيلي تبدأ وتنتهي عند وقت الافتتاح، لا عند منتصف الليل.
+export function getUtcDateBounds(from, to, workdayStartMinutes = 0) {
   const start = parseLocalDateKey(from);
   const lastDay = parseLocalDateKey(to);
   if (!start || !lastDay || from > to) throw new Error("Invalid report date range");
-  const endExclusive = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1);
+  const endExclusive = new Date(lastDay);
+  endExclusive.setDate(endExclusive.getDate() + 1);
+  setClock(start, workdayStartMinutes);
+  setClock(endExclusive, workdayStartMinutes);
   return { start: start.toISOString(), endExclusive: endExclusive.toISOString() };
 }
 
@@ -49,9 +58,7 @@ function normalizeItems(value) {
       try {
         const parsed = JSON.parse(item);
         return Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === "object") : parsed && typeof parsed === "object" ? [parsed] : [];
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     });
   }
   if (typeof value === "string") {
@@ -60,7 +67,12 @@ function normalizeItems(value) {
   return [];
 }
 
-export function aggregateSalesReport(orders = []) {
+function isInWorkday(date, schedule) {
+  if (!date) return false;
+  return getWorkdayOffsetMinutes(date, schedule.startMinutes) < schedule.durationMinutes;
+}
+
+export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, durationMinutes: 1440 }) {
   let grossMinor = 0;
   let vatMinor = 0;
   let itemQuantity = 0;
@@ -68,7 +80,8 @@ export function aggregateSalesReport(orders = []) {
   const salesOrders = [];
 
   for (const order of orders) {
-    if (!SALES_STATUSES.has(order?.status) || !getSaleDate(order)) continue;
+    const saleDate = getSaleDate(order);
+    if (!SALES_STATUSES.has(order?.status) || !isInWorkday(saleDate, schedule)) continue;
     const amount = roundMoney(order.total_price || 0);
     const vat = calculateInclusiveVat(amount);
     grossMinor += toMinorUnits(vat.gross);
@@ -111,15 +124,17 @@ export function aggregateSalesReport(orders = []) {
   };
 }
 
-export function createSalesSeries(orders, from, to, period, locale = "ar-SA") {
-  const validOrders = (orders || []).filter((order) => SALES_STATUSES.has(order?.status) && getSaleDate(order));
+export function createSalesSeries(orders, from, to, period, locale = "ar-SA", schedule = { startMinutes: 0, durationMinutes: 1440 }) {
+  const validOrders = (orders || []).filter((order) => SALES_STATUSES.has(order?.status) && isInWorkday(getSaleDate(order), schedule));
   if (period === "daily") {
-    const values = Array.from({ length: 24 }, (_, hour) => ({ label: `${pad(hour)}:00`, key: hour, total: 0 }));
+    const buckets = createWorkdayHourBuckets(schedule.startMinutes, schedule.durationMinutes).map((bucket) => ({ label: bucket.label, total: 0 }));
     validOrders.forEach((order) => {
-      const hour = getSaleDate(order).getHours();
-      values[hour].total += Number(order.total_price) || 0;
+      const offset = getWorkdayOffsetMinutes(getSaleDate(order), schedule.startMinutes);
+      if (offset == null || offset >= schedule.durationMinutes) return;
+      const index = Math.floor(offset / 60);
+      if (buckets[index]) buckets[index].total += Number(order.total_price) || 0;
     });
-    return values.map((bucket) => ({ ...bucket, total: roundMoney(bucket.total) }));
+    return buckets.map((bucket, index) => ({ ...bucket, key: index, total: roundMoney(bucket.total) }));
   }
 
   const first = parseLocalDateKey(from);
@@ -127,19 +142,16 @@ export function createSalesSeries(orders, from, to, period, locale = "ar-SA") {
   if (!first || !last || from > to) return [];
   const byDay = new Map();
   validOrders.forEach((order) => {
-    const key = toLocalDateKey(getSaleDate(order));
-    byDay.set(key, (byDay.get(key) || 0) + (Number(order.total_price) || 0));
+    const businessDate = shiftBusinessDate(getSaleDate(order), schedule.startMinutes);
+    const key = businessDate && toLocalDateKey(businessDate);
+    if (key) byDay.set(key, (byDay.get(key) || 0) + (Number(order.total_price) || 0));
   });
 
   const series = [];
   const cursor = new Date(first);
   while (cursor <= last) {
     const key = toLocalDateKey(cursor);
-    series.push({
-      key,
-      label: cursor.toLocaleDateString(locale, { day: "numeric", month: "short" }),
-      total: roundMoney(byDay.get(key) || 0),
-    });
+    series.push({ key, label: cursor.toLocaleDateString(locale, { day: "numeric", month: "short" }), total: roundMoney(byDay.get(key) || 0) });
     cursor.setDate(cursor.getDate() + 1);
   }
   return series;

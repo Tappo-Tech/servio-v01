@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  Drawer,
   IconButton,
   InputAdornment,
   Paper,
@@ -29,6 +30,8 @@ import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { v4 as uuidV4 } from "uuid";
 import PaymentStatusControl from "../components/cashier-dashboard/orders/PaymentStatusControl";
 import { useMenu } from "../context/MenuContext";
@@ -39,6 +42,9 @@ import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import CashierShiftGate from "../components/cashier-dashboard/CashierShiftGate";
+import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-control/CategoryPrintRoutingDrawer";
+import { useShift } from "../context/ShiftContext";
+import { useUser } from "../context/UserContext";
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
@@ -54,6 +60,9 @@ const copy = {
     all: "الكل",
     add: "إضافة",
     cart: "سلة البيع",
+    cartReview: "مراجعة السلة",
+    selectedCount: "عناصر",
+    clearSearch: "مسح البحث",
     empty: "اختر صنفًا من المنيو لبدء البيع.",
     clear: "تفريغ السلة",
     orderType: "نوع الطلب",
@@ -91,6 +100,8 @@ const copy = {
     close: "إغلاق",
     printerTestItem: "اختبار الطباعة",
     printerTestLocation: "اختبار طابعة — لا يوجد طلب",
+    shiftRequired: "ابدأ الوردية وسجّل رصيد البداية قبل اعتماد أي بيع.",
+    categoryPrinters: "طابعات التصنيفات",
   },
   en: {
     title: "Cashier — New sale",
@@ -100,6 +111,9 @@ const copy = {
     all: "All",
     add: "Add",
     cart: "Sale cart",
+    cartReview: "Review cart",
+    selectedCount: "items",
+    clearSearch: "Clear search",
     empty: "Choose an item from the menu to start a sale.",
     clear: "Clear cart",
     orderType: "Order type",
@@ -137,6 +151,8 @@ const copy = {
     close: "Close",
     printerTestItem: "Printer test",
     printerTestLocation: "Printer test — no order",
+    shiftRequired: "Start your shift and record the opening cash before completing a sale.",
+    categoryPrinters: "Category printers",
   },
 };
 
@@ -151,11 +167,14 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
  */
 function CashierPOSPage() {
   const navigate = useNavigate();
-  const { items, categoriesList, menuLoading, menuError, refreshMenu } = useMenu();
+  const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoute } = useMenu();
   const { addOrder } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { language } = useLanguage();
+  const { currentShift } = useShift();
+  const { user } = useUser();
+  const shiftRequired = user?.role === "cashier";
   const text = copy[language] || copy.ar;
   const currency = storeInfo.currency || (language === "ar" ? "ر.س" : "SAR");
 
@@ -175,6 +194,8 @@ function CashierPOSPage() {
   const [invoiceIsTest, setInvoiceIsTest] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
+  const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
     try {
       return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false";
@@ -190,6 +211,7 @@ function CashierPOSPage() {
   const categories = useMemo(() => categoriesList.filter((category) => (
     availableItems.some((item) => item.category_id === category.id)
   )), [categoriesList, availableItems]);
+  const categoryById = useMemo(() => new Map(categoriesList.map((category) => [category.id, category])), [categoriesList]);
   const visibleItems = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();
     return availableItems.filter((item) => (
@@ -208,6 +230,7 @@ function CashierPOSPage() {
     0,
   );
   const grossAmount = grossMinorUnits / 100;
+  const cartItemCount = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const breakdown = calculateInclusiveVat(grossAmount);
   const amount = (value) => `${formatAmount(value, language)} ${currency}`;
 
@@ -295,6 +318,7 @@ function CashierPOSPage() {
 
   const submitOrder = async () => {
     if (!tenantId || cart.length === 0 || saving) return;
+    if (shiftRequired && !currentShift?.id) { setCheckoutError(text.shiftRequired); return; }
     setSaving(true);
     setCheckoutError("");
     setSavedMessage("");
@@ -318,6 +342,7 @@ function CashierPOSPage() {
       setNotes("");
       setPaymentStatus("unpaid");
       setPaymentMethod(null);
+      setCartDrawerOpen(false);
       setSavedMessage(text.saved);
     } catch (error) {
       console.error("تعذر حفظ بيع الكاشير:", { code: error?.code, status: error?.status, message: error?.message });
@@ -332,20 +357,112 @@ function CashierPOSPage() {
     setInvoiceIsTest(false);
   };
 
+  const renderCartContents = (mobileView = false) => (
+    <Box sx={{ p: mobileView ? { xs: 2, sm: 2.5 } : 0, pb: mobileView ? "calc(16px + env(safe-area-inset-bottom))" : 0 }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.35 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+          <ShoppingCartCheckoutRoundedIcon color="primary" />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={950} sx={{ fontSize: { xs: "1.05rem", sm: "1.2rem" } }}>{text.cart}</Typography>
+            {cart.length > 0 && <Typography variant="caption" color="text.secondary">{cartItemCount} {text.selectedCount}</Typography>}
+          </Box>
+        </Stack>
+        <Stack direction="row" alignItems="center" spacing={.25}>
+          {cart.length > 0 && (
+            <>
+              <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => { setCart([]); if (mobileView) setCartDrawerOpen(false); }} sx={{ display: { xs: "none", sm: "inline-flex" } }}>
+                {text.clear}
+              </Button>
+              <IconButton aria-label={text.clear} title={text.clear} color="error" onClick={() => { setCart([]); setCartDrawerOpen(false); }} sx={{ display: { xs: "inline-flex", sm: "none" } }}>
+                <DeleteOutlineRoundedIcon />
+              </IconButton>
+            </>
+          )}
+          {mobileView && <IconButton aria-label={text.close} onClick={() => setCartDrawerOpen(false)}><CloseRoundedIcon /></IconButton>}
+        </Stack>
+      </Stack>
+      <Divider />
+
+      {cart.length === 0 ? (
+        <Typography color="text.secondary" align="center" sx={{ py: 5 }}>{text.empty}</Typography>
+      ) : (
+        <Stack spacing={0.7} sx={{ py: 1.1, maxHeight: mobileView ? "30dvh" : { sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: "auto", overscrollBehavior: "contain" }}>
+          {cart.map((item) => {
+            const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
+            const lineId = getCartLineKey(item);
+            return (
+              <Box key={lineId} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: .75, alignItems: "center", py: .65, borderBottom: "1px solid rgba(23,26,47,.06)" }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography fontWeight={950} sx={{ fontSize: { xs: ".86rem", sm: ".92rem" }, lineHeight: 1.25, overflowWrap: "anywhere" }}>{item.name}</Typography>
+                  {item.selected_addons?.length > 0 && (
+                    <Typography variant="caption" color="primary.main" display="block" sx={{ overflowWrap: "anywhere" }}>
+                      {item.selected_addons.map((addon) => addon.name).join(language === "ar" ? "، " : ", ")}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography>
+                </Box>
+                <Stack direction="row" alignItems="center" spacing={.1}>
+                  <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)}><RemoveRoundedIcon fontSize="small" /></IconButton>
+                  <Typography sx={{ minWidth: 22, textAlign: "center", fontWeight: 900 }}>{item.quantity}</Typography>
+                  <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)}><AddRoundedIcon fontSize="small" /></IconButton>
+                </Stack>
+              </Box>
+            );
+          })}
+        </Stack>
+      )}
+
+      <Divider sx={{ mb: 1.4 }} />
+      <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
+      <Box sx={{ mt: 1.25, p: 1.1, borderRadius: 2, bgcolor: "rgba(23,26,47,.025)", border: "1px solid", borderColor: "divider" }}>
+        <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={setPaymentMethod} language={language} />
+      </Box>
+
+      {cart.length > 0 && (
+        <Box sx={{ mt: 1.25, p: 1.35, borderRadius: 2.2, bgcolor: "#f7f8fb", border: "1px solid rgba(23,26,47,.07)" }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: .8, lineHeight: 1.5 }}>{text.vatNote}</Typography>
+          <Stack spacing={.65}>
+            <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.net}</Typography><Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{amount(breakdown.net)}</Typography></Stack>
+            <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.vat}</Typography><Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{amount(breakdown.vat)}</Typography></Stack>
+            <Divider />
+            <Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={950} sx={{ minWidth: 0 }}>{text.gross}</Typography><Typography fontWeight={950} color="primary.main" sx={{ whiteSpace: "nowrap" }}>{amount(grossAmount)}</Typography></Stack>
+          </Stack>
+        </Box>
+      )}
+
+      {savedMessage && <Alert severity="success" sx={{ mt: 1.2 }}>{savedMessage}</Alert>}
+      {shiftRequired && !currentShift && <Alert severity="warning" sx={{ mt: 1.2, borderRadius: 2 }}>{text.shiftRequired}</Alert>}
+      {checkoutError && <Alert severity="error" sx={{ mt: 1.2 }}>{checkoutError}</Alert>}
+      <Box sx={{ position: mobileView ? "sticky" : "static", bottom: 0, pt: 1.2, bgcolor: mobileView ? "background.paper" : "transparent" }}>
+        <Button fullWidth variant="contained" size="large" startIcon={saving ? <CircularProgress size={19} color="inherit" /> : <ShoppingCartCheckoutRoundedIcon />} disabled={!tenantId || cart.length === 0 || saving || (shiftRequired && !currentShift?.id)} onClick={submitOrder} sx={{ py: 1.2, minHeight: 50, borderRadius: 2.2, fontWeight: 900 }}>
+          {saving ? text.submitting : text.submit}
+        </Button>
+      </Box>
+    </Box>
+  );
+
   return (
-    <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", bgcolor: "#f6f7f9", py: { xs: 2, md: 3 }, px: { xs: 1.5, sm: 2.5, lg: 4 } }}>
-      <Box sx={{ maxWidth: 1500, mx: "auto" }}>
+    <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, bgcolor: "#f6f7f9", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 } }}>
+      <Box sx={{ maxWidth: 1500, minWidth: 0, mx: "auto" }}>
         <CashierShiftGate />
         <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>
-          <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={1.5}>
-            <Stack direction="row" alignItems="center" spacing={1.3}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
               <PointOfSaleRoundedIcon color="primary" sx={{ fontSize: 34 }} />
-              <Box>
-                <Typography variant="h5" fontWeight={950}>{text.title}</Typography>
-                <Typography variant="body2" color="text.secondary">{text.subtitle}</Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h5" fontWeight={950} sx={{ fontSize: { xs: "1.12rem", sm: "1.5rem" }, lineHeight: 1.25 }}>{text.title}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: "none", sm: "block" }, mt: .25 }}>{text.subtitle}</Typography>
               </Box>
             </Stack>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <Stack direction="row" spacing={0.5} sx={{ display: { xs: "flex", sm: "none" }, flex: "0 0 auto" }}>
+              <IconButton aria-label={text.categoryPrinters} title={text.categoryPrinters} onClick={() => setCategoryRoutingOpen(true)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><CategoryOutlinedIcon fontSize="small" /></IconButton>
+              <IconButton aria-label={text.printerSetup} title={text.printerSetup} onClick={() => setPrinterSetupOpen(true)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><PrintRoundedIcon fontSize="small" /></IconButton>
+              <IconButton aria-label={text.back} title={text.back} onClick={() => navigate("/dashboard")} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><ArrowBackRoundedIcon fontSize="small" /></IconButton>
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ display: { xs: "none", sm: "flex" } }}>
+              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setCategoryRoutingOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+                {text.categoryPrinters}
+              </Button>
               <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
                 {text.printerSetup}
               </Button>
@@ -385,10 +502,13 @@ function CashierPOSPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder={text.search}
               inputProps={{ "aria-label": text.search }}
-              InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon color="action" /></InputAdornment> }}
+              InputProps={{
+                startAdornment: <InputAdornment position="start"><SearchRoundedIcon color="action" /></InputAdornment>,
+                endAdornment: search ? <InputAdornment position="end"><IconButton size="small" aria-label={text.clearSearch} onClick={() => setSearch("")} edge="end"><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment> : null,
+              }}
               sx={{ mb: 1.5 }}
             />
-            <Stack direction="row" spacing={0.8} sx={{ overflowX: "auto", pb: 1.5, mb: 1, "&::-webkit-scrollbar": { height: 5 } }}>
+            <Stack direction="row" spacing={0.8} sx={{ overflowX: "auto", pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" }, "& > *": { flexShrink: 0 } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {categories.map((category) => (
                 <Chip key={category.id} label={language === "en" ? (category.name_en || category.name) : category.name} clickable color={selectedCategory === category.id ? "primary" : "default"} variant={selectedCategory === category.id ? "filled" : "outlined"} onClick={() => setSelectedCategory(category.id)} />
@@ -402,8 +522,10 @@ function CashierPOSPage() {
             ) : visibleItems.length === 0 ? (
               <Typography color="text.secondary" align="center" sx={{ py: 8 }}>{text.noItems}</Typography>
             ) : (
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: { xs: 0.7, sm: 1 } }}>
-                {visibleItems.map((item) => (
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: { xs: .8, sm: 1.4 } }}>
+                {visibleItems.map((item) => {
+                  const category = categoryById.get(item.category_id);
+                  return (
                   <Button
                     key={item.id}
                     fullWidth
@@ -411,115 +533,72 @@ function CashierPOSPage() {
                     onClick={() => handleSelectItem(item)}
                     aria-label={`${text.add} ${item.name || text.image} ${amount(item.price)}`}
                     sx={{
-                      minHeight: { xs: 96, sm: 100 },
-                      px: { xs: 0.75, sm: 1 },
-                      py: 1,
-                      borderColor: "rgba(23,26,47,.14)",
-                      borderRadius: 2.5,
-                      color: "text.primary",
-                      textAlign: language === "ar" ? "right" : "left",
-                      justifyContent: "space-between",
-                      "&:hover": { borderColor: "primary.main", bgcolor: "rgba(244,121,32,.05)" },
+                      minWidth: 0, minHeight: { xs: 158, sm: 210 }, p: 0,
+                      borderColor: "rgba(23,26,47,.10)", borderRadius: 3, color: "text.primary",
+                      bgcolor: "background.paper", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start",
+                      textAlign: language === "ar" ? "right" : "left", overflow: "hidden",
+                      boxShadow: "0 5px 18px rgba(23,26,47,.035)", transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
+                      "&:hover": { borderColor: "primary.main", bgcolor: "background.paper", transform: "translateY(-2px)", boxShadow: "0 12px 26px rgba(23,26,47,.10)" },
+                      "&:hover .pos-product-image": { transform: "scale(1.04)" },
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={0.8} sx={{ minWidth: 0, flex: 1 }}>
+                    <Box sx={{ position: "relative", width: "100%", height: { xs: 78, sm: 118 }, overflow: "hidden", bgcolor: "rgba(23,26,47,.045)" }}>
                       {item.image ? (
-                        <Box component="img" src={item.image} alt={item.name || text.image} loading="lazy" sx={{ width: 42, height: 42, borderRadius: 1.4, objectFit: "cover", flex: "0 0 auto", bgcolor: "grey.100" }} onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
+                        <Box className="pos-product-image" component="img" src={item.image} alt={item.name || text.image} loading="lazy" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform .35s ease" }} onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
                       ) : (
-                        <Box sx={{ width: 42, height: 42, borderRadius: 1.4, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.08)", color: "primary.main", flex: "0 0 auto" }}><ReceiptLongRoundedIcon fontSize="small" /></Box>
+                        <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "primary.main", background: "linear-gradient(145deg, rgba(244,121,32,.10), rgba(23,26,47,.035))" }}><ReceiptLongRoundedIcon sx={{ fontSize: 34, opacity: .8 }} /></Box>
                       )}
+                      {category && <Chip size="small" label={language === "en" ? (category.name_en || category.name) : category.name} sx={{ position: "absolute", top: 8, insetInlineStart: 8, bgcolor: "rgba(255,255,255,.92)", backdropFilter: "blur(8px)", fontWeight: 800, maxWidth: "80%", height: 24 }} />}
+                      <Box sx={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: "50%", color: "primary.main", bgcolor: "rgba(255,255,255,.94)", boxShadow: "0 3px 9px rgba(23,26,47,.14)" }}><AddRoundedIcon fontSize="small" /></Box>
+                    </Box>
+                    <Box sx={{ p: { xs: 1, sm: 1.35 }, minWidth: 0, width: "100%", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: .6 }}>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={950}
-                          sx={{ fontSize: { xs: "0.82rem", sm: "0.9rem" }, lineHeight: 1.2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}
-                        >
-                          {item.name}
-                        </Typography>
-                        {item.description && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ mt: 0.15, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, fontWeight: 600 }}
-                          >
-                            {item.description}
-                          </Typography>
-                        )}
-                        <Stack direction="row" alignItems="center" spacing={0.55}>
-                          <Typography variant="caption" fontWeight={850} color="primary.main">{amount(item.price)}</Typography>
-                          {normalizeAddonLimit(item.max_addons, addonChoiceCounts.get(String(item.id)) || 0) > 0 && (
-                            <Chip label={text.addonBadge} size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: "0.58rem", fontWeight: 850, "& .MuiChip-label": { px: 0.7 } }} />
-                          )}
-                        </Stack>
+                        <Typography variant="body2" fontWeight={900} sx={{ fontSize: { xs: ".82rem", sm: ".94rem" }, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere", minHeight: "2.1em" }}>{item.name}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: .25, display: { xs: "none", sm: "-webkit-box" }, WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.25, minHeight: "1.25em" }}>{item.description || " "}</Typography>
                       </Box>
-                    </Stack>
-                    <AddRoundedIcon fontSize="small" color="primary" sx={{ flex: "0 0 auto", ml: .4 }} />
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={.5}>
+                        <Typography variant="body2" fontWeight={950} color="primary.main" sx={{ overflowWrap: "anywhere" }}>{amount(item.price)}</Typography>
+                        {normalizeAddonLimit(item.max_addons, addonChoiceCounts.get(String(item.id)) || 0) > 0 && <Chip label={text.addonBadge} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: ".58rem", fontWeight: 850, "& .MuiChip-label": { px: .7 } }} />}
+                      </Stack>
+                    </Box>
                   </Button>
-                ))}
+                  );
+                })}
               </Box>
             )}
           </Paper>
 
-          <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-              <Stack direction="row" alignItems="center" spacing={1}><ShoppingCartCheckoutRoundedIcon color="primary" /><Typography variant="h6" fontWeight={950}>{text.cart}</Typography></Stack>
-              {cart.length > 0 && <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setCart([])}>{text.clear}</Button>}
-            </Stack>
-            <Divider />
-            {cart.length === 0 ? (
-              <Typography color="text.secondary" align="center" sx={{ py: 5 }}>{text.empty}</Typography>
-            ) : (
-              <Stack spacing={0.8} sx={{ py: 1.25, maxHeight: { xs: "none", sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: { xs: "visible", sm: "auto" } }}>
-                {cart.map((item) => {
-                  const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
-                  const lineId = getCartLineKey(item);
-                  return (
-                    <Box key={lineId} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, alignItems: "center", py: .7 }}>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography fontWeight={950} sx={{ fontSize: { xs: "0.86rem", sm: "0.92rem" }, lineHeight: 1.25, overflowWrap: "anywhere" }}>{item.name}</Typography>
-                        {item.selected_addons?.length > 0 && (
-                          <Typography variant="caption" color="primary.main" display="block" sx={{ overflowWrap: "anywhere" }}>
-                            {item.selected_addons.map((addon) => addon.name).join(language === "ar" ? "، " : ", ")}
-                          </Typography>
-                        )}
-                        <Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography>
-                      </Box>
-                      <Stack direction="row" alignItems="center" spacing={.2}>
-                        <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)}><RemoveRoundedIcon fontSize="small" /></IconButton>
-                        <Typography sx={{ minWidth: 22, textAlign: "center", fontWeight: 900 }}>{item.quantity}</Typography>
-                        <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)}><AddRoundedIcon fontSize="small" /></IconButton>
-                      </Stack>
-                    </Box>
-                  );
-                })}
-              </Stack>
-            )}
-            <Divider sx={{ mb: 1.5 }} />
-            <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
-
-            <Box sx={{ mt: 1.4, p: 1.1, borderRadius: 2, bgcolor: "rgba(23,26,47,.025)", border: "1px solid", borderColor: "divider" }}>
-              <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={setPaymentMethod} language={language} />
-            </Box>
-
-            {cart.length > 0 && (
-              <Box sx={{ mt: 1.7, p: 1.5, borderRadius: 2.2, bgcolor: "#f7f8fb", border: "1px solid rgba(23,26,47,.07)" }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{text.vatNote}</Typography>
-                <Stack spacing={.7}>
-                  <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.net}</Typography><Typography variant="body2">{amount(breakdown.net)}</Typography></Stack>
-                  <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.vat}</Typography><Typography variant="body2">{amount(breakdown.vat)}</Typography></Stack>
-                  <Divider />
-                  <Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={950}>{text.gross}</Typography><Typography fontWeight={950} color="primary.main">{amount(grossAmount)}</Typography></Stack>
-                </Stack>
-              </Box>
-            )}
-            {savedMessage && <Alert severity="success" sx={{ mt: 1.3 }}>{savedMessage}</Alert>}
-            {checkoutError && <Alert severity="error" sx={{ mt: 1.3 }}>{checkoutError}</Alert>}
-            <Button fullWidth variant="contained" size="large" startIcon={saving ? <CircularProgress size={19} color="inherit" /> : <ShoppingCartCheckoutRoundedIcon />} disabled={!tenantId || cart.length === 0 || saving} onClick={submitOrder} sx={{ mt: 1.6, py: 1.25, borderRadius: 2.2, fontWeight: 900 }}>
-              {saving ? text.submitting : text.submit}
-            </Button>
+          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
+            {renderCartContents(false)}
           </Paper>
         </Box>
       </Box>
+
+      <Drawer
+        anchor="bottom"
+        open={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+        sx={{ display: { xs: "block", sm: "none" } }}
+        slotProps={{ paper: { sx: { maxHeight: "92dvh", overflowY: "auto", borderTopLeftRadius: 22, borderTopRightRadius: 22, bgcolor: "background.paper" } } }}
+      >
+        <Box sx={{ width: "100%", maxWidth: 680, mx: "auto" }}>{renderCartContents(true)}</Box>
+      </Drawer>
+      {cart.length > 0 && (
+        <Box component="footer" sx={{ display: { xs: "block", sm: "none" }, position: "fixed", insetInline: 0, bottom: 0, zIndex: (theme) => theme.zIndex.appBar + 1, px: 1.25, pt: .9, pb: "calc(10px + env(safe-area-inset-bottom))", bgcolor: "rgba(246,247,249,.94)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(23,26,47,.08)" }}>
+          <Button fullWidth variant="contained" onClick={() => setCartDrawerOpen(true)} aria-label={`${text.cartReview}: ${cartItemCount} ${text.selectedCount}, ${amount(grossAmount)}`} sx={{ minHeight: 58, px: 1.6, borderRadius: 2.6, bgcolor: "secondary.main", color: "common.white", textTransform: "none", boxShadow: "0 8px 22px rgba(23,26,47,.18)", "&:hover": { bgcolor: "secondary.dark" } }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, textAlign: "start" }}>
+                <ShoppingCartCheckoutRoundedIcon sx={{ color: "primary.light" }} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={900} sx={{ lineHeight: 1.2 }}>{text.cartReview}</Typography>
+                  <Typography variant="caption" sx={{ color: "rgba(255,255,255,.7)" }}>{cartItemCount} {text.selectedCount}</Typography>
+                </Box>
+              </Stack>
+              <Typography fontWeight={950} sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>{amount(grossAmount)}</Typography>
+            </Stack>
+          </Button>
+        </Box>
+      )}
 
       <PrinterSetupDialog
         open={printerSetupOpen}
@@ -529,6 +608,7 @@ function CashierPOSPage() {
         onAutoPrintChange={handleAutoPrintChange}
         onTest={openPrinterTest}
       />
+      <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategory={updateCategoryPrintRoute} />
 
       <Dialog open={Boolean(addonDialogItem)} onClose={closeAddonDialog} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 950 }}>{text.addonsTitle}</DialogTitle>

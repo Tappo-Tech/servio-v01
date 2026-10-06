@@ -63,6 +63,12 @@ describe("category-specific receipt groups", () => {
     expect(groups[0].isSeparate).toBe(true);
   });
 
+  test("includes the store-saved printer queue for a separate category", () => {
+    const order = { total_price: 5, items: [{ id: "tea", category_id: "drinks", name: "شاي", price: 5, quantity: 1 }] };
+    const groups = buildOrderReceiptGroups(order, [{ id: "drinks", name: "المشروبات", separate_print: true, printer_name: "Drinks Queue" }]);
+    expect(groups[0].printerName).toBe("Drinks Queue");
+  });
+
   test("reconciles per-receipt rounding so gross, net and VAT sum to the original order", () => {
     const order = {
       total_price: 10.03,

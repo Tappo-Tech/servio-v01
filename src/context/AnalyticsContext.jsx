@@ -1,90 +1,73 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { useHistory } from "./HistoryContext";
 import { useLanguage } from "./LanguageContext";
+import { useStore } from "./StoreInfoContext";
 import { aggregateHourlySales, createHourlyLabels } from "../utils/analyticsUtils";
+import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
 
 const AnalyticsContext = createContext();
 
-const isValidDate = (value) => {
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime());
-};
+const isValidDate = (value) => !Number.isNaN(new Date(value).getTime());
+const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-const isSameDay = (date1, date2) => (
-  date1.getDate() === date2.getDate() &&
-  date1.getMonth() === date2.getMonth() &&
-  date1.getFullYear() === date2.getFullYear()
-);
-
-// المقارنة مع يوم بلا مبيعات تُعرض 100% فقط إذا كان اليوم فيه مبيعات فعلية.
 const calculateGrowth = (current, previous) => {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Number((((current - previous) / previous) * 100).toFixed(1));
 };
 
-// يعتمد التقرير على الطلبات المكتملة؛ وقت الإكمال هو تاريخ احتساب البيع، مع الرجوع للإنشاء للبيانات القديمة.
 const getSaleDate = (order) => order.completed_at || order.created_at;
 
 export function AnalyticsProvider({ children }) {
-  const {
-    finishedOrders = [],
-    ordersLoading,
-    ordersLoadError,
-    reloadOrders,
-  } = useHistory();
+  const { finishedOrders = [], ordersLoading, ordersLoadError, reloadOrders } = useHistory();
   const { language } = useLanguage();
+  const { storeInfo = {} } = useStore();
   const [viewType, setViewType] = useState("daily");
+  const schedule = useMemo(() => getWorkdaySchedule(storeInfo), [storeInfo]);
 
   const analyticsData = useMemo(() => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
+    const now = new Date();
+    const operationalToday = shiftBusinessDate(now, schedule.startMinutes) || now;
+    const operationalTodayKey = dateKey(operationalToday);
+    const previousBusinessDate = new Date(operationalToday);
+    previousBusinessDate.setDate(previousBusinessDate.getDate() - 1);
+    const previousBusinessKey = dateKey(previousBusinessDate);
 
-    // نرفض تواريخ البيانات غير الصالحة ونستبعد الملغي؛ cancelled لا يعد إيرادًا مكتملًا.
     const validFinishedOrders = finishedOrders.filter((order) => (
       order.status !== "cancelled" && isValidDate(getSaleDate(order))
     ));
-    const todaysOrders = validFinishedOrders.filter((order) => (
-      isSameDay(new Date(getSaleDate(order)), today)
-    ));
-    const yesterdaysOrders = validFinishedOrders.filter((order) => (
-      isSameDay(new Date(getSaleDate(order)), yesterday)
-    ));
+    const businessKey = (order) => {
+      const saleDate = new Date(getSaleDate(order));
+      return getWorkdayOffsetMinutes(saleDate, schedule.startMinutes) < schedule.durationMinutes
+        ? dateKey(shiftBusinessDate(saleDate, schedule.startMinutes))
+        : null;
+    };
+    const todaysOrders = validFinishedOrders.filter((order) => businessKey(order) === operationalTodayKey);
+    const yesterdaysOrders = validFinishedOrders.filter((order) => businessKey(order) === previousBusinessKey);
 
-    // إجمالي اليوم ومتوسط قيمة الطلب يُحسبان من total_price المحفوظ على الطلب، لا من إعادة جمع الصور/المنيو.
-    const totalSalesToday = todaysOrders.reduce(
-      (sum, order) => sum + Number(order.total_price || 0),
-      0,
-    );
+    const totalSalesToday = todaysOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
     const aovToday = todaysOrders.length > 0 ? totalSalesToday / todaysOrders.length : 0;
-    const totalSalesYesterday = yesterdaysOrders.reduce(
-      (sum, order) => sum + Number(order.total_price || 0),
-      0,
-    );
+    const totalSalesYesterday = yesterdaysOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
     const aovYesterday = yesterdaysOrders.length > 0 ? totalSalesYesterday / yesterdaysOrders.length : 0;
-
     const salesGrowth = calculateGrowth(totalSalesToday, totalSalesYesterday);
     const aovGrowth = calculateGrowth(aovToday, aovYesterday);
     const ordersGrowth = calculateGrowth(todaysOrders.length, yesterdaysOrders.length);
 
-    // المبيعات الأسبوعية تحافظ على ترتيب الأيام من الأقدم إلى الأحدث حسب لغة الواجهة.
-    const last7Days = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (6 - index));
+    const last7BusinessDays = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(operationalToday);
+      date.setDate(operationalToday.getDate() - (6 - index));
       return date;
     });
-    const weeklyLabels = last7Days.map((date) => date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
-      weekday: "long",
-    }));
-    const weeklySales = last7Days.map((date) => validFinishedOrders
-      .filter((order) => isSameDay(new Date(getSaleDate(order)), date))
-      .reduce((sum, order) => sum + Number(order.total_price || 0), 0));
+    const weeklyLabels = last7BusinessDays.map((date) => date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", { weekday: "long" }));
+    const weeklySales = last7BusinessDays.map((date) => {
+      const targetKey = dateKey(date);
+      return validFinishedOrders
+        .filter((order) => businessKey(order) === targetKey)
+        .reduce((sum, order) => sum + Number(order.total_price || 0), 0);
+    });
 
-    // توزيع اليوم على 24 ساعة مستقلة (00:00–23:00) ليلائم اختلاف أوقات دوام الأنشطة.
-    const hourlyLabels = createHourlyLabels();
-    const hourlySales = aggregateHourlySales(todaysOrders);
+    const hourlyLabels = createHourlyLabels(schedule.startMinutes, schedule.durationMinutes);
+    const hourlySales = aggregateHourlySales(todaysOrders, schedule);
 
-    // بيانات الأصناف التاريخية تستخدم الاسم والكمية والسعر؛ الصور والوصف لا تدخل في التحليل.
     const itemSalesMap = {};
     validFinishedOrders.forEach((order) => {
       const items = Array.isArray(order.items) ? order.items : [];
@@ -102,67 +85,27 @@ export function AnalyticsProvider({ children }) {
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 3);
 
-    // أحدث الطلبات تظهر بترتيب وقت الإنشاء، وهو الأنسب لقراءة سجل التشغيل.
     const recentOrders = [...todaysOrders]
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 3);
 
-    return {
-      todaysOrders,
-      totalSalesToday,
-      aovToday: aovToday.toFixed(2),
-      salesGrowth,
-      aovGrowth,
-      ordersGrowth,
-      weeklyLabels,
-      weeklySales,
-      hourlyLabels,
-      hourlySales,
-      topProducts,
-      recentOrders,
-    };
-  }, [finishedOrders, language]);
+    return { todaysOrders, totalSalesToday, aovToday: aovToday.toFixed(2), salesGrowth, aovGrowth, ordersGrowth, weeklyLabels, weeklySales, hourlyLabels, hourlySales, topProducts, recentOrders };
+  }, [finishedOrders, language, schedule]);
 
   const isDaily = viewType === "daily";
   const currentLabels = isDaily ? analyticsData.hourlyLabels : analyticsData.weeklyLabels;
   const currentSales = isDaily ? analyticsData.hourlySales : analyticsData.weeklySales;
-  // لا تعتبر الأرقام صفرًا نهائية ما دام الاستعلام الأولي جارٍ أو فشل؛ تعرض الواجهة شرطة بدل تضليل المدير.
   const analyticsReady = !ordersLoading && !ordersLoadError;
-
   const value = useMemo(() => ({
-    viewType,
-    setViewType,
-    isDaily,
-    currentLabels,
-    currentSales,
-    analyticsReady,
-    ordersLoading,
-    ordersLoadError,
-    reloadOrders,
-    ...analyticsData,
-  }), [
-    viewType,
-    isDaily,
-    currentLabels,
-    currentSales,
-    analyticsReady,
-    ordersLoading,
-    ordersLoadError,
-    reloadOrders,
-    analyticsData,
-  ]);
+    viewType, setViewType, isDaily, currentLabels, currentSales, analyticsReady,
+    ordersLoading, ordersLoadError, reloadOrders, schedule, ...analyticsData,
+  }), [viewType, isDaily, currentLabels, currentSales, analyticsReady, ordersLoading, ordersLoadError, reloadOrders, schedule, analyticsData]);
 
-  return (
-    <AnalyticsContext.Provider value={value}>
-      {children}
-    </AnalyticsContext.Provider>
-  );
+  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
 }
 
 export function useAnalytics() {
   const context = useContext(AnalyticsContext);
-  if (!context) {
-    throw new Error("useAnalytics must be used within an AnalyticsProvider");
-  }
+  if (!context) throw new Error("useAnalytics must be used within an AnalyticsProvider");
   return context;
 }

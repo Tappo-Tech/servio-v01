@@ -11,6 +11,7 @@ import QRCodeGenerate from "../components/manager-dashboard/settings/QRCodesGene
 import OrdersHistory from "../components/manager-dashboard/orders/OrdersHistory";
 import SettingsLayout from "../components/manager-dashboard/settings/SettingsLayout";
 import Feedbacks from "../components/manager-dashboard/Feedbacks";
+import ShiftReports from "../components/manager-dashboard/ShiftReports";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -25,7 +26,7 @@ function ManagerDashboard() {
   };
 
   return (
-    <Box data-language={language} sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box data-language={language} sx={{ display: "flex", minHeight: "100vh", width: "100%", minWidth: 0, overflowX: "clip" }}>
       {/* الشريط الجانبي */}
       <ManagerSidebar
         mobileOpen={mobileOpen}
@@ -39,6 +40,7 @@ function ManagerDashboard() {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
           minHeight: "100vh",
           backgroundColor: "background.default",
           display: "flex",
@@ -71,10 +73,11 @@ function ManagerDashboard() {
         </Box>
 
         {/* عرض الصفحة بناءً على التبويب المحدد */}
-        <Box sx={{ flexGrow: 1, p: { xs: 1.25, sm: 2.5, lg: 3 }, pt: { xs: 2, md: 2.5 } }}>
+        <Box sx={{ flexGrow: 1, minWidth: 0, width: "100%", p: { xs: 1.25, sm: 2.5, lg: 3 }, pt: { xs: 2, md: 2.5 } }}>
           {activeTab === "manager" && <Analytics />}
           {activeTab === "history" && <OrdersHistory />}
           {activeTab === "reports" && <Reports />}
+          {activeTab === "shifts" && <ShiftReports />}
           {activeTab === "menu" && <MenuControl />}
           {activeTab === "settings" && <SettingsLayout />}
           {activeTab === "qrGen" && <QRCodeGenerate />}

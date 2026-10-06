@@ -46,6 +46,14 @@ describe("receipt HTML", () => {
     expect(html).toContain("بطاقة / شبكة (مدى)");
   });
 
+  test("always includes a selected or default SERVIO logo in the cashier invoice", () => {
+    const selectedLogo = buildReceiptHtml({ order, storeInfo: { logo_url: "data:image/png;base64,QUJD" } });
+    const fallbackLogo = buildReceiptHtml({ order, storeInfo: {} });
+    expect(selectedLogo).toContain('src="data:image/png;base64,QUJD"');
+    expect(fallbackLogo).toContain('src="/logo-icon.webp"');
+    expect(fallbackLogo).toContain("onerror=");
+  });
+
   test("builds a kitchen ticket with only the order, table, items, quantities, add-ons, and notes", () => {
     const html = buildReceiptHtml({
       order: { ...order, notes: "بدون سكر" },

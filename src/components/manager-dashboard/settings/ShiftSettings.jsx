@@ -1,46 +1,71 @@
-import { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import supabase from "../../../supabase";
 import { useStore } from "../../../context/StoreInfoContext";
-import { useShift } from "../../../context/ShiftContext";
+import { useTenant } from "../../../context/TenantContext";
 import { useLanguage } from "../../../context/LanguageContext";
+import { parseClockMinutes } from "../../../utils/workdayUtils";
+
+function durationFor(start, end) {
+  const startMinutes = parseClockMinutes(start, NaN);
+  const endMinutes = parseClockMinutes(end, NaN);
+  if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) return null;
+  const diff = (endMinutes - startMinutes + 1440) % 1440;
+  return diff === 0 ? 24 : diff / 60;
+}
 
 export default function ShiftSettings() {
-  const { storeInfo, refreshStoreInfo } = useStore();
-  const { sessions, loadSessions } = useShift();
+  const { storeInfo = {}, refreshStoreInfo } = useStore();
+  const { tenantId } = useTenant();
   const { language } = useLanguage();
   const ar = language !== "en";
-  const [form, setForm] = useState({ start: storeInfo?.workday_start?.slice(0, 5) || "08:00", end: storeInfo?.workday_end?.slice(0, 5) || "00:00", hours: storeInfo?.workday_hours || "16" });
+  const [form, setForm] = useState({ start: "08:00", end: "00:00" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const hours = useMemo(() => durationFor(form.start, form.end), [form.start, form.end]);
 
-  useEffect(() => { setForm({ start: storeInfo?.workday_start?.slice(0, 5) || "08:00", end: storeInfo?.workday_end?.slice(0, 5) || "00:00", hours: storeInfo?.workday_hours || "16" }); }, [storeInfo?.workday_start, storeInfo?.workday_end, storeInfo?.workday_hours]);
-  useEffect(() => { void loadSessions(); }, [loadSessions]);
+  useEffect(() => {
+    setForm({ start: storeInfo.workday_start?.slice(0, 5) || "08:00", end: storeInfo.workday_end?.slice(0, 5) || "00:00" });
+  }, [storeInfo.workday_start, storeInfo.workday_end]);
 
   const saveHours = async (event) => {
-    event.preventDefault(); setSaving(true); setError(""); setMessage("");
-    const { error: saveError } = await supabase.from("store").update({ workday_start: form.start || null, workday_end: form.end || null, workday_hours: Number(form.hours) || null }).eq("tenant_id", storeInfo.tenant_id);
-    if (saveError) setError(saveError.message); else { setMessage(ar ? "تم حفظ ساعات الدوام." : "Working hours saved."); await refreshStoreInfo?.(); }
+    event.preventDefault();
+    setSaving(true); setError(""); setMessage("");
+    if (!tenantId || hours == null || hours <= 0 || hours > 24) {
+      setError(ar ? "أدخل وقت بداية ونهاية صحيحًا." : "Enter valid opening and closing times.");
+      setSaving(false);
+      return;
+    }
+    const { data: updatedStore, error: saveError } = await supabase.from("store").update({
+      workday_start: form.start || null,
+      workday_end: form.end || null,
+      workday_hours: hours,
+    }).eq("tenant_id", tenantId).select("id").maybeSingle();
+    if (saveError || !updatedStore) setError(saveError?.message || (ar ? "لم يتم تحديث سجل المتجر؛ تحقق من صلاحيات المدير." : "Store settings were not updated; check manager permissions."));
+    else {
+      setMessage(ar ? "تم حفظ ساعات الدوام؛ ستُعرض ساعات التقارير بالترتيب بدءًا من وقت الافتتاح." : "Working hours saved. Report hours will start at opening time and run in order.");
+      await refreshStoreInfo?.();
+    }
     setSaving(false);
   };
-  const printSession = (session) => {
-    const cashier = session.cashiers?.full_name || session.cashiers?.username || (ar ? "كاشير" : "Cashier");
-    const win = window.open("", "_blank", "width=760,height=700");
-    if (!win) return;
-    win.document.write(`<html dir="${ar ? "rtl" : "ltr"}"><head><title>${ar ? "تقرير وردية" : "Shift report"}</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.8}h1{margin:0 0 16px}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #ddd;padding:8px}td:last-child{text-align:end;font-weight:bold}</style></head><body><h1>${ar ? "تقرير وردية الكاشير" : "Cashier shift report"}</h1><table>${[[ar ? "الكاشير" : "Cashier", cashier],[ar ? "البداية" : "Opened", new Date(session.opened_at).toLocaleString(ar ? "ar-SA" : "en-US")],[ar ? "النهاية" : "Closed", session.closed_at ? new Date(session.closed_at).toLocaleString(ar ? "ar-SA" : "en-US") : (ar ? "مفتوحة" : "Open")],[ar ? "إجمالي المبيعات" : "Total sales", Number(session.total_sales || 0).toFixed(2)],[ar ? "الكاش" : "Cash", Number(session.cash_sales || 0).toFixed(2)],[ar ? "الشبكة / البطاقة" : "Card / network", Number(session.card_sales || 0).toFixed(2)],[ar ? "المحفظة" : "Wallet", Number(session.wallet_sales || 0).toFixed(2)],[ar ? "التحويل" : "Transfer", Number(session.transfer_sales || 0).toFixed(2)],[ar ? "طرق أخرى" : "Other", Number(session.other_sales || 0).toFixed(2)],[ar ? "بداية الكاش" : "Opening cash", Number(session.opening_cash || 0).toFixed(2)],[ar ? "نهاية الكاش" : "Closing cash", session.closing_cash == null ? "—" : Number(session.closing_cash).toFixed(2)]].map(([a,b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join("")}</table><script>window.print()</script></body></html>`);
-    win.document.close();
-  };
+
   return <Box sx={{ maxWidth: 900, mx: "auto" }}>
-    <Typography variant="h6" fontWeight={900}>{ar ? "ساعات الدوام والورديات" : "Working hours and shifts"}</Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{ar ? "حدد وقت بداية ونهاية العمل وعدد الساعات، وراقب جلسات الكاشير وتقارير الإغلاق." : "Set opening and closing times and monitor cashier sessions and closing reports."}</Typography>
-    <Paper component="form" onSubmit={saveHours} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, mb: 3 }}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}><TextField type="time" label={ar ? "تبدأ الساعة" : "Starts at"} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} /><TextField type="time" label={ar ? "تنتهي الساعة" : "Ends at"} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} /><TextField type="number" label={ar ? "عدد الساعات" : "Hours"} value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} inputProps={{ min: 0, max: 24, step: "0.5", dir: "ltr" }} /><Button type="submit" variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={16} /> : <AccessTimeRoundedIcon />} sx={{ fontWeight: 850 }}>{ar ? "حفظ ساعات الدوام" : "Save hours"}</Button></Stack>
+    <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: .5 }}><AccessTimeRoundedIcon color="primary" /><Typography variant="h6" fontWeight={950}>{ar ? "ساعات الدوام" : "Working hours"}</Typography></Stack>
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 2.25, lineHeight: 1.8 }}>{ar ? "حدد بداية ونهاية يوم العمل. ستُرتّب رسوم المبيعات والتقارير الساعية من بداية دوامك، بما في ذلك الدوام الممتد بعد منتصف الليل." : "Set the opening and closing time. Hourly sales charts and reports will follow your workday sequence, including overnight hours."}</Typography>
+    <Paper component="form" onSubmit={saveHours} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "flex-end" }}>
+        <TextField type="time" label={ar ? "تبدأ الوردية" : "Workday starts"} value={form.start} onChange={(event) => setForm((current) => ({ ...current, start: event.target.value }))} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} required fullWidth />
+        <TextField type="time" label={ar ? "ينتهي الدوام" : "Workday ends"} value={form.end} onChange={(event) => setForm((current) => ({ ...current, end: event.target.value }))} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} required fullWidth />
+        <TextField label={ar ? "مدة الدوام المحسوبة" : "Calculated duration"} value={hours == null ? "—" : `${hours} ${ar ? "ساعة" : "hours"}`} InputProps={{ readOnly: true }} fullWidth />
+        <Button type="submit" variant="contained" disabled={saving || hours == null} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <CheckCircleOutlineRoundedIcon />} sx={{ fontWeight: 900, whiteSpace: "nowrap", minHeight: 42 }}>{ar ? "حفظ الدوام" : "Save hours"}</Button>
+      </Stack>
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>{ar ? "إذا كان وقت النهاية أسبق من البداية، يُحسب تلقائيًا أنه في اليوم التالي. إدخال وقت البداية والنهاية نفسيهما يعني دوامًا كاملًا (24 ساعة)." : "If the end time is earlier than the start, it is treated as the next day. Matching start and end times mean a full 24-hour day."}</Typography>
     </Paper>
-    {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}{error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-    <Typography variant="subtitle1" fontWeight={900} sx={{ mb: 1 }}>{ar ? "جلسات الكاشير" : "Cashier sessions"}</Typography>
-    <Stack spacing={1}>{sessions.map((session) => <Paper key={session.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}><Box sx={{ flex: 1, minWidth: 210 }}><Typography fontWeight={850}>{session.cashiers?.full_name || session.cashiers?.username || (ar ? "كاشير" : "Cashier")}</Typography><Typography variant="caption" color="text.secondary">{new Date(session.opened_at).toLocaleString(ar ? "ar-SA" : "en-US")} → {session.closed_at ? new Date(session.closed_at).toLocaleString(ar ? "ar-SA" : "en-US") : (ar ? "مفتوحة" : "Open")}</Typography></Box><Box><Typography fontWeight={900}>{Number(session.total_sales || 0).toFixed(2)} {storeInfo?.currency || "ر.س"}</Typography><Typography variant="caption" color="text.secondary">{ar ? "كاش" : "Cash"}: {Number(session.cash_sales || 0).toFixed(2)} · {ar ? "شبكة" : "Card"}: {Number(session.card_sales || 0).toFixed(2)}</Typography></Box><Button size="small" variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => printSession(session)}>{ar ? "طباعة التقرير" : "Print report"}</Button></Paper>)}{!sessions.length && <Divider><Typography variant="caption" color="text.secondary">{ar ? "لا توجد جلسات محفوظة بعد" : "No saved sessions yet"}</Typography></Divider>}</Stack>
+    {message && <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>{message}</Alert>}
+    {error && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{error}</Alert>}
+    <Card elevation={0} sx={{ mt: 2.5, border: "1px solid", borderColor: "divider", borderRadius: 3, bgcolor: "background.default" }}><CardContent><Typography fontWeight={850}>{ar ? "تقارير الوردية في مكان مستقل" : "Shift reports have their own section"}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .5, lineHeight: 1.7 }}>{ar ? "نُقلت جلسات الكاشير والطباعة إلى تبويب «الورديات» في لوحة المدير، كما أصبحت متاحة للكاشير من لوحة التشغيل." : "Cashier sessions and printing now live under the dedicated Shifts tab in the manager dashboard and are also available to cashiers."}</Typography></CardContent></Card>
   </Box>;
 }

@@ -120,8 +120,8 @@ export function buildReceiptHtml({
     : calculateInclusiveVat(order?.total_price);
   const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const storeName = escapeReceiptHtml(storeInfo.store_name || (language === "en" ? "SERVIO Store" : "متجر SERVIO"));
-  const safeImage = safeReceiptImageSource(storeInfo.logo_url);
-  const logo = safeImage ? `<img class="logo" src="${escapeReceiptHtml(safeImage)}" alt="" crossorigin="anonymous">` : "";
+  const safeImage = safeReceiptImageSource(storeInfo.logo_url) || "/logo-icon.webp";
+  const logo = `<img class="logo" src="${escapeReceiptHtml(safeImage)}" alt="${escapeReceiptHtml(storeName)}" crossorigin="anonymous" onerror="this.onerror=null;this.src='/logo-icon.webp'">`;
   const taxNumber = storeInfo.tax_number ? `<div>${language === "en" ? "VAT No." : "الرقم الضريبي"}: ${escapeReceiptHtml(storeInfo.tax_number)}</div>` : "";
   const address = storeInfo.address ? `<div>${escapeReceiptHtml(storeInfo.address)}</div>` : "";
   const contact = [
