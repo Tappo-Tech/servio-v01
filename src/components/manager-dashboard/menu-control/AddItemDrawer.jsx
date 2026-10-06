@@ -372,10 +372,10 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         <Box sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider", bgcolor: "rgba(244,121,32,.035)", display: "flex", flexDirection: "column", gap: 1.25 }}>
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
-              {language === "ar" ? "إضافات اختيارية ضمن السعر" : "Optional add-ons included in price"}
+              {language === "ar" ? "مكملات الصنف ضمن السعر" : "Item complements included in price"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {language === "ar" ? "لا تزيد الإضافات المحددة سعر هذا الصنف." : "Selected add-ons do not increase this item’s price."}
+              {language === "ar" ? "حدد المكملات المتاحة لهذا الصنف والحد الأقصى لاختيارات العميل." : "Choose this item’s complements and the customer’s maximum selections."}
             </Typography>
           </Box>
 
@@ -393,9 +393,9 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
               <TextField
                 {...params}
                 size="small"
-                label={language === "ar" ? "إضافات مكتوبة" : "Named add-ons"}
-                placeholder={language === "ar" ? "اكتب اسم الإضافة واضغط Enter" : "Type an add-on and press Enter"}
-                helperText={language === "ar" ? "اختر مكملًا محفوظًا أو اكتب اسمًا جديدًا؛ الاسم المكتوب يُحفظ ضمن خيارات هذا الصنف." : "Choose a saved complement or type a new name; typed names stay on this item."}
+                label={language === "ar" ? "مكملات باسم" : "Named complements"}
+                placeholder={language === "ar" ? "اكتب اسم المكمل واضغط Enter" : "Type a complement and press Enter"}
+                helperText={language === "ar" ? "اختر مكملًا محفوظًا أو اكتب اسمًا جديدًا؛ سيظهر ضمن هذا الصنف فقط." : "Choose a saved complement or type a new name; it appears on this item only."}
               />
             )}
             fullWidth
@@ -408,8 +408,8 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             sx={{ alignSelf: "flex-start", borderRadius: 2, fontWeight: 800, textAlign: "start" }}
           >
             {language === "ar"
-              ? `اختيار أصناف مجانية من المنيو (${formData.free_addon_item_ids.length})`
-              : `Choose free menu add-ons (${formData.free_addon_item_ids.length})`}
+              ? `اختيار مكملات من أصناف المنيو (${formData.free_addon_item_ids.length})`
+              : `Choose menu item complements (${formData.free_addon_item_ids.length})`}
           </Button>
 
           <TextField
@@ -417,10 +417,10 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             size="small"
             fullWidth
             disabled={addonChoiceCount === 0}
-            label={language === "ar" ? "الحد الأعلى للإضافات لكل وحدة" : "Maximum add-ons per item"}
+            label={language === "ar" ? "الحد الأقصى للمكملات لكل وحدة" : "Maximum complements per item"}
             value={String(normalizeAddonLimit(formData.max_addons, addonChoiceCount))}
             onChange={(event) => setFormData((previous) => ({ ...previous, max_addons: event.target.value }))}
-            helperText={language === "ar" ? "يُطبّق الاختيار نفسه على كل كمية هذا الصنف في السلة." : "The same selection applies to the full quantity of this item in the cart."}
+            helperText={language === "ar" ? "يُطبّق الحد على اختيارات العميل لكل وحدة من هذا الصنف." : "This limit applies to customer selections for each unit of this item."}
           >
             {Array.from({ length: addonLimitOptions + 1 }, (_, limit) => (
               <MenuItem key={limit} value={String(limit)}>

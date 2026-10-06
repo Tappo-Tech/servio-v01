@@ -40,6 +40,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 // OTHERS
 import { v4 as uuidV4 } from "uuid";
+import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../../../utils/menuItemOptions";
 
 function MenuControl() {
   const { t, language } = useLanguage();
@@ -325,6 +326,19 @@ function MenuControl() {
                     </Typography>
                   }
                 />
+                <Box sx={{ mt: 1.25, p: 1, borderRadius: 1.8, bgcolor: "rgba(244,121,32,.06)", border: "1px solid rgba(244,121,32,.18)" }}>
+                  <Typography variant="caption" sx={{ display: "block", fontWeight: 900, color: "text.primary" }}>
+                    {language === "ar" ? "مكملات الصنف" : "Item complements"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: .25 }}>
+                    {language === "ar"
+                      ? `${normalizeAddonOptions(product.addon_options).length + normalizeAddonItemIds(product.free_addon_item_ids).length} مكملات · الحد الأقصى ${normalizeAddonLimit(product.max_addons, normalizeAddonOptions(product.addon_options).length + normalizeAddonItemIds(product.free_addon_item_ids).length)}`
+                      : `${normalizeAddonOptions(product.addon_options).length + normalizeAddonItemIds(product.free_addon_item_ids).length} complements · maximum ${normalizeAddonLimit(product.max_addons, normalizeAddonOptions(product.addon_options).length + normalizeAddonItemIds(product.free_addon_item_ids).length)}`}
+                  </Typography>
+                  <Button size="small" variant="text" onClick={() => handleOpenEdit(product)} sx={{ mt: .35, px: 0, minWidth: 0, fontWeight: 850 }}>
+                    {language === "ar" ? "إدارة مكملات الصنف" : "Manage item complements"}
+                  </Button>
+                </Box>
               </CardContent>
 
               <CardActions
