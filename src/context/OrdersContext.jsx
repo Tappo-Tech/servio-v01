@@ -472,6 +472,16 @@ export const OrdersProvider = ({ children }) => {
     return { data: result.data, error: null };
   });
 
+  const deleteOrder = (orderId) => guard(`orders:delete:${orderId}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const target = orders.find((order) => order.id === orderId);
+    if (!target) return { error: new Error("الطلب غير موجود") };
+    const { error } = await supabase.from("orders").delete().eq("id", orderId).eq("tenant_id", tenantId);
+    if (error) return { error };
+    setOrders((current) => current.filter((order) => order.id !== orderId));
+    return { data: target, error: null };
+  });
+
   const reloadOrders = useCallback(() => reloadOrdersRef.current?.() || Promise.resolve(), []);
 
   return (
@@ -481,6 +491,7 @@ export const OrdersProvider = ({ children }) => {
       ordersLoadError,
       reloadOrders,
       updateOrderPaymentStatus,
+      deleteOrder,
       updateOrderPaymentMethod,
       finishedOrders: orders.filter((order) => order.is_completed && order.status !== "cancelled"),
       cancelledOrders: orders.filter((order) => order.status === "cancelled"),

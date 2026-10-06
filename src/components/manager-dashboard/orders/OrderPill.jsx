@@ -259,8 +259,10 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
     const timer = window.setTimeout(() => {
       autoPrintedOrderRef.current = order.id;
       setPrinting(true);
-      (autoPrint === "kitchen"
-        ? printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() })
+      (printMode === "cashier"
+        ? (() => { const settings = getPrinterSettings(); return printReceipt(order, storeInfo, { language, currency, settings, printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter) }); })()
+        : autoPrint === "kitchen"
+          ? printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() })
         : isTest
           ? printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest })
           : printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() }))
@@ -275,7 +277,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
         .finally(() => setPrinting(false));
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [autoPrint, open, order?.id, order, storeInfo, language, currency, isTest, menuLoading, menuError, receiptGroups, getPrintErrorMessage, getPrintSuccessMessage]);
+  }, [autoPrint, open, order?.id, order, storeInfo, language, currency, isTest, printMode, menuLoading, menuError, receiptGroups, getPrintErrorMessage, getPrintSuccessMessage]);
 
   if (!order) return null;
 

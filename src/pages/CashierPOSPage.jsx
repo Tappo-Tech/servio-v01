@@ -170,7 +170,7 @@ function CashierPOSPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoutes } = useMenu();
-  const { addOrder, updateOrder, updateOrderPaymentStatus } = useOrders();
+  const { addOrder, updateOrder, updateOrderPaymentStatus, deleteOrder } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { language } = useLanguage();
@@ -198,6 +198,9 @@ function CashierPOSPage() {
   const [addonDialogItem, setAddonDialogItem] = useState(null);
   const [addonDraft, setAddonDraft] = useState([]);
   const [invoiceIsTest, setInvoiceIsTest] = useState(false);
+  const [invoicePrintMode, setInvoicePrintMode] = useState("order");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [savedMessage, setSavedMessage] = useState("");
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
   const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
@@ -419,6 +422,7 @@ function CashierPOSPage() {
         : await addOrder(orderInput);
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
       setInvoiceIsTest(false);
+      setInvoicePrintMode("order");
       setInvoiceOrder(result.data);
       if (paymentStatus !== "paid") {
         setUnpaidOrders((current) => editingOrderId
@@ -451,8 +455,21 @@ function CashierPOSPage() {
     const paidOrder = { ...order, payment_status: "paid", paid_at: new Date().toISOString() };
     setUnpaidOrders((current) => current.filter((row) => row.id !== order.id));
     setInvoiceIsTest(false);
+    setInvoicePrintMode("cashier");
     setInvoiceOrder(paidOrder);
-    setSavedMessage(language === "ar" ? "تم تسجيل السداد. يمكنك الآن طباعة فاتورة الكاشير." : "Payment recorded. The cashier invoice is now available to print.");
+    setSavedMessage(language === "ar" ? "تم تسجيل السداد وطباعة فاتورة الكاشير فقط." : "Payment recorded and cashier invoice printed only.");
+  };
+
+  const confirmDeleteUnpaidOrder = async () => {
+    if (!deleteTarget) return;
+    const result = await deleteOrder(deleteTarget.id);
+    if (result?.error) {
+      setCheckoutError(language === "ar" ? "تعذر حذف الطلب المعلق." : "Could not delete the pending order.");
+    } else {
+      setUnpaidOrders((current) => current.filter((row) => row.id !== deleteTarget.id));
+      setSavedMessage(language === "ar" ? "تم حذف الطلب المعلق." : "Pending order deleted.");
+    }
+    setDeleteTarget(null);
   };
 
   const editUnpaidOrder = (order) => {
@@ -468,6 +485,7 @@ function CashierPOSPage() {
   const closeInvoice = () => {
     setInvoiceOrder(null);
     setInvoiceIsTest(false);
+    setInvoicePrintMode("order");
   };
 
   const renderCartContents = (mobileView = false) => (
@@ -557,6 +575,7 @@ function CashierPOSPage() {
                 <Stack direction="row" spacing={.6}>
                   <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
                   <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
+                  <IconButton size="small" color="error" aria-label={language === "ar" ? "حذف الطلب المعلق" : "Delete pending order"} onClick={() => setDeleteTarget(order)}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton>
                 </Stack>
               </Box>
             ))}
@@ -628,7 +647,7 @@ function CashierPOSPage() {
         </Paper>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: { sm: "auto" }, overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: "156px minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: { sm: "auto" }, overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
             <TextField
               fullWidth
               size="small"
@@ -642,7 +661,11 @@ function CashierPOSPage() {
               }}
               sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" } }}
             />
-            <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: { xs: "1", md: filtersOpen ? "1" : "1 / -1" }, mb: .8 }}>
+              <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
+              <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
+            </Stack>
+            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {orderedCategories.map((category) => (
                 <Chip
@@ -665,9 +688,9 @@ function CashierPOSPage() {
                   sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
                 />
               ))}
-            </Stack>
+            </Stack>}
 
-            <Box sx={{ gridColumn: { xs: "1", md: "2" }, minWidth: 0 }}>
+            <Box sx={{ gridColumn: { xs: "1", md: filtersOpen ? "2" : "1" }, minWidth: 0 }}>
             {tenantLoading || menuLoading ? (
               <Box sx={{ py: 8, display: "grid", justifyItems: "center", gap: 1 }}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Box>
             ) : menuError ? (
@@ -675,7 +698,7 @@ function CashierPOSPage() {
             ) : visibleItems.length === 0 ? (
               <Typography color="text.secondary" align="center" sx={{ py: 8 }}>{text.noItems}</Typography>
             ) : (
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: { xs: .8, sm: 1.4 } }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: { xs: .8, sm: 1.4 } }}>
                 {visibleItems.map((item) => {
                   const category = categoryById.get(item.category_id);
                   return (
@@ -763,6 +786,15 @@ function CashierPOSPage() {
         onTest={openPrinterTest}
       />
       <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategories={updateCategoryPrintRoutes} />
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 950 }}>{language === "ar" ? "حذف الطلب المعلق؟" : "Delete pending order?"}</DialogTitle>
+        <DialogContent>{language === "ar" ? "سيتم حذف الطلب غير المدفوع نهائيًا من الطلبات المعلقة. هل تريد المتابعة؟" : "This unpaid order will be permanently removed from the pending orders. Continue?"}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} color="inherit">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+          <Button onClick={confirmDeleteUnpaidOrder} color="error" variant="contained">{language === "ar" ? "حذف الطلب" : "Delete order"}</Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={Boolean(addonDialogItem)} onClose={closeAddonDialog} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 950 }}>{text.addonsTitle}</DialogTitle>
@@ -854,12 +886,13 @@ function CashierPOSPage() {
       </Dialog>
 
       <InvoiceModal
-        key={invoiceOrder ? `${invoiceOrder.id}-${invoiceOrder.payment_status || "test"}` : "invoice"}
+        key={invoiceOrder ? `${invoiceOrder.id}-${invoiceOrder.payment_status || "test"}-${invoicePrintMode}` : "invoice"}
         open={Boolean(invoiceOrder)}
         onClose={closeInvoice}
         order={invoiceOrder}
         autoPrint={invoiceIsTest ? autoPrintAfterSave : true}
         isTest={invoiceIsTest}
+        printMode={invoicePrintMode}
       />
     </Box>
   );
