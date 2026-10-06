@@ -8,7 +8,7 @@ jest.mock("./receiptImageRenderer", () => ({
 }));
 
 import supabase from "../supabase";
-import { discoverPrinters, printKitchenTicketGroups, printReceipt, printReceiptGroups, savePrinterSettings } from "./qzPrinting";
+import { discoverPrinters, getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan, savePrinterSettings } from "./qzPrinting";
 import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 
 function makeQzMock() {
@@ -201,5 +201,97 @@ describe("QZ Tray printer integration", () => {
       printedReceiptCount: 1,
       totalReceiptCount: 2,
     });
+  });
+
+  test("persists cashier, kitchen, and payment routing settings on the current device", () => {
+    const settings = savePrinterSettings({
+      printers: ["Cashier Printer"],
+      kitchenPrinter: "Kitchen Printer",
+      paperWidth: "58mm",
+      unpaidInvoicePolicy: "kitchen_only",
+    });
+
+    expect(JSON.parse(localStorage.getItem("servio.qzPrinterSettings.v1"))).toEqual(settings);
+    expect(getPrinterSettings()).toEqual(settings);
+  });
+
+  test("routes paid invoices to both kitchen and cashier printers", async () => {
+    const settings = savePrinterSettings({ printers: ["Cashier Printer"], kitchenPrinter: "Kitchen Printer", paperWidth: "80mm" });
+    const order = { id: "paid-order", payment_status: "paid", total_price: 11, items: [{ name: "Meal", quantity: 1, price: 11 }] };
+    const groups = [{ order, amounts: { gross: 11, net: 9.57, vat: 1.43 } }];
+
+    const result = await printOrderByPaymentStatus(order, groups, {}, { settings });
+
+    expect(result).toMatchObject({ kitchenReceiptCount: 1, cashierReceiptCount: 1, receiptCount: 2, destinations: ["kitchen", "cashier"] });
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Kitchen Printer", "Cashier Printer"]);
+  });
+
+  test("keeps paid cashier receipts on cashier queues when categories route to kitchen printers", async () => {
+    const settings = savePrinterSettings({
+      printers: ["Cashier Printer"],
+      kitchenPrinter: "Kitchen Printer",
+      categoryPrinters: { drinks: "Drinks Printer" },
+      paperWidth: "80mm",
+    });
+    const order = { id: "paid-drinks-order", payment_status: "paid", total_price: 5, items: [{ name: "Drink", quantity: 1, price: 5 }] };
+    const groups = [{
+      key: "drinks",
+      categoryId: "drinks",
+      printerName: "Drinks Printer",
+      order,
+      amounts: { gross: 5, net: 4.35, vat: 0.65 },
+    }];
+
+    await printOrderByPaymentStatus(order, groups, {}, { settings });
+
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Drinks Printer", "Cashier Printer"]);
+  });
+
+  test("resumes only cashier copies not already sent after a partial multi-printer failure", async () => {
+    const settings = savePrinterSettings({
+      printers: ["Cashier A", "Cashier B"],
+      kitchenPrinter: "Kitchen Printer",
+      paperWidth: "80mm",
+    });
+    const order = { id: "paid-resume-order", payment_status: "paid", total_price: 5, items: [{ name: "Drink", quantity: 1, price: 5 }] };
+    const groups = [{ key: "drinks", categoryId: "drinks", printerName: "Drinks Printer", order }];
+    qz.print.mockResolvedValueOnce().mockResolvedValueOnce().mockRejectedValueOnce(new Error("Cashier B offline"));
+
+    let failure;
+    try {
+      await printOrderByPaymentStatus(order, groups, {}, { settings });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toMatchObject({
+      printDestination: "cashier",
+      alreadyPrintedByGroup: { drinks: ["Cashier A"] },
+      kitchenPrintResult: { printers: ["Drinks Printer"], receiptCount: 1 },
+    });
+    qz.print.mockResolvedValue();
+
+    const result = await printReceiptGroups(groups, {}, {
+      settings,
+      ignoreCategoryPrinters: true,
+      alreadyPrintedByGroup: failure.alreadyPrintedByGroup,
+    });
+
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual([
+      "Drinks Printer", "Cashier A", "Cashier B", "Cashier B",
+    ]);
+    expect(result).toMatchObject({ printers: ["Cashier B"], receiptCount: 1 });
+  });
+
+  test("routes unpaid invoices to kitchen only by default", async () => {
+    const settings = savePrinterSettings({ printers: ["Cashier Printer"], kitchenPrinter: "Kitchen Printer", paperWidth: "80mm" });
+    const order = { id: "unpaid-order", payment_status: "unpaid", total_price: 11, items: [{ name: "Meal", quantity: 1, price: 11 }] };
+    const groups = [{ order, amounts: { gross: 11, net: 9.57, vat: 1.43 } }];
+
+    expect(resolveInvoicePrintPlan(order, settings)).toEqual({ kitchen: true, cashier: false, paymentStatus: "unpaid" });
+    const result = await printOrderByPaymentStatus(order, groups, {}, { settings });
+
+    expect(result).toMatchObject({ kitchenReceiptCount: 1, cashierReceiptCount: 0, receiptCount: 1, destinations: ["kitchen"] });
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Kitchen Printer"]);
   });
 });

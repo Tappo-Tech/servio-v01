@@ -314,6 +314,24 @@ export const MenuProvider = ({ children }) => {
     return { data, error: error || (!data ? new Error("التصنيف غير موجود أو لا تملك صلاحية تعديله") : null) };
   });
 
+  const updateCategoryPrintRoutes = (routes) => guard("menu:print-routes", async () => {
+    if (isPublic || !tenantId || !Array.isArray(routes)) return { error: new Error("غير مصرح") };
+    const payload = routes.map((route) => ({
+      category_id: String(route.category_id || route.id || ""),
+      separate_print: Boolean(route.separate_print),
+      printer_name: String(route.printer_name || "").trim() || null,
+    }));
+    const { data, error } = await supabase.rpc("save_category_print_routes", { p_routes: payload });
+    if (!error) {
+      const routesById = new Map(payload.map((route) => [route.category_id, route]));
+      setCategoriesList((current) => current.map((category) => {
+        const route = routesById.get(String(category.id));
+        return route ? { ...category, separate_print: route.separate_print, printer_name: route.printer_name } : category;
+      }));
+    }
+    return { data, error };
+  });
+
   const deleteCategory = (id) => guard(`menu:delete-category:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const { error } = await supabase.from("categories").delete().eq("id", id).eq("tenant_id", tenantId);
@@ -325,7 +343,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, updateCategoryPrintRoute, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
       {children}
     </MenuContext.Provider>
   );

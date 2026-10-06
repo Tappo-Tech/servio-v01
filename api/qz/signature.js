@@ -1,5 +1,6 @@
 const { createSign } = require("node:crypto");
 const { createClient } = require("@supabase/supabase-js");
+const { matchesServioCertificate } = require("./certificateFingerprint");
 
 const MAX_SIGNED_REQUEST_LENGTH = 250_000;
 const ALLOWED_ROLES = new Set(["admin", "cashier"]);
@@ -57,6 +58,10 @@ module.exports = async function signQzRequest(req, res) {
 
     const { data: profile, error: profileError } = await staffClient.rpc("ensure_profile_for_current_user");
     if (profileError || !ALLOWED_ROLES.has(profile?.role)) return reply(res, 403, "Cashier or manager access required");
+
+    if (!matchesServioCertificate(privateKey)) {
+      return reply(res, 503, "QZ signing key does not match the SERVIO trust certificate; verify QZ_SIGNING_PRIVATE_KEY in Vercel.");
+    }
 
     const signer = createSign("RSA-SHA512");
     signer.update(requestToSign, "utf8");

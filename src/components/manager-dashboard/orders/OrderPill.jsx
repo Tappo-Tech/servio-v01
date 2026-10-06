@@ -20,7 +20,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import { useMenu } from "../../../context/MenuContext";
 import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
 import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
-import { getPrinterSettings, printKitchenTicketGroups, printReceiptGroups } from "../../../utils/qzPrinting";
+import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
   const shortOrderId = String(order?.id || "").slice(-6).toUpperCase();
@@ -168,6 +168,17 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
   );
 }
 
+function getPrintRetryState(error, orderId) {
+  const alreadyPrintedByGroup = error?.alreadyPrintedByGroup || {};
+  if (error?.printDestination === "cashier" && error?.kitchenPrintResult?.receiptCount) {
+    return { orderId, destination: "cashier", alreadyPrintedByGroup };
+  }
+  if (error?.printDestination === "kitchen" && Object.values(alreadyPrintedByGroup).some((printers) => Array.isArray(printers) && printers.length > 0)) {
+    return { orderId, destination: "kitchen", alreadyPrintedByGroup };
+  }
+  return null;
+}
+
 function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false }) {
   const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
@@ -175,6 +186,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
   const autoPrintedOrderRef = useRef(null);
   const [printState, setPrintState] = useState(null);
   const [printing, setPrinting] = useState(false);
+  const [retryState, setRetryState] = useState(null);
   const currency = storeInfo.currency || t("currencySar");
   const receiptGroups = useMemo(
     () => buildOrderReceiptGroups(order, categoriesList, menuItems, language),
@@ -183,6 +195,10 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
 
   const getPrintErrorMessage = useCallback((error) => {
     const base = error?.message || (language === "ar" ? "تعذرت الطباعة عبر QZ Tray" : "QZ Tray printing failed");
+    if (error?.kitchenPrintResult?.receiptCount) {
+      const partial = language === "ar" ? "تم إرسال تذكرة المطبخ قبل تعذر فاتورة الكاشير." : "The kitchen ticket was sent before the cashier receipt failed.";
+      return `${base} ${partial}`;
+    }
     if (!error?.printedReceiptCount) return base;
     const partial = language === "ar"
       ? `تم إرسال ${error.printedReceiptCount} من ${error.totalReceiptCount} إيصالات قبل التعثر.`
@@ -190,7 +206,15 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     return `${base} ${partial}`;
   }, [language]);
 
-  const getPrintSuccessMessage = useCallback(({ printers, receiptCount }) => {
+  const getPrintSuccessMessage = useCallback((result) => {
+    const { printers = [], receiptCount = 0, kitchenReceiptCount = 0, cashierReceiptCount = 0 } = result || {};
+    const destinations = [];
+    if (kitchenReceiptCount) destinations.push(language === "ar" ? "تذكرة المطبخ" : "kitchen ticket");
+    if (cashierReceiptCount) destinations.push(language === "ar" ? "فاتورة الكاشير" : "cashier receipt");
+    if (destinations.length) {
+      const label = destinations.join(" + ");
+      return language === "ar" ? `أُرسلت ${label} إلى: ${printers.join("، ")}` : `Sent ${label} to: ${printers.join(", ")}`;
+    }
     if (language === "ar") {
       const sentText = receiptCount > 1 ? `أُرسلت ${receiptCount} إيصالات` : "أُرسلت الفاتورة";
       return `${sentText} إلى: ${printers.join("، ")}`;
@@ -202,7 +226,9 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
   const runGroupedPrint = () => {
     if (menuLoading) throw new Error(language === "ar" ? "جارٍ تحميل إعدادات التصنيفات، حاول بعد لحظات." : "Category settings are still loading; try again shortly.");
     if (menuError) throw new Error(language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد تحميل المنيو قبل الطباعة." : "Category settings could not be loaded. Reload the menu before printing.");
-    return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest });
+    const settings = getPrinterSettings();
+    if (isTest) return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest, settings });
+    return printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings });
   };
 
   const runKitchenPrint = () => {
@@ -213,7 +239,6 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
 
   useEffect(() => {
     if (!open) {
-      autoPrintedOrderRef.current = null;
       setPrintState(null);
       return undefined;
     }
@@ -226,9 +251,17 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     const timer = window.setTimeout(() => {
       autoPrintedOrderRef.current = order.id;
       setPrinting(true);
-      printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest })
-        .then((result) => setPrintState({ severity: "success", message: getPrintSuccessMessage(result) }))
-        .catch((error) => setPrintState({ severity: "error", message: getPrintErrorMessage(error) }))
+      (isTest
+        ? printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest })
+        : printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() }))
+        .then((result) => {
+          setRetryState(null);
+          setPrintState({ severity: "success", message: getPrintSuccessMessage(result) });
+        })
+        .catch((error) => {
+          setRetryState(getPrintRetryState(error, order?.id));
+          setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
+        })
         .finally(() => setPrinting(false));
     }, 500);
     return () => window.clearTimeout(timer);
@@ -236,7 +269,10 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
 
   if (!order) return null;
 
-  const paperWidth = getPrinterSettings().paperWidth;
+  const printerSettings = getPrinterSettings();
+  const printPlan = resolveInvoicePrintPlan(order, printerSettings);
+  const activeRetryState = retryState?.orderId === order?.id ? retryState : null;
+  const paperWidth = printerSettings.paperWidth;
   const browserPageSize = paperWidth === "A4" ? "A4 portrait" : `${paperWidth} auto`;
   const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth;
 
@@ -245,8 +281,10 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     setPrintState(null);
     try {
       const result = await runGroupedPrint();
+      setRetryState(null);
       setPrintState({ severity: "success", message: getPrintSuccessMessage(result) });
     } catch (error) {
+      setRetryState(getPrintRetryState(error, order?.id));
       setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
     } finally {
       setPrinting(false);
@@ -258,16 +296,79 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     setPrintState(null);
     try {
       const result = await runKitchenPrint();
+      setRetryState(null);
       const prefix = language === "ar" ? (result.receiptCount > 1 ? "أُرسلت تذاكر المطبخ" : "أُرسلت تذكرة المطبخ") : (result.receiptCount > 1 ? "Kitchen tickets sent" : "Kitchen ticket sent");
       setPrintState({ severity: "success", message: `${prefix}: ${result.printers.join(language === "ar" ? "، " : ", ")}` });
     } catch (error) {
+      setRetryState(getPrintRetryState(error, order?.id));
       setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
     } finally {
       setPrinting(false);
     }
   };
 
-  const handleBrowserFallback = () => window.print();
+  const handleRetryRemaining = async () => {
+    if (!activeRetryState) return;
+    setPrinting(true);
+    setPrintState(null);
+    try {
+      if (activeRetryState.destination === "cashier") {
+        const result = await printReceiptGroups(receiptGroups, storeInfo, {
+          language,
+          currency,
+          settings: getPrinterSettings(),
+          ignoreCategoryPrinters: true,
+          alreadyPrintedByGroup: activeRetryState.alreadyPrintedByGroup,
+        });
+        setPrintState({
+          severity: "success",
+          message: getPrintSuccessMessage({ ...result, kitchenReceiptCount: 0, cashierReceiptCount: result.receiptCount }),
+        });
+      } else {
+        const result = await printKitchenTicketGroups(receiptGroups, storeInfo, {
+          language,
+          currency,
+          settings: getPrinterSettings(),
+          alreadyPrintedByGroup: activeRetryState.alreadyPrintedByGroup,
+        });
+        const prefix = language === "ar" ? "أُرسلت تذاكر المطبخ المتبقية" : "Remaining kitchen tickets sent";
+        setPrintState({ severity: "success", message: `${prefix}: ${result.printers.join(language === "ar" ? "، " : ", ")}` });
+      }
+      setRetryState(null);
+    } catch (error) {
+      const nextRetry = getPrintRetryState(error, order?.id);
+      setRetryState(nextRetry || (error?.alreadyPrintedByGroup
+        ? { ...activeRetryState, alreadyPrintedByGroup: error.alreadyPrintedByGroup }
+        : activeRetryState));
+      setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleBrowserFallback = async () => {
+    if (isTest) {
+      window.print();
+      return;
+    }
+    setPrinting(true);
+    setPrintState(null);
+    try {
+      await printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: printerSettings });
+      setPrintState({
+        severity: "info",
+        message: language === "ar"
+          ? "أُرسلت تذكرة المطبخ عبر QZ؛ أكمل طباعة إيصال الكاشير في نافذة النظام."
+          : "Kitchen ticket sent through QZ; complete the cashier receipt in the system dialog.",
+      });
+      window.setTimeout(() => window.print(), 100);
+    } catch (error) {
+      setRetryState(getPrintRetryState(error, order?.id));
+      setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -295,6 +396,20 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
 
       <DialogContent id="printable-invoice">
         {printState && <Alert severity={printState.severity} sx={{ mb: 1.5, "@media print": { display: "none" } }}>{printState.message}</Alert>}
+        {activeRetryState && <Alert
+          severity="warning"
+          action={<Button color="inherit" size="small" onClick={handleRetryRemaining} disabled={printing}>
+            {activeRetryState.destination === "cashier"
+              ? (language === "ar" ? "أعد الكاشير فقط" : "Retry cashier only")
+              : (language === "ar" ? "أعد المتبقي فقط" : "Retry remaining only")}
+          </Button>}
+          sx={{ mb: 1.5, "@media print": { display: "none" } }}
+        >
+          {activeRetryState.destination === "cashier"
+            ? (language === "ar" ? "أُرسلت تذكرة المطبخ. أعد محاولة إيصالات الكاشير غير المرسلة فقط لتجنب تكرار التذاكر." : "Kitchen tickets were sent. Retry only cashier receipts not yet sent to avoid duplicate tickets.")
+            : (language === "ar" ? "أُرسلت بعض تذاكر المطبخ؛ ستُعاد التذاكر غير المرسلة فقط." : "Some kitchen tickets were sent; only unsent tickets will be retried.")}
+        </Alert>}
+        {!isTest && order.payment_status === "unpaid" && !printPlan.cashier && <Alert severity="info" sx={{ mb: 1.5, "@media print": { display: "none" } }}>{language === "ar" ? "غير مدفوع: تُرسل تذكرة المطبخ فقط؛ تُتاح فاتورة الكاشير بعد تسجيل السداد." : "Unpaid: only the kitchen ticket is sent. The cashier receipt is available after payment is recorded."}</Alert>}
         {menuError && (
           <Alert
             severity="warning"
@@ -320,15 +435,17 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
 
       <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, flexWrap: "wrap", gap: 1, "& .MuiButton-root": { minWidth: { xs: "100%", sm: "auto" } } }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
-        <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError)}>
-          {language === "ar" ? "نافذة النظام (بديل)" : "System dialog (fallback)"}
+        <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)} title={language === "ar" ? "يفتح حوار طباعة يدوي؛ الفاتورة العادية ترسل تذكرة المطبخ عبر QZ أولًا." : "Opens a manual print dialog; regular invoices send the kitchen ticket through QZ first."}>
+          {isTest
+            ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)")
+            : (language === "ar" ? "إيصال الكاشير عبر النظام" : "Cashier receipt (system dialog)")}
         </Button>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
-          <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError)}>
+          <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
             {language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket"}
           </Button>
-          <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError)}>
-            {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة" : "Print")}
+          <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
+            {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة حسب حالة السداد" : "Print by payment status")}
           </Button>
         </Stack>
       </DialogActions>

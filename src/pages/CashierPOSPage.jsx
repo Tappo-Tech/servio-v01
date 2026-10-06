@@ -167,7 +167,7 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
  */
 function CashierPOSPage() {
   const navigate = useNavigate();
-  const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoute } = useMenu();
+  const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoutes } = useMenu();
   const { addOrder } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
@@ -608,7 +608,7 @@ function CashierPOSPage() {
         onAutoPrintChange={handleAutoPrintChange}
         onTest={openPrinterTest}
       />
-      <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategory={updateCategoryPrintRoute} />
+      <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategories={updateCategoryPrintRoutes} />
 
       <Dialog open={Boolean(addonDialogItem)} onClose={closeAddonDialog} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 950 }}>{text.addonsTitle}</DialogTitle>

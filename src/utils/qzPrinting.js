@@ -5,8 +5,9 @@ import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 const SETTINGS_KEY = "servio.qzPrinterSettings.v1";
 const PAPER_WIDTHS = ["58mm", "80mm", "A4"];
 const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
-const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {} };
-const SETTINGS_FILE_VERSION = 2;
+const UNPAID_INVOICE_POLICIES = new Set(["kitchen_only", "kitchen_and_cashier"]);
+const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only" };
+const SETTINGS_FILE_VERSION = 3;
 let securityConfigured = false;
 let connectionPromise = null;
 let qzLoadPromise = null;
@@ -72,6 +73,7 @@ function normalizePrinterSettings(settings) {
     paperWidth: PAPER_WIDTHS.includes(settings?.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth,
     kitchenPrinter: typeof settings?.kitchenPrinter === "string" ? settings.kitchenPrinter.trim() : "",
     categoryPrinters,
+    unpaidInvoicePolicy: UNPAID_INVOICE_POLICIES.has(settings?.unpaidInvoicePolicy) ? settings.unpaidInvoicePolicy : DEFAULT_SETTINGS.unpaidInvoicePolicy,
   };
 }
 
@@ -101,6 +103,7 @@ export function createPrinterSettingsFile(settings, autoPrintAfterSave = true) {
     paperWidth: normalized.paperWidth,
     kitchenPrinter: normalized.kitchenPrinter,
     categoryPrinters: normalized.categoryPrinters,
+    unpaidInvoicePolicy: normalized.unpaidInvoicePolicy,
     autoPrintAfterSave: Boolean(autoPrintAfterSave),
   }, null, 2)}\n`;
 }
@@ -112,7 +115,7 @@ export function parsePrinterSettingsFile(contents) {
   } catch {
     throw new Error("ملف الإعداد غير صالح أو ليس JSON صحيحًا.");
   }
-  if (!payload || payload.app !== "SERVIO" || ![1, SETTINGS_FILE_VERSION].includes(payload.schemaVersion)) {
+  if (!payload || payload.app !== "SERVIO" || ![1, 2, SETTINGS_FILE_VERSION].includes(payload.schemaVersion)) {
     throw new Error("هذا ليس ملف إعداد طابعة SERVIO مدعومًا.");
   }
   if (!Array.isArray(payload.printers) || payload.printers.length > 2 || payload.printers.some((name) => typeof name !== "string" || !name.trim())) {
@@ -123,6 +126,9 @@ export function parsePrinterSettingsFile(contents) {
   }
   if (payload.autoPrintAfterSave !== undefined && typeof payload.autoPrintAfterSave !== "boolean") {
     throw new Error("قيمة الطباعة التلقائية في الملف يجب أن تكون true أو false.");
+  }
+  if (payload.unpaidInvoicePolicy !== undefined && !UNPAID_INVOICE_POLICIES.has(payload.unpaidInvoicePolicy)) {
+    throw new Error("سياسة طباعة الفاتورة غير المدفوعة في الملف غير صالحة.");
   }
   if (payload.kitchenPrinter !== undefined && typeof payload.kitchenPrinter !== "string") {
     throw new Error("اسم طابعة المطبخ في الملف غير صالح.");
@@ -204,60 +210,96 @@ export async function printReceipt(order, storeInfo, options = {}) {
   return { printers: succeeded, paperWidth: width };
 }
 
-// كل مجموعة تُرسل كوظيفة طباعة مستقلة إلى الطابعات المختارة؛ لا تُكرر أصناف المجموعات.
+function copyPrintedByGroup(source) {
+  return Object.fromEntries(Object.entries(source || {}).map(([key, names]) => [key, [...new Set(Array.isArray(names) ? names.filter((name) => typeof name === "string" && name) : [])]]));
+}
+
+function recordPrintedPrinters(printedByGroup, groupKey, names) {
+  printedByGroup[groupKey] = [...new Set([...(printedByGroup[groupKey] || []), ...(names || [])])];
+}
+
+// كل مجموعة تُرسل كوظيفة طباعة مستقلة؛ مسار الاستئناف يتجاوز الطابعات التي تأكد إرسالها.
 export async function printReceiptGroups(groups, storeInfo, options = {}) {
   if (!Array.isArray(groups) || groups.length === 0) {
     throw new Error("لا توجد فواتير جاهزة للطباعة.");
   }
 
   const baseSettings = options.settings || getPrinterSettings();
+  const printedByGroup = copyPrintedByGroup(options.alreadyPrintedByGroup);
   let lastResult = null;
   let printedReceiptCount = 0;
   const sentPrinters = new Set();
-  for (const group of groups) {
+  for (let index = 0; index < groups.length; index += 1) {
+    const group = groups[index];
+    const groupKey = String(group.key ?? index);
+    const categoryPrinter = !options.ignoreCategoryPrinters && group.categoryId
+      ? (group.printerName || baseSettings.categoryPrinters?.[String(group.categoryId)])
+      : null;
+    const targetPrinters = categoryPrinter ? [categoryPrinter] : baseSettings.printers;
+    const completedPrinters = new Set(printedByGroup[groupKey] || []);
+    const printersToPrint = targetPrinters.filter((printer) => !completedPrinters.has(printer));
+    if (!targetPrinters.length) {
+      const error = new Error("لم تُحدد طابعة كاشير. افتح إعداد الطابعة واختر طابعة واحدة على الأقل.");
+      error.code = "QZ_NO_PRINTERS_SELECTED";
+      error.failedGroupKey = groupKey;
+      error.alreadyPrintedByGroup = copyPrintedByGroup(printedByGroup);
+      error.printedReceiptCount = printedReceiptCount;
+      error.totalReceiptCount = groups.length;
+      throw error;
+    }
+    if (!printersToPrint.length) continue;
     try {
       lastResult = await printReceipt(group.order, storeInfo, {
         ...options,
-        settings: group.categoryId && (group.printerName || baseSettings.categoryPrinters?.[String(group.categoryId)])
-          ? { ...baseSettings, printers: [group.printerName || baseSettings.categoryPrinters[String(group.categoryId)]] }
-          : baseSettings,
+        settings: baseSettings,
+        printersOverride: printersToPrint,
         receiptTitle: group.receiptTitle,
         taxBreakdown: group.amounts,
       });
       (lastResult.printers || []).forEach((printer) => sentPrinters.add(printer));
+      recordPrintedPrinters(printedByGroup, groupKey, lastResult.printers);
       printedReceiptCount += 1;
     } catch (error) {
       const groupError = new Error(error?.message || "تعذرت طباعة إحدى الفواتير.");
       groupError.code = error?.code || "QZ_RECEIPT_GROUP_PRINT_FAILURE";
       groupError.succeededPrinters = error?.succeededPrinters || [];
       groupError.failedPrinters = error?.failedPrinters || [];
+      recordPrintedPrinters(printedByGroup, groupKey, groupError.succeededPrinters);
+      groupError.failedGroupKey = groupKey;
+      groupError.alreadyPrintedByGroup = copyPrintedByGroup(printedByGroup);
       groupError.printedReceiptCount = printedReceiptCount;
       groupError.totalReceiptCount = groups.length;
       throw groupError;
     }
   }
 
-  return { ...lastResult, printers: [...sentPrinters], receiptCount: printedReceiptCount };
+  return { ...(lastResult || {}), printers: [...sentPrinters], receiptCount: printedReceiptCount };
 }
 
 // تذكرة المطبخ لا تتضمن أسعارًا؛ المجموعة المفصولة تذهب إلى طابعتها المحلية، والبقية إلى طابعة المطبخ العامة.
 export async function printKitchenTicketGroups(groups, storeInfo, options = {}) {
   if (!Array.isArray(groups) || groups.length === 0) throw new Error("لا توجد أصناف جاهزة لتذكرة المطبخ.");
   const settings = options.settings || getPrinterSettings();
+  const printedByGroup = copyPrintedByGroup(options.alreadyPrintedByGroup);
   let lastResult = null;
   let printedReceiptCount = 0;
   const sentPrinters = new Set();
 
-  for (const group of groups) {
+  for (let index = 0; index < groups.length; index += 1) {
+    const group = groups[index];
+    const groupKey = String(group.key ?? index);
     const categoryPrinter = group.categoryId ? (group.printerName || settings.categoryPrinters?.[String(group.categoryId)]) : "";
     const printer = categoryPrinter || settings.kitchenPrinter;
     if (!printer) {
       const error = new Error("حدد طابعة المطبخ من إعداد الطابعة، أو عيّن طابعة للتصنيف المنفصل.");
       error.code = "QZ_NO_KITCHEN_PRINTER";
+      error.failedGroupKey = groupKey;
+      error.alreadyPrintedByGroup = copyPrintedByGroup(printedByGroup);
       error.printedReceiptCount = printedReceiptCount;
       error.totalReceiptCount = groups.length;
       throw error;
     }
+    if ((printedByGroup[groupKey] || []).includes(printer)) continue;
     try {
       const title = group.isSeparate && group.categoryName
         ? (options.language === "en" ? `Kitchen ticket — ${group.categoryName}` : `تذكرة مطبخ — ${group.categoryName}`)
@@ -269,16 +311,61 @@ export async function printKitchenTicketGroups(groups, storeInfo, options = {}) 
         settings: { ...settings, printers: [printer] },
       });
       (lastResult.printers || []).forEach((sentPrinter) => sentPrinters.add(sentPrinter));
+      recordPrintedPrinters(printedByGroup, groupKey, lastResult.printers);
       printedReceiptCount += 1;
     } catch (error) {
       const groupError = new Error(error?.message || "تعذرت طباعة تذكرة مطبخ.");
       groupError.code = error?.code || "QZ_KITCHEN_TICKET_PRINT_FAILURE";
       groupError.succeededPrinters = error?.succeededPrinters || [];
       groupError.failedPrinters = error?.failedPrinters || [];
+      recordPrintedPrinters(printedByGroup, groupKey, groupError.succeededPrinters);
+      groupError.failedGroupKey = groupKey;
+      groupError.alreadyPrintedByGroup = copyPrintedByGroup(printedByGroup);
       groupError.printedReceiptCount = printedReceiptCount;
       groupError.totalReceiptCount = groups.length;
       throw groupError;
     }
   }
   return { ...lastResult, printers: [...sentPrinters], receiptCount: printedReceiptCount };
+}
+
+export function resolveInvoicePrintPlan(order, settings = getPrinterSettings()) {
+  const normalized = normalizePrinterSettings(settings);
+  const paymentStatus = order?.payment_status;
+  const cashier = paymentStatus === "paid"
+    || (paymentStatus === "unpaid" && normalized.unpaidInvoicePolicy === "kitchen_and_cashier");
+  return { kitchen: true, cashier, paymentStatus };
+}
+
+export async function printOrderByPaymentStatus(order, groups, storeInfo, options = {}) {
+  const settings = options.settings || getPrinterSettings();
+  const plan = resolveInvoicePrintPlan(order, settings);
+  let kitchenResult;
+  let cashierResult = null;
+
+  try {
+    kitchenResult = await printKitchenTicketGroups(groups, storeInfo, { ...options, settings });
+  } catch (error) {
+    error.printDestination = "kitchen";
+    throw error;
+  }
+
+  if (plan.cashier) {
+    try {
+      cashierResult = await printReceiptGroups(groups, storeInfo, { ...options, settings, ignoreCategoryPrinters: true });
+    } catch (error) {
+      error.kitchenPrintResult = kitchenResult;
+      error.printDestination = "cashier";
+      throw error;
+    }
+  }
+
+  return {
+    printers: [...new Set([...(kitchenResult?.printers || []), ...(cashierResult?.printers || [])])],
+    receiptCount: (kitchenResult?.receiptCount || 0) + (cashierResult?.receiptCount || 0),
+    kitchenReceiptCount: kitchenResult?.receiptCount || 0,
+    cashierReceiptCount: cashierResult?.receiptCount || 0,
+    destinations: plan.cashier ? ["kitchen", "cashier"] : ["kitchen"],
+    paymentStatus: plan.paymentStatus,
+  };
 }

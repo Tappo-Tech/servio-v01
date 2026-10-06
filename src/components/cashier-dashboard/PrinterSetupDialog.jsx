@@ -43,6 +43,10 @@ const COPY = {
     printers: "الطابعات المكتشفة",
     kitchenPrinter: "طابعة تذكرة المطبخ",
     kitchenHelp: "تذكرة المطبخ تعرض رقم الطلب والطاولة والأصناف والكميات والإضافات والملاحظات فقط، دون أسعار. هذا الإعداد خاص بهذا الجهاز ويمكن أن يختلف عن طابعات الكاشير.",
+    unpaidPolicy: "توجيه الفواتير حسب حالة السداد",
+    unpaidPolicyHelp: "الفاتورة المدفوعة تُطبع للمطبخ والكاشير دائمًا. اختر وجهة الفاتورة غير المدفوعة.",
+    unpaidKitchenOnly: "المطبخ فقط (الافتراضي)",
+    unpaidKitchenAndCashier: "المطبخ والكاشير",
     noKitchenPrinter: "لم تُحدد طابعة للمطبخ",
     kitchenNotFound: "الطابعة المحفوظة غير مكتشفة على هذا الجهاز. أعد الاتصال وتحقق منها قبل الطباعة.",
     noPrinters: "لم تظهر طابعات. تأكد من تشغيل QZ Tray وإضافة الطابعة في إعدادات النظام.",
@@ -72,6 +76,10 @@ const COPY = {
     printers: "Discovered printers",
     kitchenPrinter: "Kitchen ticket printer",
     kitchenHelp: "Kitchen tickets contain the order number, table, item names, quantities, add-ons, and notes only. This device-specific setting can be different from the cashier printers.",
+    unpaidPolicy: "Route invoices by payment status",
+    unpaidPolicyHelp: "Paid invoices always print to both kitchen and cashier. Choose where unpaid invoices should print.",
+    unpaidKitchenOnly: "Kitchen only (default)",
+    unpaidKitchenAndCashier: "Kitchen and cashier",
     noKitchenPrinter: "No kitchen printer selected",
     kitchenNotFound: "Saved kitchen printer was not discovered on this device. Reconnect and verify it before printing.",
     noPrinters: "No printers found. Make sure QZ Tray is running and the printer is installed in the OS.",
@@ -256,6 +264,22 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
             {settings.kitchenPrinter && !availablePrinters.includes(settings.kitchenPrinter) && connected && (
               <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.6 }}>{text.kitchenNotFound}</Typography>
             )}
+          </Box>
+          <Box sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider" }}>
+            <Typography fontWeight={850} sx={{ mb: 0.35 }}>{text.unpaidPolicy}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>{text.unpaidPolicyHelp}</Typography>
+            <FormControl fullWidth size="small">
+              <InputLabel id="servio-unpaid-invoice-policy-label">{text.unpaidPolicy}</InputLabel>
+              <Select
+                labelId="servio-unpaid-invoice-policy-label"
+                value={settings.unpaidInvoicePolicy}
+                label={text.unpaidPolicy}
+                onChange={(event) => setSettings((current) => ({ ...current, unpaidInvoicePolicy: event.target.value }))}
+              >
+                <MenuItem value="kitchen_only">{text.unpaidKitchenOnly}</MenuItem>
+                <MenuItem value="kitchen_and_cashier">{text.unpaidKitchenAndCashier}</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
           <input ref={fileInputRef} type="file" accept=".json,application/json" hidden onChange={importSettingsFile} />
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>

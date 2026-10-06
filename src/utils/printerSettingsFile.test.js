@@ -12,26 +12,28 @@ describe("portable SERVIO printer settings file", () => {
       paperWidth: "58mm",
       kitchenPrinter: "Kitchen Printer",
       categoryPrinters: { drinks: "Drink Printer" },
+      unpaidInvoicePolicy: "kitchen_only",
     }, false);
 
     expect(JSON.parse(content)).toEqual({
       app: "SERVIO",
-      schemaVersion: 2,
+      schemaVersion: 3,
       printers: ["Receipt Printer", "Office Laser"],
       paperWidth: "58mm",
       kitchenPrinter: "Kitchen Printer",
       categoryPrinters: { drinks: "Drink Printer" },
+      unpaidInvoicePolicy: "kitchen_only",
       autoPrintAfterSave: false,
     });
     expect(parsePrinterSettingsFile(content)).toEqual({
-      settings: { printers: ["Receipt Printer", "Office Laser"], paperWidth: "58mm", kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drink Printer" } },
+      settings: { printers: ["Receipt Printer", "Office Laser"], paperWidth: "58mm", kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drink Printer" }, unpaidInvoicePolicy: "kitchen_only" },
       autoPrintAfterSave: false,
     });
   });
 
   test("imports older version 1 files with safe defaults for new printer routes", () => {
     expect(parsePrinterSettingsFile(JSON.stringify({ app: "SERVIO", schemaVersion: 1, printers: ["Receipt Printer"], paperWidth: "80mm" }))).toEqual({
-      settings: { printers: ["Receipt Printer"], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {} },
+      settings: { printers: ["Receipt Printer"], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only" },
       autoPrintAfterSave: undefined,
     });
   });
@@ -41,5 +43,6 @@ describe("portable SERVIO printer settings file", () => {
     expect(() => parsePrinterSettingsFile(JSON.stringify({ app: "OTHER", schemaVersion: 1, printers: [], paperWidth: "80mm" }))).toThrow();
     expect(() => parsePrinterSettingsFile(JSON.stringify({ app: "SERVIO", schemaVersion: 1, printers: ["A", "B", "C"], paperWidth: "80mm" }))).toThrow();
     expect(() => parsePrinterSettingsFile(JSON.stringify({ app: "SERVIO", schemaVersion: 1, printers: [], paperWidth: "Letter" }))).toThrow();
+    expect(() => parsePrinterSettingsFile(JSON.stringify({ app: "SERVIO", schemaVersion: 3, printers: [], paperWidth: "80mm", unpaidInvoicePolicy: "send_everywhere" }))).toThrow();
   });
 });

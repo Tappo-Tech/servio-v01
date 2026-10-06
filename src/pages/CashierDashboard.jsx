@@ -40,7 +40,7 @@ function Dashboard() {
   const [testInvoice, setTestInvoice] = useState(null);
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { storeInfo = {} } = useStore();
-  const { categoriesList = [], updateCategoryPrintRoute } = useMenu();
+  const { categoriesList = [], updateCategoryPrintRoutes } = useMenu();
   const { t, language } = useLanguage();
   const schedule = useMemo(() => getWorkdaySchedule(storeInfo), [storeInfo]);
   const operationalToday = shiftBusinessDate(new Date(), schedule.startMinutes) || new Date();
@@ -145,7 +145,7 @@ function Dashboard() {
             onAutoPrintChange={handleAutoPrintChange}
             onTest={openPrinterTest}
           />
-          <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategory={updateCategoryPrintRoute} />
+          <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategories={updateCategoryPrintRoutes} />
           <InvoiceModal open={Boolean(testInvoice)} onClose={() => setTestInvoice(null)} order={testInvoice} isTest />
         </Stack>
       </Container>

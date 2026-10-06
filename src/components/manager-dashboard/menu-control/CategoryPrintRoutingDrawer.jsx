@@ -7,7 +7,7 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import { useLanguage } from "../../../context/LanguageContext";
 import { discoverPrinters, getPrinterSettings, savePrinterSettings } from "../../../utils/qzPrinting";
 
-export default function CategoryPrintRoutingDrawer({ open, onClose, categories = [], onUpdateCategory }) {
+export default function CategoryPrintRoutingDrawer({ open, onClose, categories = [], onUpdateCategories }) {
   const categoriesRef = useRef(categories);
   categoriesRef.current = categories;
   const { language } = useLanguage();
@@ -85,19 +85,20 @@ export default function CategoryPrintRoutingDrawer({ open, onClose, categories =
     if (saving) return;
     setSaving(true); setError(""); setNotice("");
     try {
-      if (!onUpdateCategory) throw new Error(isArabic ? "تعذر الاتصال بخدمة حفظ توجيه التصنيفات." : "Category route persistence is unavailable.");
-      for (const category of categories) {
+      if (!onUpdateCategories) throw new Error(isArabic ? "تعذر الاتصال بخدمة حفظ توجيه التصنيفات." : "Category route persistence is unavailable.");
+      const routes = categories.map((category) => {
         const id = String(category.id);
         const printerName = String(settings.categoryPrinters?.[id] || "").trim();
-        const result = await onUpdateCategory({
-          ...category,
+        return {
+          category_id: category.id,
           separate_print: Boolean(separateDraft[id]),
           printer_name: printerName || null,
-        });
-        if (result?.error) throw result.error;
-      }
+        };
+      });
+      const result = await onUpdateCategories(routes);
+      if (result?.error) throw result.error;
       const saved = savePrinterSettings({ ...settings, categoryPrinters: {} });
-      setSettings((current) => ({ ...current, printers: saved.printers, paperWidth: saved.paperWidth, kitchenPrinter: saved.kitchenPrinter, categoryPrinters: { ...(current.categoryPrinters || {}) } }));
+      setSettings((current) => ({ ...current, ...saved, categoryPrinters: { ...(current.categoryPrinters || {}) } }));
       setNotice(text.saved);
     } catch (cause) {
       setError(cause?.message || (isArabic ? "تعذر حفظ توجيه الطابعات." : "Could not save printer routes."));

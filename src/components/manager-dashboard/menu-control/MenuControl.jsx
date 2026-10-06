@@ -66,7 +66,7 @@ function MenuControl() {
     toggleAvailable,
     addCategory,      // دالة إضافة تصنيف في Context
     updateCategory,   // دالة تعديل تصنيف في Context
-    updateCategoryPrintRoute,
+    updateCategoryPrintRoutes,
     deleteCategory,   // دالة حذف تصنيف في Context
     addAddonComplement,
     deleteAddonComplement,
@@ -370,7 +370,7 @@ function MenuControl() {
         open={isPrinterRoutingOpen}
         onClose={() => setPrinterRoutingOpen(false)}
         categories={categoriesList}
-        onUpdateCategory={updateCategoryPrintRoute}
+        onUpdateCategories={updateCategoryPrintRoutes}
       />
       <AddonComplementDrawer
         open={isComplementDrawerOpen}
