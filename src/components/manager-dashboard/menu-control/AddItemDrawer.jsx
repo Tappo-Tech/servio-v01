@@ -72,7 +72,7 @@ const INITIAL_FORM_STATE = {
 };
 
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
-  const { addNewItem, updateItem, categoriesList = [], items = [] } = useMenu();
+  const { addNewItem, updateItem, categoriesList = [], items = [], addonComplements = [] } = useMenu();
   const { language, t } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [freeAddonDrawerOpen, setFreeAddonDrawerOpen] = useState(false);
@@ -382,7 +382,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           <Autocomplete
             multiple
             freeSolo
-            options={[]}
+            options={addonComplements.map((complement) => complement.name)}
             value={formData.addon_options}
             onChange={(_, newValue) => updateAddonOptions(newValue)}
             renderTags={(value, getTagProps) => value.map((option, index) => {
@@ -395,7 +395,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
                 size="small"
                 label={language === "ar" ? "إضافات مكتوبة" : "Named add-ons"}
                 placeholder={language === "ar" ? "اكتب اسم الإضافة واضغط Enter" : "Type an add-on and press Enter"}
-                helperText={language === "ar" ? "مثال: صوص، عسل، ليمون" : "Example: sauce, honey, lemon"}
+                helperText={language === "ar" ? "اختر مكملًا محفوظًا أو اكتب اسمًا جديدًا؛ الاسم المكتوب يُحفظ ضمن خيارات هذا الصنف." : "Choose a saved complement or type a new name; typed names stay on this item."}
               />
             )}
             fullWidth

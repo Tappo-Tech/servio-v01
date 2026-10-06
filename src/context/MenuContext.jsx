@@ -11,6 +11,7 @@ export const MenuProvider = ({ children }) => {
   const { slug, tenantId, isPublic, isTracking, loading: tenantLoading } = useTenant();
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
+  const [addonComplements, setAddonComplements] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [menuLoading, setMenuLoading] = useState(true);
@@ -42,6 +43,7 @@ export const MenuProvider = ({ children }) => {
     if (isTracking) {
       setItems([]);
       setCategoriesList([]);
+      setAddonComplements([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError(null);
@@ -52,6 +54,7 @@ export const MenuProvider = ({ children }) => {
     if (isPublic && !slug) {
       setItems([]);
       setCategoriesList([]);
+      setAddonComplements([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError(null);
@@ -62,6 +65,7 @@ export const MenuProvider = ({ children }) => {
     if (!isPublic && !tenantId) {
       setItems([]);
       setCategoriesList([]);
+      setAddonComplements([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError("لم يتم تحديد النشاط الحالي");
@@ -72,6 +76,7 @@ export const MenuProvider = ({ children }) => {
     // عند الانتقال إلى نشاط/مسار مختلف نمسح القائمة السابقة حتى لا تتسرب بين المستأجرين.
     setItems([]);
     setCategoriesList([]);
+    setAddonComplements([]);
     setMenuLoading(true);
     setMenuRefreshing(false);
     setMenuError(null);
@@ -128,6 +133,21 @@ export const MenuProvider = ({ children }) => {
           });
         }
         setCategoriesList(categoriesResult.data || []);
+        if (isPublic) {
+          setAddonComplements([]);
+        } else {
+          // المكتبة اختيارية ولا ينبغي أن تعطل عرض/بيع المنيو عند تعذر جدول المكملات.
+          void supabase.from("menu_addon_complements").select("id,name,created_at").eq("tenant_id", tenantId).order("name", { ascending: true }).then(({ data, error }) => {
+            if (!active) return;
+            if (error) {
+              console.warn("تعذر تحميل مكتبة المكملات:", error.message);
+              return;
+            }
+            setAddonComplements(data || []);
+          }).catch((error) => {
+            if (active) console.warn("تعذر تحميل مكتبة المكملات:", error?.message || error);
+          });
+        }
         setMenuError(null);
         hasLoadedRef.current = true;
       } catch (error) {
@@ -237,6 +257,22 @@ export const MenuProvider = ({ children }) => {
     return { data: savedItem, error: error || (!data ? new Error("لم يتم العثور على الصنف") : null) };
   });
 
+  const addAddonComplement = (rawName) => guard("menu:add-complement", async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const name = String(rawName || "").trim().replace(/\s+/g, " ").slice(0, 100);
+    if (!name) return { error: new Error("أدخل اسم المكمل") };
+    const { data, error } = await supabase.from("menu_addon_complements").insert([{ name, tenant_id: tenantId }]).select("id,name,created_at").single();
+    if (!error && data) setAddonComplements((current) => [...current.filter((entry) => entry.id !== data.id), data].sort((a, b) => a.name.localeCompare(b.name)));
+    return { data, error };
+  });
+
+  const deleteAddonComplement = (id) => guard(`menu:delete-complement:${id}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const { error } = await supabase.from("menu_addon_complements").delete().eq("id", id).eq("tenant_id", tenantId);
+    if (!error) setAddonComplements((current) => current.filter((entry) => entry.id !== id));
+    return { error };
+  });
+
   const deleteItem = (id) => guard(`menu:delete-item:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const { error } = await supabase.from("menu_items").delete().eq("id", id).eq("tenant_id", tenantId);
@@ -278,7 +314,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, deleteCategory, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
       {children}
     </MenuContext.Provider>
   );

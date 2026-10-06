@@ -35,12 +35,16 @@ import {
 const COPY = {
   ar: {
     title: "إعداد الطابعة",
-    help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم تأكد أن الطابعة مضافة في نظام التشغيل. يتيح ذلك استخدام طابعات USB أو Bluetooth أو الشبكة عبر تعريفاتها. اختر حتى طابعتين لإرسال الفاتورة إليهما معًا.",
+    help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم أضف الطابعة في نظام التشغيل. يدعم ذلك USB وBluetooth والشبكة عبر تعريفاتها. اختر حتى طابعتين لفاتورة الكاشير؛ توجيه التصنيفات يُدار من المنيو.",
     certificate: "QZ Tray مجاني؛ لا يلزم اشتراك عند استخدام شهادة SERVIO الذاتية. لإخفاء التنبيهات يلزم تثبيت الشهادة مرة واحدة بصلاحية مسؤول وإضافة المفتاح الخاص إلى Vercel. راجع خطوات التفعيل في دليل التطوير.",
     refresh: "الاتصال واكتشاف الطابعات",
     refreshBusy: "جارٍ الاتصال…",
     paper: "مقاس الورق",
     printers: "الطابعات المكتشفة",
+    kitchenPrinter: "طابعة تذكرة المطبخ",
+    kitchenHelp: "تذكرة المطبخ تعرض رقم الطلب والطاولة والأصناف والكميات والإضافات والملاحظات فقط، دون أسعار. هذا الإعداد خاص بهذا الجهاز ويمكن أن يختلف عن طابعات الكاشير.",
+    noKitchenPrinter: "لم تُحدد طابعة للمطبخ",
+    kitchenNotFound: "الطابعة المحفوظة غير مكتشفة على هذا الجهاز. أعد الاتصال وتحقق منها قبل الطباعة.",
     noPrinters: "لم تظهر طابعات. تأكد من تشغيل QZ Tray وإضافة الطابعة في إعدادات النظام.",
     selectHint: "اختر طابعة واحدة أو اثنتين؛ الطابعات الافتراضية الوهمية غير محددة تلقائيًا.",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع",
@@ -60,12 +64,16 @@ const COPY = {
   },
   en: {
     title: "Printer setup",
-    help: "Install and run QZ Tray on the cashier device, then make sure the printer is installed in the operating system. This supports USB, Bluetooth, or network printers through their drivers. Select up to two printers to receive each receipt.",
+    help: "Install and run QZ Tray on this cashier device, then install the printer in the operating system. USB, Bluetooth, and network printers work through their drivers. Choose up to two cashier printers; category routes are managed from the menu.",
     certificate: "QZ Tray is free; the SERVIO self-signed certificate avoids a QZ subscription. To suppress prompts, install the certificate once as an administrator and add the private signing key in Vercel. See the development guide.",
     refresh: "Connect and discover printers",
     refreshBusy: "Connecting…",
     paper: "Paper size",
     printers: "Discovered printers",
+    kitchenPrinter: "Kitchen ticket printer",
+    kitchenHelp: "Kitchen tickets contain the order number, table, item names, quantities, add-ons, and notes only. This device-specific setting can be different from the cashier printers.",
+    noKitchenPrinter: "No kitchen printer selected",
+    kitchenNotFound: "Saved kitchen printer was not discovered on this device. Reconnect and verify it before printing.",
     noPrinters: "No printers found. Make sure QZ Tray is running and the printer is installed in the OS.",
     selectHint: "Select one or two printers; virtual/default queues are not selected automatically.",
     autoPrint: "Send receipt automatically after saving a sale",
@@ -94,6 +102,7 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const kitchenPrinterOptions = [...new Set([...availablePrinters, settings.kitchenPrinter].filter(Boolean))];
 
   useEffect(() => {
     if (!open) return;
@@ -227,6 +236,25 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
               </FormGroup>
             ) : (
               <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>{text.noPrinters}</Typography>
+            )}
+          </Box>
+          <Box sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider", bgcolor: "rgba(23,26,47,.025)" }}>
+            <Typography fontWeight={850} sx={{ mb: 0.35 }}>{text.kitchenPrinter}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>{text.kitchenHelp}</Typography>
+            <FormControl fullWidth size="small">
+              <InputLabel id="servio-kitchen-printer-label">{text.kitchenPrinter}</InputLabel>
+              <Select
+                labelId="servio-kitchen-printer-label"
+                value={settings.kitchenPrinter || "__none__"}
+                label={text.kitchenPrinter}
+                onChange={(event) => setSettings((current) => ({ ...current, kitchenPrinter: event.target.value === "__none__" ? "" : event.target.value }))}
+              >
+                <MenuItem value="__none__">{text.noKitchenPrinter}</MenuItem>
+                {kitchenPrinterOptions.map((printer) => <MenuItem key={printer} value={printer}>{printer}</MenuItem>)}
+              </Select>
+            </FormControl>
+            {settings.kitchenPrinter && !availablePrinters.includes(settings.kitchenPrinter) && connected && (
+              <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.6 }}>{text.kitchenNotFound}</Typography>
             )}
           </Box>
           <input ref={fileInputRef} type="file" accept=".json,application/json" hidden onChange={importSettingsFile} />

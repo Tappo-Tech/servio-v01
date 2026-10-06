@@ -3,8 +3,13 @@ jest.mock("../supabase", () => ({
   default: { auth: { getSession: jest.fn() } },
 }));
 
+jest.mock("./receiptImageRenderer", () => ({
+  renderReceiptHtmlToImages: jest.fn(() => Promise.resolve([{ data: "UE5H", width: 300, height: 600 }])),
+}));
+
 import supabase from "../supabase";
-import { discoverPrinters, printReceipt, printReceiptGroups, savePrinterSettings } from "./qzPrinting";
+import { discoverPrinters, printKitchenTicketGroups, printReceipt, printReceiptGroups, savePrinterSettings } from "./qzPrinting";
+import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 
 function makeQzMock() {
   return {
@@ -46,6 +51,7 @@ describe("QZ Tray printer integration", () => {
       ok: true,
       text: () => Promise.resolve(url === "/servio-qz-certificate.txt" ? "TEST CERTIFICATE" : "TEST SIGNATURE"),
     }));
+    renderReceiptHtmlToImages.mockResolvedValue([{ data: "UE5H", width: 300, height: 600 }]);
   });
 
   afterEach(() => {
@@ -86,10 +92,10 @@ describe("QZ Tray printer integration", () => {
     expect(qz.print).toHaveBeenCalledTimes(2);
     expect(qz.print.mock.calls.map(([config]) => config.printer)).toEqual(saved.printers);
     for (const [, data] of qz.print.mock.calls) {
-      expect(data[0]).toEqual(expect.objectContaining({ type: "pixel", format: "html", flavor: "plain" }));
-      expect(data[0].data).toContain("58mm");
-      expect(data[0].options.pageWidth).toBeCloseTo(58 / 25.4);
+      expect(data[0]).toEqual({ type: "pixel", format: "image", flavor: "base64", data: "UE5H" });
     }
+    expect(qz.configs.create.mock.calls[0][1]).toMatchObject({ units: "mm", size: { width: 58, height: 116 }, colorType: "grayscale" });
+    expect(renderReceiptHtmlToImages.mock.calls[0][0]).toContain('dir="ltr"');
     expect(windowPrintSpy).not.toHaveBeenCalled();
   });
 
@@ -132,7 +138,40 @@ describe("QZ Tray printer integration", () => {
     expect(qz.print.mock.calls.map(([config]) => config.printer)).toEqual([
       "Virtual Thermal 58mm", "Virtual Laser A4", "Virtual Thermal 58mm", "Virtual Laser A4",
     ]);
-    expect(qz.print.mock.calls.some(([, data]) => data[0].data.includes("Separate receipt — Drinks"))).toBe(true);
+    expect(renderReceiptHtmlToImages.mock.calls.some(([html]) => html.includes("Separate receipt — Drinks"))).toBe(true);
+  });
+
+  test("routes a separate category receipt to its locally assigned printer", async () => {
+    const settings = savePrinterSettings({ printers: ["Cashier Printer"], paperWidth: "80mm", categoryPrinters: { drinks: "Drinks Printer" } });
+    const groups = [
+      { order: { total_price: 10, items: [{ name: "Meal", price: 10, quantity: 1 }] }, amounts: { gross: 10, net: 8.7, vat: 1.3 } },
+      { categoryId: "drinks", order: { total_price: 5, items: [{ name: "Drink", price: 5, quantity: 1 }] }, amounts: { gross: 5, net: 4.35, vat: 0.65 } },
+    ];
+    const result = await printReceiptGroups(groups, {}, { settings });
+    expect(result.printers).toEqual(["Cashier Printer", "Drinks Printer"]);
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Cashier Printer", "Drinks Printer"]);
+  });
+
+  test("prints kitchen tickets without prices to kitchen and category printers", async () => {
+    const settings = savePrinterSettings({ paperWidth: "80mm", kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drinks Printer" } });
+    const groups = [
+      { categoryId: null, isSeparate: false, order: { id: "order-4", table_number: "6", notes: "بدون ثلج", total_price: 10, items: [{ name: "Meal", price: 10, quantity: 2 }] } },
+      { categoryId: "drinks", categoryName: "Drinks", isSeparate: true, order: { id: "order-4", table_number: "6", total_price: 5, items: [{ name: "Drink", price: 5, quantity: 1 }] } },
+    ];
+    const result = await printKitchenTicketGroups(groups, { store_name: "Cafe name" }, { settings, language: "ar" });
+    expect(result).toMatchObject({ printers: ["Kitchen Printer", "Drinks Printer"], receiptCount: 2 });
+    expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual(["Kitchen Printer", "Drinks Printer"]);
+    const kitchenHtml = renderReceiptHtmlToImages.mock.calls.map(([html]) => html);
+    expect(kitchenHtml[0]).toContain("تذكرة المطبخ");
+    expect(kitchenHtml[0]).not.toContain("المبلغ قبل الضريبة");
+    expect(kitchenHtml[0]).not.toContain("10.00");
+  });
+
+  test("requires a kitchen printer before sending a kitchen ticket", async () => {
+    const settings = savePrinterSettings({ printers: ["Cashier Printer"], paperWidth: "80mm" });
+    await expect(printKitchenTicketGroups([{ order: { items: [{ name: "Meal", quantity: 1, price: 2 }] } }], {}, { settings }))
+      .rejects.toMatchObject({ code: "QZ_NO_KITCHEN_PRINTER" });
+    expect(qz.print).not.toHaveBeenCalled();
   });
 
   test("reports how many grouped receipts were already sent if a later receipt fails", async () => {

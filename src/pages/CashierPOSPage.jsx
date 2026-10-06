@@ -30,6 +30,7 @@ import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { v4 as uuidV4 } from "uuid";
+import PaymentStatusControl from "../components/cashier-dashboard/orders/PaymentStatusControl";
 import { useMenu } from "../context/MenuContext";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
@@ -55,6 +56,9 @@ const copy = {
     empty: "اختر صنفًا من المنيو لبدء البيع.",
     clear: "تفريغ السلة",
     orderType: "نوع الطلب",
+    paid: "مدفوع",
+    unpaid: "غير مدفوع",
+    paymentStatus: "حالة الدفع",
     dineIn: "محلي",
     takeaway: "سفري",
     tableNumber: "رقم الطاولة (اختياري)",
@@ -98,6 +102,9 @@ const copy = {
     empty: "Choose an item from the menu to start a sale.",
     clear: "Clear cart",
     orderType: "Order type",
+    paid: "Paid",
+    unpaid: "Unpaid",
+    paymentStatus: "Payment status",
     dineIn: "Dine-in",
     takeaway: "Takeaway",
     tableNumber: "Table number (optional)",
@@ -155,6 +162,8 @@ function CashierPOSPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
   const [orderType, setOrderType] = useState("dineIn");
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -297,6 +306,8 @@ function CashierPOSPage() {
           ? text.takeaway
           : tableNumber.trim() ? `${text.dineIn} - ${tableNumber.trim()}` : text.dineIn,
         notes: notes.trim() || null,
+        payment_status: paymentStatus,
+        payment_method: paymentMethod,
         completeImmediately: true,
       });
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
@@ -304,6 +315,8 @@ function CashierPOSPage() {
       setInvoiceOrder(result.data);
       setCart([]);
       setNotes("");
+      setPaymentStatus("unpaid");
+      setPaymentMethod(null);
       setSavedMessage(text.saved);
     } catch (error) {
       console.error("تعذر حفظ بيع الكاشير:", { code: error?.code, status: error?.status, message: error?.message });
@@ -361,7 +374,7 @@ function CashierPOSPage() {
           </Box>
         </Paper>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.55fr) minmax(330px, .75fr)" }, gap: 2.2, alignItems: "start" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
           <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
             <TextField
               fullWidth
@@ -387,7 +400,7 @@ function CashierPOSPage() {
             ) : visibleItems.length === 0 ? (
               <Typography color="text.secondary" align="center" sx={{ py: 8 }}>{text.noItems}</Typography>
             ) : (
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: 1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", md: "repeat(3,minmax(0,1fr))", xl: "repeat(4,minmax(0,1fr))" }, gap: { xs: 0.7, sm: 1 } }}>
                 {visibleItems.map((item) => (
                   <Button
                     key={item.id}
@@ -396,8 +409,8 @@ function CashierPOSPage() {
                     onClick={() => handleSelectItem(item)}
                     aria-label={`${text.add} ${item.name || text.image} ${amount(item.price)}`}
                     sx={{
-                      minHeight: 86,
-                      px: 1,
+                      minHeight: { xs: 96, sm: 100 },
+                      px: { xs: 0.75, sm: 1 },
                       py: 1,
                       borderColor: "rgba(23,26,47,.14)",
                       borderRadius: 2.5,
@@ -414,7 +427,22 @@ function CashierPOSPage() {
                         <Box sx={{ width: 42, height: 42, borderRadius: 1.4, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.08)", color: "primary.main", flex: "0 0 auto" }}><ReceiptLongRoundedIcon fontSize="small" /></Box>
                       )}
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={850} noWrap>{item.name}</Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={950}
+                          sx={{ fontSize: { xs: "0.82rem", sm: "0.9rem" }, lineHeight: 1.2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}
+                        >
+                          {item.name}
+                        </Typography>
+                        {item.description && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 0.15, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, fontWeight: 600 }}
+                          >
+                            {item.description}
+                          </Typography>
+                        )}
                         <Stack direction="row" alignItems="center" spacing={0.55}>
                           <Typography variant="caption" fontWeight={850} color="primary.main">{amount(item.price)}</Typography>
                           {normalizeAddonLimit(item.max_addons, addonChoiceCounts.get(String(item.id)) || 0) > 0 && (
@@ -430,7 +458,7 @@ function CashierPOSPage() {
             )}
           </Paper>
 
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { lg: "sticky" }, top: { lg: 16 }, minWidth: 0 }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
               <Stack direction="row" alignItems="center" spacing={1}><ShoppingCartCheckoutRoundedIcon color="primary" /><Typography variant="h6" fontWeight={950}>{text.cart}</Typography></Stack>
               {cart.length > 0 && <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setCart([])}>{text.clear}</Button>}
@@ -439,14 +467,14 @@ function CashierPOSPage() {
             {cart.length === 0 ? (
               <Typography color="text.secondary" align="center" sx={{ py: 5 }}>{text.empty}</Typography>
             ) : (
-              <Stack spacing={1.1} sx={{ py: 1.5, maxHeight: { lg: "40vh" }, overflowY: "auto" }}>
+              <Stack spacing={0.8} sx={{ py: 1.25, maxHeight: { xs: "none", sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: { xs: "visible", sm: "auto" } }}>
                 {cart.map((item) => {
                   const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
                   const lineId = getCartLineKey(item);
                   return (
                     <Box key={lineId} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, alignItems: "center", py: .7 }}>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography fontWeight={800} noWrap>{item.name}</Typography>
+                        <Typography fontWeight={950} sx={{ fontSize: { xs: "0.86rem", sm: "0.92rem" }, lineHeight: 1.25, overflowWrap: "anywhere" }}>{item.name}</Typography>
                         {item.selected_addons?.length > 0 && (
                           <Typography variant="caption" color="primary.main" display="block" sx={{ overflowWrap: "anywhere" }}>
                             {item.selected_addons.map((addon) => addon.name).join(language === "ar" ? "، " : ", ")}
@@ -466,6 +494,10 @@ function CashierPOSPage() {
             )}
             <Divider sx={{ mb: 1.5 }} />
             <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
+
+            <Box sx={{ mt: 1.4, p: 1.1, borderRadius: 2, bgcolor: "rgba(23,26,47,.025)", border: "1px solid", borderColor: "divider" }}>
+              <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={setPaymentMethod} language={language} />
+            </Box>
 
             {cart.length > 0 && (
               <Box sx={{ mt: 1.7, p: 1.5, borderRadius: 2.2, bgcolor: "#f7f8fb", border: "1px solid rgba(23,26,47,.07)" }}>

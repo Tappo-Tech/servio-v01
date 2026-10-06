@@ -8,6 +8,8 @@ import {
   DialogActions,
   DialogContent,
   Divider,
+  Chip,
+  Stack,
   Typography,
 } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
@@ -18,7 +20,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import { useMenu } from "../../../context/MenuContext";
 import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
 import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
-import { getPrinterSettings, printReceiptGroups } from "../../../utils/qzPrinting";
+import { getPrinterSettings, printKitchenTicketGroups, printReceiptGroups } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
   const shortOrderId = String(order?.id || "").slice(-6).toUpperCase();
@@ -28,6 +30,10 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
     maximumFractionDigits: 2,
   }).format(Number(value) || 0)} ${currency}`;
   const orderAdjustment = roundMoney(Number(order?.receipt_adjustment) || 0);
+  const paymentMethods = language === "ar"
+    ? { cash: "نقدًا", card: "بطاقة / شبكة (مدى)", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى" }
+    : { cash: "Cash", card: "Card / network (mada)", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other" };
+  const paymentMethod = paymentMethods[order?.payment_method] || (language === "ar" ? "غير محددة" : "Not specified");
 
   return (
     <Box
@@ -136,6 +142,19 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
           <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>{language === "ar" ? "الإجمالي المستحق (شامل الضريبة)" : "Total due (VAT included)"}</Typography>
           <Typography variant="subtitle1" sx={{ fontWeight: 900, whiteSpace: "nowrap" }}>{money(invoiceAmounts.gross)}</Typography>
         </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1, gap: 1 }}>
+          <Typography variant="body2" fontWeight={800}>{language === "ar" ? "حالة الدفع" : "Payment"}</Typography>
+          <Chip
+            size="small"
+            color={order?.payment_status === "paid" ? "success" : order?.payment_status === "unpaid" ? "warning" : "default"}
+            label={order?.payment_status === "paid" ? (language === "ar" ? "مدفوع" : "Paid") : order?.payment_status === "unpaid" ? (language === "ar" ? "غير مدفوع" : "Unpaid") : (language === "ar" ? "غير محدد" : "Not set")}
+            sx={{ fontWeight: 850 }}
+          />
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.7, gap: 1 }}>
+          <Typography variant="body2" fontWeight={800}>{language === "ar" ? "طريقة الدفع" : "Payment method"}</Typography>
+          <Typography variant="body2" color="text.secondary">{paymentMethod}</Typography>
+        </Box>
       </Box>
 
       <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
@@ -187,6 +206,12 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest });
   };
 
+  const runKitchenPrint = () => {
+    if (menuLoading) throw new Error(language === "ar" ? "جارٍ تحميل إعدادات التصنيفات، حاول بعد لحظات." : "Category settings are still loading; try again shortly.");
+    if (menuError) throw new Error(language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد تحميل المنيو قبل الطباعة." : "Category settings could not be loaded. Reload the menu before printing.");
+    return printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency });
+  };
+
   useEffect(() => {
     if (!open) {
       autoPrintedOrderRef.current = null;
@@ -222,6 +247,20 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     try {
       const result = await runGroupedPrint();
       setPrintState({ severity: "success", message: getPrintSuccessMessage(result) });
+    } catch (error) {
+      setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleKitchenPrint = async () => {
+    setPrinting(true);
+    setPrintState(null);
+    try {
+      const result = await runKitchenPrint();
+      const prefix = language === "ar" ? (result.receiptCount > 1 ? "أُرسلت تذاكر المطبخ" : "أُرسلت تذكرة المطبخ") : (result.receiptCount > 1 ? "Kitchen tickets sent" : "Kitchen ticket sent");
+      setPrintState({ severity: "success", message: `${prefix}: ${result.printers.join(language === "ar" ? "، " : ", ")}` });
     } catch (error) {
       setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
     } finally {
@@ -280,14 +319,19 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
         ))}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, justifyContent: "space-between" }}>
+      <DialogActions sx={{ p: 2, justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
         <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError)}>
           {language === "ar" ? "نافذة النظام (بديل)" : "System dialog (fallback)"}
         </Button>
-        <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError)}>
-          {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة" : "Print")}
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError)}>
+            {language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket"}
+          </Button>
+          <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError)}>
+            {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة" : "Print")}
+          </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );
