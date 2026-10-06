@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -169,7 +169,7 @@ const formatAmount = (value, language) => new Intl.NumberFormat(
 function CashierPOSPage() {
   const navigate = useNavigate();
   const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoutes } = useMenu();
-  const { addOrder } = useOrders();
+  const { addOrder, updateOrderPaymentStatus } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { language } = useLanguage();
@@ -197,6 +197,7 @@ function CashierPOSPage() {
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
   const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  const [unpaidOrders, setUnpaidOrders] = useState([]);
   const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
     try {
       return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false";
@@ -204,6 +205,21 @@ function CashierPOSPage() {
       return true;
     }
   });
+
+  useEffect(() => {
+    if (!tenantId) return;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(`servio.pos.unpaidOrders.${tenantId}`) || "[]");
+      setUnpaidOrders(Array.isArray(stored) ? stored : []);
+    } catch {
+      setUnpaidOrders([]);
+    }
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    try { window.localStorage.setItem(`servio.pos.unpaidOrders.${tenantId}`, JSON.stringify(unpaidOrders)); } catch { /* storage is optional */ }
+  }, [tenantId, unpaidOrders]);
 
   const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
   const addonChoiceCounts = useMemo(() => new Map(availableItems.map((item) => (
@@ -342,6 +358,7 @@ function CashierPOSPage() {
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
       setInvoiceIsTest(false);
       setInvoiceOrder(result.data);
+      if (paymentStatus !== "paid") setUnpaidOrders((current) => [...current.filter((row) => row.id !== result.data.id), result.data]);
       setCart([]);
       setNotes("");
       setPaymentStatus("unpaid");
@@ -354,6 +371,19 @@ function CashierPOSPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const settleUnpaidOrder = async (order) => {
+    const result = await updateOrderPaymentStatus(order.id, "paid");
+    if (result?.error) {
+      setCheckoutError(language === "ar" ? "تعذر تسجيل السداد. أعد المحاولة." : "Could not record payment. Retry.");
+      return;
+    }
+    const paidOrder = { ...order, payment_status: "paid", paid_at: new Date().toISOString() };
+    setUnpaidOrders((current) => current.filter((row) => row.id !== order.id));
+    setInvoiceIsTest(false);
+    setInvoiceOrder(paidOrder);
+    setSavedMessage(language === "ar" ? "تم تسجيل السداد. يمكنك الآن طباعة فاتورة الكاشير." : "Payment recorded. The cashier invoice is now available to print.");
   };
 
   const closeInvoice = () => {
@@ -437,6 +467,20 @@ function CashierPOSPage() {
       {savedMessage && <Alert severity="success" sx={{ mt: 1.2 }}>{savedMessage}</Alert>}
       {shiftRequired && !currentShift && <Alert severity="warning" sx={{ mt: 1.2, borderRadius: 2 }}>{text.shiftRequired}</Alert>}
       {checkoutError && <Alert severity="error" sx={{ mt: 1.2 }}>{checkoutError}</Alert>}
+      {unpaidOrders.length > 0 && (
+        <Box sx={{ mt: 1.5, p: 1.35, borderRadius: 2.2, bgcolor: "rgba(244,121,32,.07)", border: "1px solid", borderColor: "warning.light" }}>
+          <Typography fontWeight={900} sx={{ mb: .35 }}>{language === "ar" ? "طلبات غير مدفوعة" : "Unpaid orders"}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{language === "ar" ? "تبقى هنا حتى تسجيل السداد، ثم تتاح فاتورة الكاشير." : "They stay here until payment is recorded; then the cashier invoice becomes available."}</Typography>
+          <Stack spacing={.8}>
+            {unpaidOrders.map((order) => (
+              <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
+                <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{String(order.id).slice(-6).toUpperCase()} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
+                <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
       <Box sx={{ position: mobileView ? "sticky" : "static", bottom: 0, pt: 1.2, bgcolor: mobileView ? "background.paper" : "transparent" }}>
         <Button fullWidth variant="contained" size="large" startIcon={saving ? <CircularProgress size={19} color="inherit" /> : <ShoppingCartCheckoutRoundedIcon />} disabled={!tenantId || cart.length === 0 || saving || (shiftRequired && !currentShift?.id)} onClick={submitOrder} sx={{ py: 1.2, minHeight: 50, borderRadius: 2.2, fontWeight: 900 }}>
           {saving ? text.submitting : text.submit}
@@ -708,6 +752,7 @@ function CashierPOSPage() {
       </Dialog>
 
       <InvoiceModal
+        key={invoiceOrder ? `${invoiceOrder.id}-${invoiceOrder.payment_status || "test"}` : "invoice"}
         open={Boolean(invoiceOrder)}
         onClose={closeInvoice}
         order={invoiceOrder}

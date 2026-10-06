@@ -251,9 +251,11 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     const timer = window.setTimeout(() => {
       autoPrintedOrderRef.current = order.id;
       setPrinting(true);
-      (isTest
-        ? printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest })
-        : printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() }))
+      (autoPrint === "kitchen"
+        ? printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() })
+        : isTest
+          ? printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest })
+          : printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() }))
         .then((result) => {
           setRetryState(null);
           setPrintState({ severity: "success", message: getPrintSuccessMessage(result) });

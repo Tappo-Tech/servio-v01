@@ -47,7 +47,8 @@ const COPY = {
     refresh: "الاتصال واكتشاف الطابعات",
     refreshBusy: "جارٍ الاتصال…",
     paper: "مقاس الورق",
-    printers: "الطابعات المكتشفة",
+    printers: "طابعات فواتير الكاشير",
+    cashierHelp: "تُرسل إليها فواتير الكاشير بعد السداد؛ يمكنك اختيار طابعة واحدة أو اثنتين لهذا الجهاز.",
     kitchenPrinter: "طابعة تذكرة المطبخ",
     kitchenHelp: "تذكرة المطبخ تعرض رقم الطلب والطاولة والأصناف والكميات والإضافات والملاحظات فقط، دون أسعار. هذا الإعداد خاص بهذا الجهاز ويمكن أن يختلف عن طابعات الكاشير.",
     unpaidPolicy: "توجيه الفواتير حسب حالة السداد",
@@ -87,7 +88,8 @@ const COPY = {
     refresh: "Connect and discover printers",
     refreshBusy: "Connecting…",
     paper: "Paper size",
-    printers: "Discovered printers",
+    printers: "Cashier invoice printers",
+    cashierHelp: "Cashier invoices are sent here after payment; choose one or two printers for this device.",
     kitchenPrinter: "Kitchen ticket printer",
     kitchenHelp: "Kitchen tickets contain the order number, table, item names, quantities, add-ons, and notes only. This device-specific setting can be different from the cashier printers.",
     unpaidPolicy: "Route invoices by payment status",
@@ -298,6 +300,7 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
           </FormControl>
           <Box>
             <Typography fontWeight={800} sx={{ mb: 0.5 }}>{text.printers}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{text.cashierHelp}</Typography>
             <Typography variant="caption" color="text.secondary">{text.selectHint}</Typography>
             {availablePrinters.length ? (
               <FormGroup sx={{ mt: 0.5, maxHeight: 220, overflowY: "auto" }}>

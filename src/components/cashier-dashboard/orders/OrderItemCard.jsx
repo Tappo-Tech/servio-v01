@@ -33,11 +33,19 @@ function OrderItemCard({ order }) {
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [, setTimeTick] = useState(0);
+  const isPaid = order.payment_status === "paid";
+  const isAwaitingPayment = order.status === "awaiting_payment";
   useEffect(() => {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const changeStatus = async (status) => { if (sending) return; setSending(true); await updateOrderStatus(order.id, status); setSending(false); };
+  const changeStatus = async (status) => {
+    if (sending) return;
+    setSending(true);
+    const nextStatus = status === "served" && !isPaid ? "awaiting_payment" : status;
+    await updateOrderStatus(order.id, nextStatus);
+    setSending(false);
+  };
   const changePaymentStatus = async (status) => {
     if (paymentSaving) return;
     setPaymentSaving(true);
@@ -227,7 +235,7 @@ function OrderItemCard({ order }) {
                 onClick={() => setIsInvoiceOpen(true)}
                 sx={{ minWidth: 0, whiteSpace: "normal" }}
               >
-                {t("printInvoice")}
+                {language === "ar" ? "طباعة تذكرة المطبخ" : "Print kitchen ticket"}
               </Button>
               <Button
                 color="error"
@@ -260,7 +268,7 @@ function OrderItemCard({ order }) {
           )}
 
           {order.status === "ready" && (
-            <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 0.8, width: "100%", minWidth: 0, "& .MuiButton-root": { minWidth: 0, whiteSpace: "normal" } }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr) auto", gap: 0.8, width: "100%", minWidth: 0, "& .MuiButton-root": { minWidth: 0, whiteSpace: "normal" } }}>
               <Button
                 color="success"
                 fullWidth
@@ -273,6 +281,18 @@ function OrderItemCard({ order }) {
                 {t("received")}
               </Button>
               <Button
+                color={isPaid ? "primary" : "inherit"}
+                size="medium"
+                variant="outlined"
+                startIcon={<PrintRoundedIcon />}
+                onClick={() => setIsInvoiceOpen(true)}
+                disabled={!isPaid || sending}
+                title={!isPaid ? (language === "ar" ? "سجّل السداد أولًا لطباعة فاتورة الكاشير" : "Record payment before printing the cashier invoice") : undefined}
+                sx={{ minHeight: 48, minWidth: 0, whiteSpace: "normal" }}
+              >
+                {t("printInvoice")}
+              </Button>
+              <Button
                 color="warning"
                 size="medium"
                 variant="outlined"
@@ -283,9 +303,22 @@ function OrderItemCard({ order }) {
               </Button>
             </Box>
           )}
+          {isAwaitingPayment && (
+            <Box sx={{ width: "100%", display: "grid", gap: 0.8 }}>
+              <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 800 }}>
+                {t("paymentRequired")}
+              </Typography>
+              <Button color="success" variant="contained" onClick={() => changeStatus("served")} disabled={!isPaid || sending}>
+                {t("markDelivered")}
+              </Button>
+              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={!isPaid || sending}>
+                {t("printInvoice")}
+              </Button>
+            </Box>
+          )}
         </CardActions>
       </Card>
-      <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} />
+      <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} autoPrint={order.status === "pending" ? "kitchen" : false} />
     </motion.div>
   );
 }

@@ -30,6 +30,7 @@ const COLUMNS = [
   { key: "pending", title: "newOrder", color: "warning" },
   { key: "preparing", title: "preparing", color: "info" },
   { key: "ready", title: "ready", color: "success" },
+  { key: "awaiting_payment", title: "unpaidOrders", color: "warning" },
 ];
 
 function LiveOrders() {
@@ -65,8 +66,11 @@ function LiveOrders() {
     order.items.every((item) => item && String(item.name || "").trim() && item.quantity != null && item.price != null)
   ));
 
-  const getOrdersByStatus = (status) =>
-    activeOrders.filter((order) => order.status === status);
+  const getOrdersByStatus = (status) => activeOrders.filter((order) => (
+    status === "awaiting_payment"
+      ? order.status === "awaiting_payment" || (order.status === "unclaimed" && order.payment_status !== "paid")
+      : order.status === status
+  ));
 
   if (ordersLoading) {
     return (
