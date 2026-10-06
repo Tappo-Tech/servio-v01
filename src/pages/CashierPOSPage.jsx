@@ -170,7 +170,7 @@ function CashierPOSPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, categoriesList, menuLoading, menuError, refreshMenu, updateCategoryPrintRoutes } = useMenu();
-  const { addOrder, updateOrderPaymentStatus } = useOrders();
+  const { addOrder, updateOrder, updateOrderPaymentStatus } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { language } = useLanguage();
@@ -356,7 +356,7 @@ function CashierPOSPage() {
     setCheckoutError("");
     setSavedMessage("");
     try {
-      const result = await addOrder({
+      const orderInput = {
         items: cart,
         // المبلغ المحفوظ مستحق شامل VAT؛ والبيع النقدي المكتمل لا يمر بطابور المطبخ.
         total_price: grossAmount,
@@ -367,12 +367,20 @@ function CashierPOSPage() {
         payment_status: paymentStatus,
         payment_method: paymentMethod,
         completeImmediately: true,
-      });
+      };
+      const result = editingOrderId
+        ? await updateOrder(editingOrderId, orderInput)
+        : await addOrder(orderInput);
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
       setInvoiceIsTest(false);
       setInvoiceOrder(result.data);
-      if (paymentStatus !== "paid") setUnpaidOrders((current) => [...current.filter((row) => row.id !== result.data.id), result.data]);
-      if (editingOrderId) setUnpaidOrders((current) => current.filter((row) => row.id !== editingOrderId));
+      if (paymentStatus !== "paid") {
+        setUnpaidOrders((current) => editingOrderId
+          ? current.map((row) => row.id === editingOrderId ? result.data : row)
+          : [...current.filter((row) => row.id !== result.data.id), result.data]);
+      } else if (editingOrderId) {
+        setUnpaidOrders((current) => current.filter((row) => row.id !== editingOrderId));
+      }
       setCart([]);
       setNotes("");
       setPaymentStatus("unpaid");
@@ -399,6 +407,16 @@ function CashierPOSPage() {
     setInvoiceIsTest(false);
     setInvoiceOrder(paidOrder);
     setSavedMessage(language === "ar" ? "تم تسجيل السداد. يمكنك الآن طباعة فاتورة الكاشير." : "Payment recorded. The cashier invoice is now available to print.");
+  };
+
+  const editUnpaidOrder = (order) => {
+    setCart(Array.isArray(order.items) ? order.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
+    setPaymentStatus(order.payment_status === "paid" ? "paid" : "unpaid");
+    setPaymentMethod(order.payment_method || null);
+    setNotes(order.notes || "");
+    setEditingOrderId(order.id);
+    setCheckoutError("");
+    setSavedMessage(language === "ar" ? "تم تحميل الطلب في السلة للتعديل." : "The order is loaded into the cart for editing.");
   };
 
   const closeInvoice = () => {
@@ -490,7 +508,10 @@ function CashierPOSPage() {
             {unpaidOrders.map((order) => (
               <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
                 <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{String(order.id).slice(-6).toUpperCase()} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
-                <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
+                <Stack direction="row" spacing={.6}>
+                  <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
+                  <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
+                </Stack>
               </Box>
             ))}
           </Stack>

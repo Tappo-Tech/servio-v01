@@ -303,6 +303,39 @@ export const OrdersProvider = ({ children }) => {
     return { data, error };
   });
 
+  const updateOrder = (orderId, changes = {}) => guard(`orders:edit:${orderId}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const target = orders.find((order) => order.id === orderId);
+    if (!target) return { error: new Error("الطلب غير موجود") };
+    const items = compactOrderItems(changes.items || target.items);
+    if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
+    let paymentMethodUpdate;
+    try {
+      paymentMethodUpdate = createPaymentMethodUpdate(changes.payment_method ?? target.payment_method ?? null);
+    } catch (error) {
+      return { error };
+    }
+    const payload = {
+      items,
+      total_price: Number(changes.total_price ?? target.total_price) || 0,
+      table_number: String(changes.table_number ?? target.table_number ?? "غير محدد"),
+      notes: changes.notes ? String(changes.notes) : null,
+      ...createPaymentStatusUpdate(changes.payment_status || target.payment_status || "unpaid"),
+      ...paymentMethodUpdate,
+    };
+    const optimistic = formatOrder({ ...target, ...payload });
+    setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
+    const { data, error } = await supabase.from("orders").update(payload)
+      .eq("id", orderId).eq("tenant_id", tenantId).select(ORDER_COLUMNS).maybeSingle();
+    if (error || !data) {
+      setOrders((current) => current.map((order) => order.id === orderId ? target : order));
+      return { error: error || new Error("تعذر تحديث الطلب") };
+    }
+    const formatted = formatOrder(data);
+    setOrders((current) => current.map((order) => order.id === orderId ? mergeOrder(order, formatted) : order));
+    return { data: formatted, error: null };
+  });
+
   const updateOrderStatus = (orderId, newStatus) => guard(`orders:update:${orderId}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const target = orders.find((order) => order.id === orderId);
@@ -444,6 +477,7 @@ export const OrdersProvider = ({ children }) => {
       finishedOrders: orders.filter((order) => order.is_completed && order.status !== "cancelled"),
       cancelledOrders: orders.filter((order) => order.status === "cancelled"),
       addOrder,
+      updateOrder,
       updateOrderStatus,
     }}>
       {children}
