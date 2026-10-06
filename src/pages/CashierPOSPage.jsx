@@ -42,6 +42,7 @@ import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import CashierShiftGate from "../components/cashier-dashboard/CashierShiftGate";
+import PrinterBridgeStatus from "../components/cashier-dashboard/PrinterBridgeStatus";
 import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-control/CategoryPrintRoutingDrawer";
 import { useShift } from "../context/ShiftContext";
 import { useUser } from "../context/UserContext";
@@ -211,6 +212,9 @@ function CashierPOSPage() {
   const categories = useMemo(() => categoriesList.filter((category) => (
     availableItems.some((item) => item.category_id === category.id)
   )), [categoriesList, availableItems]);
+  const categoryPrinterNames = useMemo(() => categoriesList
+    .map((category) => category.printer_name)
+    .filter((name) => typeof name === "string" && name.trim()), [categoriesList]);
   const categoryById = useMemo(() => new Map(categoriesList.map((category) => [category.id, category])), [categoriesList]);
   const visibleItems = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -472,6 +476,10 @@ function CashierPOSPage() {
             </Stack>
           </Stack>
         </Paper>
+
+        <Box sx={{ display: "flex", justifyContent: { xs: "flex-start", sm: "flex-end" }, minWidth: 0, mb: 1.5 }}>
+          <PrinterBridgeStatus language={language} categoryPrinterNames={categoryPrinterNames} />
+        </Box>
 
         {/* وضع نوع الطلب قبل شبكة المنيو والسلة يضمن ظهوره دون تمرير، خصوصًا على الهاتف. */}
         <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>

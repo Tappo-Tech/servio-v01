@@ -63,23 +63,25 @@ function OrderItemCard({ order }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      style={{ marginBottom: "16px" }}
+      style={{ marginBottom: "12px" }}
     >
       <Card
         elevation={0}
         sx={{
           width: "100%",
           minWidth: 0,
+          boxSizing: "border-box",
           border: "1px solid",
           borderColor: "divider",
-          borderRadius: "18px",
-          background: "rgba(255,255,255,.86)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          boxShadow: "0 12px 34px rgba(23,26,47,.06)",
+          borderRadius: "16px",
+          background: "rgba(255,255,255,.96)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 8px 24px rgba(23,26,47,.055)",
           transition: "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
+          overflow: "hidden",
           "&:hover": {
-            boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+            boxShadow: "0 10px 26px rgba(23,26,47,.09)",
             borderColor: "primary.light",
           },
         }}
@@ -87,18 +89,18 @@ function OrderItemCard({ order }) {
         {/* هيدر الكارت */}
         <Box
           sx={{
-            p: { xs: 1.5, md: 2 },
-            pb: { xs: 1.25, md: 1.5 },
+            p: { xs: 1.25, sm: 1.5 },
+            pb: 1,
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "flex-start",
             minWidth: 0,
-            gap: 1,
+            gap: 0.8,
           }}
         >
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 800, color: "text.primary" }}
+            sx={{ fontWeight: 900, color: "text.primary", fontSize: { xs: "0.98rem", sm: "1.05rem" }, minWidth: 0, overflowWrap: "anywhere" }}
           >
             {t("table")} {order.table_number}
           </Typography>
@@ -106,53 +108,58 @@ function OrderItemCard({ order }) {
           <Typography
             variant="caption"
             sx={{
-              color: "text.secondary",
               fontWeight: 600,
               fontSize: "0.74rem",
-              bgcolor: "rgba(244,121,32,.07)",
+              bgcolor: "rgba(244,121,32,.09)",
+              color: "warning.dark",
+              border: "1px solid",
+              borderColor: "warning.100",
               px: 1,
-              py: 0.3,
-              borderRadius: "6px",
+              py: 0.45,
+              borderRadius: "999px",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             {formatTimeAgo(order.created_at, language, t)}
           </Typography>
         </Box>
 
-        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1.2, display: "flex", flexDirection: "column", gap: 0.6, minWidth: 0 }}>
+        <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: "1px solid", borderColor: "divider", bgcolor: "grey.50", display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
           <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />
-          {paymentError && <Typography variant="caption" color="error">{paymentError}</Typography>}
+          {paymentError && <Typography variant="caption" color="error" sx={{ px: 0.25, overflowWrap: "anywhere" }}>{paymentError}</Typography>}
         </Box>
 
         <Divider sx={{ borderStyle: "dashed" }} />
 
         {/* عناصر الطلب */}
-        <CardContent sx={{ p: 2, py: 1.5, "&:last-child": { pb: 1.5 } }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <CardContent sx={{ p: { xs: 1.25, sm: 1.5 }, pt: 1.1, pb: 1.25, "&:last-child": { pb: 1.25 } }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, minWidth: 0 }}>
             {orderItems.map((item) => (
               <Box
                 key={item.cartItemId || item.id}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "minmax(0,1fr) auto",
-                  gap: 1,
-                  alignItems: "center",
+                  gap: 0.65,
+                  alignItems: "start",
                   minWidth: 0,
+                  py: 0.2,
                 }}
               >
                 <Typography
                   variant="body2"
-                    sx={{ fontWeight: 600, color: "text.primary", minWidth: 0, overflowWrap: "anywhere" }}
+                    sx={{ fontWeight: 700, color: "text.primary", minWidth: 0, lineHeight: 1.4, overflowWrap: "anywhere" }}
                 >
                   <Box
                     component="span"
-                    sx={{ color: "primary.main", fontWeight: 800, mr: 0.5, whiteSpace: "nowrap" }}
+                    sx={{ color: "primary.main", fontWeight: 900, mr: 0.5, whiteSpace: "nowrap" }}
                   >
                     {item.quantity}x
                   </Box>{" "}
                   {item.name}
                   {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
-                    <Box component="span" sx={{ display: "block", color: "text.secondary", fontSize: "0.72rem", fontWeight: 600, mt: 0.25 }}>
+                    <Box component="span" sx={{ display: "block", color: "text.secondary", fontSize: "0.72rem", fontWeight: 600, lineHeight: 1.45, mt: 0.25, overflowWrap: "anywhere" }}>
                       {language === "ar" ? "إضافات: " : "Add-ons: "}
                       {item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}
                     </Box>
@@ -161,7 +168,7 @@ function OrderItemCard({ order }) {
 
                 <Typography
                   variant="body2"
-                  sx={{ color: "text.secondary", fontWeight: 600, whiteSpace: "nowrap" }}
+                  sx={{ color: "text.secondary", fontWeight: 800, fontSize: "0.8rem", whiteSpace: "nowrap", pt: 0.15 }}
                 >
                   {item.price} {language === "ar" ? "ر.س" : "SAR"}
                 </Typography>
@@ -173,15 +180,16 @@ function OrderItemCard({ order }) {
           {order.notes && (
             <Box
               sx={{
-                mt: 1.5,
-                p: 1.2,
-                borderRadius: "8px",
+                mt: 1.1,
+                p: 1,
+                borderRadius: "10px",
                 bgcolor: "warning.50",
                 border: "1px solid",
                 borderColor: "warning.100",
                 display: "flex",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: 0.8,
+                minWidth: 0,
               }}
             >
               <FiberManualRecordIcon
@@ -189,7 +197,7 @@ function OrderItemCard({ order }) {
               />
               <Typography
                 variant="caption"
-                sx={{ fontWeight: 700, color: "warning.dark" }}
+                sx={{ fontWeight: 700, color: "warning.dark", lineHeight: 1.45, minWidth: 0, overflowWrap: "anywhere" }}
               >
                 {t("note")}: {order.notes}
               </Typography>
@@ -198,9 +206,9 @@ function OrderItemCard({ order }) {
         </CardContent>
 
         {/* أزرار الإجراءات */}
-        <CardActions sx={{ p: { xs: 1.25, sm: 1.5 }, pt: 0.5, minWidth: 0 }}>
+        <CardActions sx={{ p: { xs: 1.25, sm: 1.5 }, pt: 0.25, minWidth: 0, "& .MuiButton-root": { minHeight: 46, borderRadius: "11px", fontWeight: 800, lineHeight: 1.2, px: 1 } }}>
           {order.status === "pending" && (
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "minmax(0,1fr) auto auto" }, gap: .8, width: "100%", minWidth: 0 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "minmax(0,1fr) auto auto" }, gap: 0.8, width: "100%", minWidth: 0, "& .MuiButton-root": { minWidth: 0, whiteSpace: "normal" } }}>
               <Button
                 color="primary"
                 fullWidth
@@ -208,7 +216,7 @@ function OrderItemCard({ order }) {
                 variant="contained"
                 disableElevation
                 onClick={() => changeStatus("preparing")} disabled={sending}
-                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0, borderRadius: "10px", fontWeight: 700, py: 0.9 }}
+                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0, minHeight: 48, py: 0.9 }}
               >
                 {sending ? "جاري الإرسال..." : t("startPreparing")}
               </Button>
@@ -217,7 +225,7 @@ function OrderItemCard({ order }) {
                 variant="outlined"
                 startIcon={<PrintRoundedIcon />}
                 onClick={() => setIsInvoiceOpen(true)}
-                sx={{ borderRadius: "10px", fontWeight: 800, minWidth: 0, whiteSpace: "normal" }}
+                sx={{ minWidth: 0, whiteSpace: "normal" }}
               >
                 {t("printInvoice")}
               </Button>
@@ -226,7 +234,7 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="outlined"
                 onClick={() => changeStatus("cancelled")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: 0 }}
+                sx={{ minWidth: 0 }}
               >
                 {t("cancel")}
               </Button>
@@ -242,8 +250,7 @@ function OrderItemCard({ order }) {
               disableElevation
               onClick={() => changeStatus("ready")} disabled={sending}
               sx={{
-                borderRadius: "10px",
-                fontWeight: 700,
+                minHeight: 48,
                 py: 0.9,
                 color: "white",
               }}
@@ -253,7 +260,7 @@ function OrderItemCard({ order }) {
           )}
 
           {order.status === "ready" && (
-            <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: .8, width: "100%", minWidth: 0 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 0.8, width: "100%", minWidth: 0, "& .MuiButton-root": { minWidth: 0, whiteSpace: "normal" } }}>
               <Button
                 color="success"
                 fullWidth
@@ -261,7 +268,7 @@ function OrderItemCard({ order }) {
                 variant="contained"
                 disableElevation
                 onClick={() => changeStatus("served")} disabled={sending}
-                sx={{ minWidth: 0, borderRadius: "10px", fontWeight: 700, py: 0.9 }}
+                sx={{ minWidth: 0, minHeight: 48, py: 0.9 }}
               >
                 {t("received")}
               </Button>
@@ -270,7 +277,7 @@ function OrderItemCard({ order }) {
                 size="medium"
                 variant="outlined"
                 onClick={() => changeStatus("unclaimed")} disabled={sending}
-                sx={{ borderRadius: "10px", fontWeight: 700, minWidth: 0, whiteSpace: "normal" }}
+                sx={{ minHeight: 48, minWidth: 0, whiteSpace: "normal" }}
               >
                 {t("unclaimed")}
               </Button>

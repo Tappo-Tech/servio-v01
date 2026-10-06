@@ -8,7 +8,7 @@ jest.mock("./receiptImageRenderer", () => ({
 }));
 
 import supabase from "../supabase";
-import { discoverPrinters, getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan, savePrinterSettings } from "./qzPrinting";
+import { discoverPrinters, getDiscoveredPrinters, getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, reconnectSavedPrinters, resolveInvoicePrintPlan, savePrinterSettings } from "./qzPrinting";
 import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 
 function makeQzMock() {
@@ -213,6 +213,30 @@ describe("QZ Tray printer integration", () => {
 
     expect(JSON.parse(localStorage.getItem("servio.qzPrinterSettings.v1"))).toEqual(settings);
     expect(getPrinterSettings()).toEqual(settings);
+  });
+
+  test("persists discovered printer names locally for the next cashier visit", async () => {
+    const discovered = await discoverPrinters();
+
+    expect(getDiscoveredPrinters()).toEqual(discovered);
+    expect(JSON.parse(localStorage.getItem("servio.qzDiscoveredPrinters.v1"))).toMatchObject({ printers: discovered });
+  });
+
+  test("reconnects to QZ and validates saved queues without selecting every discovered printer", async () => {
+    const settings = savePrinterSettings({ printers: ["Virtual Thermal 58mm"], kitchenPrinter: "Kitchen Printer Offline" });
+    qz.websocket.isActive.mockReturnValue(false);
+
+    const result = await reconnectSavedPrinters(["Drinks Printer"]);
+
+    expect(qz.websocket.connect).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      availablePrinters: ["Virtual Laser A4", "Virtual Thermal 58mm"],
+      savedPrinterNames: ["Virtual Thermal 58mm", "Kitchen Printer Offline", "Drinks Printer"],
+      matchedPrinters: ["Virtual Thermal 58mm"],
+      missingPrinters: ["Kitchen Printer Offline", "Drinks Printer"],
+    });
+    expect(getPrinterSettings()).toEqual(settings);
+    expect(getPrinterSettings().printers).toEqual(["Virtual Thermal 58mm"]);
   });
 
   test("routes paid invoices to both kitchen and cashier printers", async () => {

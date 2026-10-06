@@ -78,12 +78,12 @@ function LiveOrders() {
   }
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={{ xs: 1.5, sm: 2, lg: 2.5 }}>
       <Grid size={{ xs: 12 }}>
         <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography fontWeight={900}>{language === "ar" ? "الطباعة على جهاز الكاشير" : "Printing on this cashier device"}</Typography>
-            <Typography variant="caption" color="text.secondary">{language === "ar" ? "اضبط طابعة المطبخ، واختبر الطباعة من هنا." : "Set the kitchen printer and test printing here."}</Typography>
+            <Typography variant="caption" color="text.secondary">{language === "ar" ? "تُحفظ الطابعات على هذا الجهاز ويعاد اتصال QZ تلقائيًا عند دخول الكاشير." : "Printers are saved on this device and QZ reconnects automatically when the cashier opens."}</Typography>
           </Box>
           <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2, fontWeight: 850, whiteSpace: "nowrap" }}>
             {language === "ar" ? "إعداد الطابعات" : "Printer setup"}
@@ -102,7 +102,7 @@ function LiveOrders() {
         const columnOrders = getOrdersByStatus(col.key);
 
         return (
-          <Grid key={col.key} size={{xs: 12, md: 4}}>
+          <Grid key={col.key} size={{ xs: 12, md: 6, lg: 4 }}>
             {/* عنوان العمود بنفس طابع لوحة التحكم */}
             <Paper
               elevation={0}

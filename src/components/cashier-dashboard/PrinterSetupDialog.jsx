@@ -27,15 +27,17 @@ import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import {
   createPrinterSettingsFile,
   discoverPrinters,
+  getDiscoveredPrinters,
   getPrinterSettings,
   parsePrinterSettingsFile,
+  reconnectSavedPrinters,
   savePrinterSettings,
 } from "../../utils/qzPrinting";
 
 const COPY = {
   ar: {
     title: "إعداد الطابعة",
-    help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم أضف الطابعة في نظام التشغيل. يدعم ذلك USB وBluetooth والشبكة عبر تعريفاتها. اختر حتى طابعتين لفاتورة الكاشير؛ توجيه التصنيفات يُدار من المنيو.",
+    help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم أضف الطابعة في نظام التشغيل. يحفظ SERVIO الاختيارات محليًا ويعيد الاتصال والاكتشاف عند دخول الكاشير؛ اختر الطابعات مرة واحدة فقط. يدعم USB وBluetooth والشبكة عبر تعريفاتها.",
     certificate: "QZ Tray مجاني؛ لا يلزم اشتراك عند استخدام شهادة SERVIO الذاتية. لإخفاء التنبيهات يلزم تثبيت الشهادة مرة واحدة بصلاحية مسؤول وإضافة المفتاح الخاص إلى Vercel. راجع خطوات التفعيل في دليل التطوير.",
     refresh: "الاتصال واكتشاف الطابعات",
     refreshBusy: "جارٍ الاتصال…",
@@ -50,6 +52,9 @@ const COPY = {
     noKitchenPrinter: "لم تُحدد طابعة للمطبخ",
     kitchenNotFound: "الطابعة المحفوظة غير مكتشفة على هذا الجهاز. أعد الاتصال وتحقق منها قبل الطباعة.",
     noPrinters: "لم تظهر طابعات. تأكد من تشغيل QZ Tray وإضافة الطابعة في إعدادات النظام.",
+    cachedPrinters: "هذه آخر أسماء طابعات اكتُشفت على هذا الجهاز. أعد الاتصال للتحقق من توفرها الآن.",
+    missingSavedPrinters: "بقيت أسماء الطابعات المحفوظة دون حذف؛ تحقق من تشغيلها أو توصيلها:",
+    notDetected: "غير متاحة حاليًا",
     selectHint: "اختر طابعة واحدة أو اثنتين؛ الطابعات الافتراضية الوهمية غير محددة تلقائيًا.",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع",
     save: "حفظ الإعدادات",
@@ -59,7 +64,7 @@ const COPY = {
     disconnected: "غير متصل",
     limit: "يمكن تحديد طابعتين كحد أقصى.",
     sizes: { "58mm": "لفة حرارية 58 مم", "80mm": "لفة حرارية 80 مم", A4: "ورق A4 (ليزر/مكتبي)" },
-    saved: "تم حفظ إعدادات الطباعة على هذا الجهاز.",
+    saved: "تم حفظ إعدادات الطباعة وقائمة الطابعات محليًا على هذا الجهاز.",
     importFile: "استيراد ملف الإعداد",
     exportFile: "تنزيل ملف الإعداد",
     imported: "تم استيراد الملف. اتصل لاكتشاف الطابعات والتحقق من أسمائها.",
@@ -68,7 +73,7 @@ const COPY = {
   },
   en: {
     title: "Printer setup",
-    help: "Install and run QZ Tray on this cashier device, then install the printer in the operating system. USB, Bluetooth, and network printers work through their drivers. Choose up to two cashier printers; category routes are managed from the menu.",
+    help: "Install and run QZ Tray on this cashier device, then install the printer in the operating system. SERVIO saves the choices locally and reconnects/discovers them when the cashier opens; select printers only once. USB, Bluetooth, and network printers work through their drivers.",
     certificate: "QZ Tray is free; the SERVIO self-signed certificate avoids a QZ subscription. To suppress prompts, install the certificate once as an administrator and add the private signing key in Vercel. See the development guide.",
     refresh: "Connect and discover printers",
     refreshBusy: "Connecting…",
@@ -83,6 +88,9 @@ const COPY = {
     noKitchenPrinter: "No kitchen printer selected",
     kitchenNotFound: "Saved kitchen printer was not discovered on this device. Reconnect and verify it before printing.",
     noPrinters: "No printers found. Make sure QZ Tray is running and the printer is installed in the OS.",
+    cachedPrinters: "These are the last printer names discovered on this device. Reconnect to verify which ones are available now.",
+    missingSavedPrinters: "Saved printer names were kept; check whether these queues are running or connected:",
+    notDetected: "currently unavailable",
     selectHint: "Select one or two printers; virtual/default queues are not selected automatically.",
     autoPrint: "Send receipt automatically after saving a sale",
     save: "Save settings",
@@ -92,7 +100,7 @@ const COPY = {
     disconnected: "Not connected",
     limit: "Select up to two printers.",
     sizes: { "58mm": "58 mm thermal roll", "80mm": "80 mm thermal roll", A4: "A4 paper (laser/office)" },
-    saved: "Printing settings saved on this device.",
+    saved: "Printing settings and discovered printer names saved locally on this device.",
     importFile: "Import settings file",
     exportFile: "Download settings file",
     imported: "Settings file imported. Connect to discover printers and verify their names.",
@@ -105,21 +113,39 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
   const text = COPY[language] || COPY.ar;
   const fileInputRef = useRef(null);
   const [settings, setSettings] = useState(() => getPrinterSettings());
-  const [availablePrinters, setAvailablePrinters] = useState([]);
+  const [availablePrinters, setAvailablePrinters] = useState(() => getDiscoveredPrinters());
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const kitchenPrinterOptions = [...new Set([...availablePrinters, settings.kitchenPrinter].filter(Boolean))];
+  const printerOptions = [...new Set([...availablePrinters, ...settings.printers].filter(Boolean))];
+  const missingSavedPrinters = connected
+    ? [...new Set([...settings.printers, settings.kitchenPrinter].filter((name) => name && !availablePrinters.includes(name)))]
+    : [];
 
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     setSettings(getPrinterSettings());
-    setAvailablePrinters([]);
+    setAvailablePrinters(getDiscoveredPrinters());
     setConnected(false);
     setError("");
     setNotice("");
-  }, [open]);
+    reconnectSavedPrinters()
+      .then(({ availablePrinters: names }) => {
+        if (cancelled) return;
+        setAvailablePrinters(names);
+        setConnected(true);
+        if (!names.length) setError(text.noPrinters);
+      })
+      .catch((cause) => {
+        if (cancelled) return;
+        setConnected(false);
+        if (!getDiscoveredPrinters().length) setError(cause?.message || text.noPrinters);
+      });
+    return () => { cancelled = true; };
+  }, [open, language, text.noPrinters]);
 
   const refreshPrinters = async () => {
     setBusy(true);
@@ -128,7 +154,6 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
     try {
       const names = await discoverPrinters();
       setAvailablePrinters(names);
-      setSettings((current) => ({ ...current, printers: current.printers.filter((name) => names.includes(name)) }));
       setConnected(true);
       if (!names.length) setError(text.noPrinters);
     } catch (cause) {
@@ -172,7 +197,7 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
       const parsed = parsePrinterSettingsFile(await file.text());
       const saved = savePrinterSettings(parsed.settings);
       setSettings(saved);
-      setAvailablePrinters(saved.printers);
+      setAvailablePrinters([...new Set([...getDiscoveredPrinters(), ...saved.printers])]);
       setConnected(false);
       if (typeof parsed.autoPrintAfterSave === "boolean") {
         onAutoPrintChange?.({ target: { checked: parsed.autoPrintAfterSave } });
@@ -227,6 +252,8 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
               {busy ? text.refreshBusy : text.refresh}
             </Button>
           </Stack>
+          {!connected && availablePrinters.length > 0 && <Alert severity="info">{text.cachedPrinters}</Alert>}
+          {missingSavedPrinters.length > 0 && <Alert severity="warning">{text.missingSavedPrinters} {missingSavedPrinters.join(language === "ar" ? "، " : ", ")}</Alert>}
           <FormControl fullWidth size="small">
             <InputLabel id="servio-paper-width-label">{text.paper}</InputLabel>
             <Select labelId="servio-paper-width-label" value={settings.paperWidth} label={text.paper} onChange={(event) => setSettings((current) => ({ ...current, paperWidth: event.target.value }))}>
@@ -238,8 +265,8 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
             <Typography variant="caption" color="text.secondary">{text.selectHint}</Typography>
             {availablePrinters.length ? (
               <FormGroup sx={{ mt: 0.5, maxHeight: 220, overflowY: "auto" }}>
-                {availablePrinters.map((printer) => (
-                  <FormControlLabel key={printer} control={<Checkbox checked={settings.printers.includes(printer)} onChange={() => togglePrinter(printer)} />} label={printer} />
+                {printerOptions.map((printer) => (
+                  <FormControlLabel key={printer} control={<Checkbox checked={settings.printers.includes(printer)} onChange={() => togglePrinter(printer)} />} label={availablePrinters.includes(printer) ? printer : `${printer} · ${text.notDetected}`} />
                 ))}
               </FormGroup>
             ) : (

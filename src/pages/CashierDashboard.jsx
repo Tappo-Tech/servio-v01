@@ -24,6 +24,7 @@ import { toLocalDateKey } from "../utils/salesReportUtils";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import CashierShiftGate from "../components/cashier-dashboard/CashierShiftGate";
+import PrinterBridgeStatus from "../components/cashier-dashboard/PrinterBridgeStatus";
 import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-control/CategoryPrintRoutingDrawer";
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import { useMenu } from "../context/MenuContext";
@@ -42,6 +43,9 @@ function Dashboard() {
   const { storeInfo = {} } = useStore();
   const { categoriesList = [], updateCategoryPrintRoutes } = useMenu();
   const { t, language } = useLanguage();
+  const categoryPrinterNames = useMemo(() => categoriesList
+    .map((category) => category.printer_name)
+    .filter((name) => typeof name === "string" && name.trim()), [categoriesList]);
   const schedule = useMemo(() => getWorkdaySchedule(storeInfo), [storeInfo]);
   const operationalToday = shiftBusinessDate(new Date(), schedule.startMinutes) || new Date();
   const operationalTodayKey = toLocalDateKey(operationalToday);
@@ -106,6 +110,9 @@ function Dashboard() {
           </Paper>
 
           <CashierShiftGate />
+          <Box sx={{ display: "flex", justifyContent: { xs: "flex-start", sm: "flex-end" }, minWidth: 0 }}>
+            <PrinterBridgeStatus language={language} categoryPrinterNames={categoryPrinterNames} />
+          </Box>
 
           <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 2, md: 2.5 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.68)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(18px)", boxShadow: "0 16px 48px rgba(23,26,47,.06)", minHeight: { xs: 0, md: "calc(100vh - 168px)" }, minWidth: 0 }}>
             <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} variant="scrollable" scrollButtons="auto" aria-label={language === "ar" ? "تبويبات الكاشير" : "Cashier tabs"} sx={{ mb: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root": { fontWeight: 850, minHeight: 48 } }}>

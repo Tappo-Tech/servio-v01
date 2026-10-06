@@ -3,6 +3,7 @@ import { buildReceiptHtml } from "./receiptHtml";
 import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 
 const SETTINGS_KEY = "servio.qzPrinterSettings.v1";
+const DISCOVERED_PRINTERS_KEY = "servio.qzDiscoveredPrinters.v1";
 const PAPER_WIDTHS = ["58mm", "80mm", "A4"];
 const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
 const UNPAID_INVOICE_POLICIES = new Set(["kitchen_only", "kitchen_and_cashier"]);
@@ -11,6 +12,7 @@ const SETTINGS_FILE_VERSION = 3;
 let securityConfigured = false;
 let connectionPromise = null;
 let qzLoadPromise = null;
+let printerDiscoveryPromise = null;
 
 async function loadQzTray() {
   if (typeof window === "undefined") throw new Error("QZ Tray printing is available in the browser only");
@@ -93,6 +95,32 @@ export function savePrinterSettings(settings) {
   return normalized;
 }
 
+export function getDiscoveredPrinters() {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(DISCOVERED_PRINTERS_KEY) || "{}");
+    const names = Array.isArray(stored) ? stored : stored?.printers;
+    return [...new Set((Array.isArray(names) ? names : [])
+      .filter((name) => typeof name === "string" && name.trim())
+      .map((name) => name.trim()))]
+      .sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
+  }
+}
+
+function persistDiscoveredPrinters(printers) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DISCOVERED_PRINTERS_KEY, JSON.stringify({
+      printers,
+      discoveredAt: new Date().toISOString(),
+    }));
+  } catch {
+    // Discovery still works for this session if browser storage is unavailable.
+  }
+}
+
 // ملف الإعداد لا يحوي أسرارًا؛ أسماء الطابعات تخص جهاز التشغيل ويمكن نقله إلى كاشير آخر.
 export function createPrinterSettingsFile(settings, autoPrintAfterSave = true) {
   const normalized = normalizePrinterSettings(settings);
@@ -155,9 +183,34 @@ export async function connectQzTray() {
 }
 
 export async function discoverPrinters() {
-  const qz = await connectQzTray();
-  const printers = await qz.printers.find();
-  return [...new Set((Array.isArray(printers) ? printers : []).filter((name) => typeof name === "string" && name.trim()))].sort((a, b) => a.localeCompare(b));
+  if (!printerDiscoveryPromise) {
+    printerDiscoveryPromise = (async () => {
+      const qz = await connectQzTray();
+      const printers = await qz.printers.find();
+      const names = [...new Set((Array.isArray(printers) ? printers : [])
+        .filter((name) => typeof name === "string" && name.trim())
+        .map((name) => name.trim()))]
+        .sort((a, b) => a.localeCompare(b));
+      persistDiscoveredPrinters(names);
+      return names;
+    })().finally(() => { printerDiscoveryPromise = null; });
+  }
+  return printerDiscoveryPromise;
+}
+
+export async function reconnectSavedPrinters(additionalPrinterNames = []) {
+  const availablePrinters = await discoverPrinters();
+  const settings = getPrinterSettings();
+  const savedPrinterNames = [...new Set([
+    ...settings.printers,
+    settings.kitchenPrinter,
+    ...Object.values(settings.categoryPrinters),
+    ...(Array.isArray(additionalPrinterNames) ? additionalPrinterNames : []),
+  ].filter((name) => typeof name === "string" && name.trim()))];
+  const available = new Set(availablePrinters);
+  const matchedPrinters = savedPrinterNames.filter((name) => available.has(name));
+  const missingPrinters = savedPrinterNames.filter((name) => !available.has(name));
+  return { availablePrinters, savedPrinterNames, matchedPrinters, missingPrinters };
 }
 
 export async function printReceipt(order, storeInfo, options = {}) {
