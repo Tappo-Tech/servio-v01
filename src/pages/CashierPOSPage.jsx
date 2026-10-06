@@ -582,7 +582,7 @@ function CashierPOSPage() {
         </Paper>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, display: "grid", gridTemplateColumns: { xs: "1fr", md: "156px minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
             <TextField
               fullWidth
               size="small"
@@ -594,15 +594,16 @@ function CashierPOSPage() {
                 startAdornment: <InputAdornment position="start"><SearchRoundedIcon color="action" /></InputAdornment>,
                 endAdornment: search ? <InputAdornment position="end"><IconButton size="small" aria-label={text.clearSearch} onClick={() => setSearch("")} edge="end"><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment> : null,
               }}
-              sx={{ mb: 1.5 }}
+              sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" } }}
             />
-            <Stack direction="row" spacing={0.8} sx={{ overflowX: "auto", pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" }, "& > *": { flexShrink: 0 } }}>
+            <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {categories.map((category) => (
                 <Chip key={category.id} label={language === "en" ? (category.name_en || category.name) : category.name} clickable color={selectedCategory === category.id ? "primary" : "default"} variant={selectedCategory === category.id ? "filled" : "outlined"} onClick={() => setSelectedCategory(category.id)} />
               ))}
             </Stack>
 
+            <Box sx={{ gridColumn: { xs: "1", md: "2" }, minWidth: 0 }}>
             {tenantLoading || menuLoading ? (
               <Box sx={{ py: 8, display: "grid", justifyItems: "center", gap: 1 }}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Box>
             ) : menuError ? (
@@ -654,9 +655,10 @@ function CashierPOSPage() {
                 })}
               </Box>
             )}
+            </Box>
           </Paper>
 
-          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
+          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: "auto", overscrollBehavior: "contain", minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
             {renderCartContents(false)}
           </Paper>
         </Box>
