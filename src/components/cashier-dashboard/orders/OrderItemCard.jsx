@@ -60,6 +60,22 @@ function OrderItemCard({ order, onEdit }) {
     }
     void performStatusChange(status);
   };
+  const settleAndDeliver = () => {
+    if (sending || paymentSaving) return;
+    setConfirmingStatus("settle_and_serve");
+  };
+  const confirmReceiptAction = async () => {
+    const action = confirmingStatus;
+    setConfirmingStatus(null);
+    if (action === "settle_and_serve") {
+      setSending(true);
+      const paymentResult = await updateOrderPaymentStatus(order.id, "paid");
+      if (!paymentResult?.error) await updateOrderStatus(order.id, "served");
+      setSending(false);
+      return;
+    }
+    await performStatusChange(action);
+  };
   const changePaymentStatus = async (status) => {
     if (paymentSaving) return;
     setPaymentSaving(true);
@@ -322,8 +338,8 @@ function OrderItemCard({ order, onEdit }) {
               <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 800 }}>
                 {t("paymentRequired")}
               </Typography>
-              <Button color="success" variant="contained" onClick={() => changeStatus("served")} disabled={sending}>
-                {t("markDelivered")}
+              <Button color="success" variant="contained" onClick={receiptConfirmed && !isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
+                {receiptConfirmed && !isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
               </Button>
               {onEdit && <Button variant="outlined" onClick={() => onEdit(order)} disabled={sending}>{language === "ar" ? "تعديل الطلب" : "Edit order"}</Button>}
               {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>
@@ -336,10 +352,12 @@ function OrderItemCard({ order, onEdit }) {
       <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} autoPrint={order.status === "pending" ? "kitchen" : false} printMode={order.status === "pending" ? "order" : "cashier"} />
       <Dialog open={Boolean(confirmingStatus)} onClose={() => !sending && setConfirmingStatus(null)} fullWidth maxWidth="xs">
         <DialogTitle>{language === "ar" ? "تأكيد الاستلام" : "Confirm receipt"}</DialogTitle>
-        <DialogContent>{language === "ar" ? "هل تؤكد أن العميل استلم الطلب؟ سيتم نقل الطلب غير المدفوع إلى انتظار السداد." : "Confirm that the customer received the order? Unpaid orders will remain awaiting payment."}</DialogContent>
+        <DialogContent>{confirmingStatus === "settle_and_serve"
+          ? (language === "ar" ? "هل تؤكد تسجيل السداد وتسليم الطلب؟ سيختفي الطلب من صف الانتظار بعد التأكيد." : "Confirm payment and delivery? The order will disappear from the payment queue after confirmation.")
+          : (language === "ar" ? "هل تؤكد أن العميل استلم الطلب؟ سيتم نقل الطلب غير المدفوع إلى انتظار السداد." : "Confirm that the customer received the order? Unpaid orders will remain awaiting payment.")}</DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmingStatus(null)} disabled={sending}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
-          <Button variant="contained" color="success" onClick={async () => { const next = confirmingStatus; setConfirmingStatus(null); await performStatusChange(next); }} disabled={sending}>{language === "ar" ? "تأكيد الاستلام" : "Confirm receipt"}</Button>
+          <Button variant="contained" color="success" onClick={confirmReceiptAction} disabled={sending}>{confirmingStatus === "settle_and_serve" ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</Button>
         </DialogActions>
       </Dialog>
     </motion.div>
