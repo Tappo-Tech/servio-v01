@@ -267,7 +267,7 @@ function OrderItemCard({ order }) {
             </Button>
           )}
 
-          {order.status === "ready" && (
+          {order.status === "ready" && isPaid && (
             <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr) auto", gap: 0.8, width: "100%", minWidth: 0, "& .MuiButton-root": { minWidth: 0, whiteSpace: "normal" } }}>
               <Button
                 color="success"
