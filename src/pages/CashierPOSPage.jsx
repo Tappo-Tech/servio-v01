@@ -52,6 +52,7 @@ import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normaliz
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
+const POS_CARD_ACCENTS = ["#F47920", "#2878C8", "#159A68", "#8B5CF6", "#D96210", "#0F766E"];
 
 const copy = {
   ar: {
@@ -701,8 +702,9 @@ function CashierPOSPage() {
               <Typography color="text.secondary" align="center" sx={{ py: 8 }}>{text.noItems}</Typography>
             ) : (
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: { xs: .8, sm: 1.4 } }}>
-                {visibleItems.map((item) => {
+                {visibleItems.map((item, itemIndex) => {
                   const category = categoryById.get(item.category_id);
+                  const cardAccent = POS_CARD_ACCENTS[itemIndex % POS_CARD_ACCENTS.length];
                   return (
                   <Button
                     key={item.id}
@@ -712,11 +714,11 @@ function CashierPOSPage() {
                     aria-label={`${text.add} ${item.name || text.image} ${amount(item.price)}`}
                     sx={{
                       minWidth: 0, minHeight: { xs: 158, sm: 210 }, p: 0,
-                      borderColor: "rgba(23,26,47,.10)", borderRadius: 3, color: "text.primary",
+                      borderColor: `${cardAccent}55`, borderTop: `5px solid ${cardAccent}`, borderRadius: 3, color: "text.primary",
                       bgcolor: "background.paper", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start",
                       textAlign: language === "ar" ? "right" : "left", overflow: "hidden",
-                      boxShadow: "0 5px 18px rgba(23,26,47,.035)", transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
-                      "&:hover": { borderColor: "primary.main", bgcolor: "background.paper", transform: "translateY(-2px)", boxShadow: "0 12px 26px rgba(23,26,47,.10)" },
+                      boxShadow: `0 7px 20px ${cardAccent}18`, transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
+                      "&:hover": { borderColor: cardAccent, bgcolor: "background.paper", transform: "translateY(-3px)", boxShadow: `0 14px 30px ${cardAccent}35` },
                       "&:hover .pos-product-image": { transform: "scale(1.04)" },
                     }}
                   >
@@ -731,7 +733,7 @@ function CashierPOSPage() {
                     </Box>
                     <Box sx={{ p: { xs: 1, sm: 1.35 }, minWidth: 0, width: "100%", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: .6 }}>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={900} sx={{ fontSize: { xs: ".82rem", sm: ".94rem" }, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere", minHeight: "2.1em" }}>{item.name}</Typography>
+                        <Typography variant="body2" fontWeight={950} sx={{ fontSize: { xs: ".86rem", sm: ".98rem" }, color: "secondary.main", lineHeight: 1.28, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere", minHeight: "2.1em" }}>{item.name}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ mt: .25, display: { xs: "none", sm: "-webkit-box" }, WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.25, minHeight: "1.25em" }}>{item.description || " "}</Typography>
                       </Box>
                       <Stack direction="row" alignItems="center" justifyContent="space-between" gap={.5}>

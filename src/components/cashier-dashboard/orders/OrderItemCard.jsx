@@ -8,6 +8,7 @@ import CardContent from "@mui/material/CardContent";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -41,6 +42,13 @@ function OrderItemCard({ order, onEdit }) {
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
   const isAwaitingPayment = order.status === "awaiting_payment" || (order.status === "ready" && !isPaid);
+  const statusVisual = order.status === "pending"
+    ? { accent: "#F47920", soft: "rgba(244,121,32,.10)", label: language === "ar" ? "جديد" : "New" }
+    : order.status === "preparing"
+      ? { accent: "#2878C8", soft: "rgba(40,120,200,.10)", label: language === "ar" ? "قيد التحضير" : "Preparing" }
+      : isAwaitingPayment
+        ? { accent: "#B66A00", soft: "rgba(244,173,52,.16)", label: language === "ar" ? "ينتظر السداد" : "Awaiting payment" }
+        : { accent: "#159A68", soft: "rgba(21,154,104,.11)", label: language === "ar" ? "جاهز" : "Ready" };
   useEffect(() => {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
@@ -110,7 +118,8 @@ function OrderItemCard({ order, onEdit }) {
           minWidth: 0,
           boxSizing: "border-box",
           border: "1px solid",
-          borderColor: "divider",
+          borderColor: statusVisual.accent,
+          borderTopWidth: 6,
           borderRadius: "16px",
           background: "rgba(255,255,255,.96)",
           backdropFilter: "blur(8px)",
@@ -136,12 +145,12 @@ function OrderItemCard({ order, onEdit }) {
             gap: 0.8,
           }}
         >
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: 900, color: "text.primary", fontSize: { xs: "0.98rem", sm: "1.05rem" }, minWidth: 0, overflowWrap: "anywhere" }}
-          >
-            #{order.displayOrderNumber || order.order_number || "—"} · {t("table")} {order.table_number}
-          </Typography>
+          <Box sx={{ minWidth: 0, display: "flex", alignItems: "center", gap: .75, flexWrap: "wrap" }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 950, color: "text.primary", fontSize: { xs: "1rem", sm: "1.08rem" }, minWidth: 0, overflowWrap: "anywhere" }}>
+              #{order.displayOrderNumber || order.order_number || "—"} · {t("table")} {order.table_number}
+            </Typography>
+            <Chip label={statusVisual.label} size="small" sx={{ height: 25, bgcolor: statusVisual.soft, color: statusVisual.accent, border: `1px solid ${statusVisual.accent}55`, fontWeight: 950, fontSize: ".7rem" }} />
+          </Box>
 
           <Typography
             variant="caption"
@@ -163,7 +172,7 @@ function OrderItemCard({ order, onEdit }) {
           </Typography>
         </Box>
 
-        <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: "1px solid", borderColor: "divider", bgcolor: "grey.50", display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
+        <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
           {(!isAwaitingPayment || receiptConfirmed) && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />}
           {paymentError && <Typography variant="caption" color="error" sx={{ px: 0.25, overflowWrap: "anywhere" }}>{paymentError}</Typography>}
         </Box>

@@ -28,10 +28,10 @@ import { useLanguage } from "../../../context/LanguageContext";
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
 const COLUMNS = [
-  { key: "pending", title: "newOrder", color: "warning" },
-  { key: "preparing", title: "preparing", color: "info" },
-  { key: "ready", title: "ready", color: "success" },
-  { key: "awaiting_payment", title: "unpaidOrders", color: "warning" },
+  { key: "pending", title: "newOrder", color: "warning", accent: "#F47920", soft: "rgba(244,121,32,.11)" },
+  { key: "preparing", title: "preparing", color: "info", accent: "#2878C8", soft: "rgba(40,120,200,.10)" },
+  { key: "ready", title: "ready", color: "success", accent: "#159A68", soft: "rgba(21,154,104,.11)" },
+  { key: "awaiting_payment", title: "unpaidOrders", color: "warning", accent: "#B66A00", soft: "rgba(244,173,52,.16)" },
 ];
 
 function LiveOrders() {
@@ -123,8 +123,9 @@ function LiveOrders() {
                 mb: 1.7,
                 borderRadius: "15px",
                 border: "1px solid",
-                borderColor: "rgba(255,255,255,.7)",
-                background: "rgba(248,250,252,.72)",
+                borderColor: `${col.accent}55`,
+                borderTop: `5px solid ${col.accent}`,
+                background: col.soft,
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
                 boxShadow: "0 10px 26px rgba(23,26,47,.04)",
@@ -138,7 +139,7 @@ function LiveOrders() {
                   fontSize="small"
                   sx={{ color: `${col.color}.main`, fontSize: 14 }}
                 />
-                <Typography variant="subtitle1" fontWeight={700}>
+                <Typography variant="subtitle1" fontWeight={950} sx={{ color: col.accent, fontSize: { xs: "1rem", sm: "1.08rem" } }}>
                   {t(col.title)}
                 </Typography>
               </Box>

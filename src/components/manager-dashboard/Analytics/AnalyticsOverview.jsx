@@ -88,6 +88,9 @@ function AnalyticsOverview() {
             md: "repeat(3, 1fr)",
           },
           gap: 2.5,
+          "& > .MuiCard-root": { position: "relative", overflow: "hidden", "&::before": { content: '""', position: "absolute", insetInline: 0, top: 0, height: 6, background: "#F47920" } },
+          "& > .MuiCard-root:nth-of-type(2)::before": { background: "#2878C8" },
+          "& > .MuiCard-root:nth-of-type(3)::before": { background: "#159A68" },
         }}
       >
         {/* CARD 1: TOTAL SALES */}
