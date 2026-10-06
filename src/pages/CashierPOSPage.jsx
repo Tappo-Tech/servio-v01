@@ -183,6 +183,7 @@ function CashierPOSPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [categoryOrder, setCategoryOrder] = useState([]);
+  const [categoryOrderReady, setCategoryOrderReady] = useState(false);
   const [draggingCategory, setDraggingCategory] = useState(null);
   const holdTimerRef = useRef(null);
   const [cart, setCart] = useState([]);
@@ -227,19 +228,20 @@ function CashierPOSPage() {
   }, [tenantId, unpaidOrders]);
 
   useEffect(() => {
-    if (!tenantId) return;
+    if (!tenantId) { setCategoryOrderReady(false); return; }
     try {
       const saved = JSON.parse(window.localStorage.getItem(`servio.pos.categoryOrder.${tenantId}`) || "[]");
       setCategoryOrder(Array.isArray(saved) ? saved.map(String) : []);
     } catch {
       setCategoryOrder([]);
     }
+    setCategoryOrderReady(true);
   }, [tenantId]);
 
   useEffect(() => {
-    if (!tenantId) return;
+    if (!tenantId || !categoryOrderReady) return;
     try { window.localStorage.setItem(`servio.pos.categoryOrder.${tenantId}`, JSON.stringify(categoryOrder)); } catch { /* storage is optional */ }
-  }, [tenantId, categoryOrder]);
+  }, [tenantId, categoryOrder, categoryOrderReady]);
 
   useEffect(() => {
     const editOrder = location.state?.editOrder;
@@ -626,7 +628,7 @@ function CashierPOSPage() {
         </Paper>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, display: "grid", gridTemplateColumns: { xs: "1fr", md: "156px minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: { sm: "auto" }, overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: "156px minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
             <TextField
               fullWidth
               size="small"
@@ -654,7 +656,13 @@ function CashierPOSPage() {
                   onPointerUp={stopCategoryHold}
                   onPointerCancel={stopCategoryHold}
                   onPointerEnter={() => moveCategoryBefore(category.id)}
-                  sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none" }}
+                  draggable
+                  onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; setDraggingCategory(String(category.id)); }}
+                  onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; moveCategoryBefore(category.id); }}
+                  onDrop={(event) => { event.preventDefault(); moveCategoryBefore(category.id); stopCategoryHold(); }}
+                  onDragEnd={stopCategoryHold}
+                  title={language === "ar" ? "اضغط باستمرار ثم اسحب لترتيب الفلتر" : "Press and hold, then drag to reorder this filter"}
+                  sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
                 />
               ))}
             </Stack>
