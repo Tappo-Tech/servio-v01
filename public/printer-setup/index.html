@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#17233c" />
+  <title>إعداد الطابعة | SERVIO</title>
+  <style>
+    :root { color-scheme: light; --ink:#17233c; --muted:#65728a; --line:#e1e7ef; --paper:#fff; --bg:#f3f6fb; --accent:#e57b35; --accent-dark:#c76020; --blue:#2856a6; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 90% 0%,#e6edf8 0,transparent 32rem),var(--bg); color:var(--ink); font-family:"Segoe UI",Tahoma,Arial,sans-serif; line-height:1.75; }
+    .shell { max-width:920px; margin:0 auto; padding:28px 18px 56px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.04em; color:var(--ink); }
+    .mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:var(--ink); color:#fff; font-size:20px; }
+    .lang { display:flex; gap:6px; padding:4px; border:1px solid var(--line); border-radius:999px; background:var(--paper); }
+    .lang button { border:0; border-radius:999px; background:transparent; color:var(--muted); padding:7px 13px; font:inherit; font-size:14px; cursor:pointer; }
+    .lang button[aria-pressed="true"] { background:var(--ink); color:#fff; }
+    .card { overflow:hidden; border:1px solid var(--line); border-radius:22px; background:var(--paper); box-shadow:0 18px 55px rgba(23,35,60,.08); }
+    .hero { padding:clamp(22px,5vw,42px); background:linear-gradient(125deg,#17233c,#243b65); color:#fff; }
+    .eyebrow { margin:0 0 8px; color:#ffd7b4; font-size:13px; font-weight:800; letter-spacing:.08em; }
+    h1 { margin:0; font-size:clamp(26px,4vw,38px); line-height:1.2; }
+    .hero p:last-child { max-width:680px; margin:14px 0 0; color:#e2e9f5; }
+    .content { padding:clamp(20px,5vw,40px); }
+    h2 { margin:30px 0 10px; font-size:20px; }
+    h2:first-child { margin-top:0; }
+    p { margin:8px 0; }
+    .notice { border-inline-start:4px solid var(--accent); border-radius:10px; background:#fff7f0; padding:13px 16px; color:#633b21; }
+    .primary { display:inline-flex; align-items:center; justify-content:center; gap:9px; margin:10px 0 18px; border:0; border-radius:12px; background:var(--accent); color:#fff; padding:12px 20px; font-weight:800; text-decoration:none; box-shadow:0 7px 18px rgba(229,123,53,.2); }
+    .primary:hover { background:var(--accent-dark); }
+    ol,ul { padding-inline-start:24px; }
+    li { margin:9px 0; padding-inline-start:4px; }
+    code,pre { font-family:Consolas,"Courier New",monospace; direction:ltr; text-align:left; }
+    pre { overflow:auto; margin:12px 0; border:1px solid #d8e0ec; border-radius:12px; background:#f6f8fb; padding:14px 16px; color:#1f2d44; line-height:1.55; }
+    .fingerprint { display:block; overflow-wrap:anywhere; direction:ltr; text-align:left; border:1px dashed #c9d4e3; border-radius:10px; background:#f8fafc; padding:11px 13px; font:13px/1.6 Consolas,"Courier New",monospace; }
+    .subtle { color:var(--muted); font-size:14px; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+    .secondary { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; padding:10px 15px; color:var(--blue); font-weight:700; text-decoration:none; }
+    .footer { padding:16px 24px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+    .language-panel[hidden] { display:none; }
+    @media (max-width:560px) { .shell { padding:16px 12px 32px; } .topbar { margin-bottom:14px; } .brand { font-size:14px; } .mark { width:34px; height:34px; } .lang button { padding:6px 10px; } .card { border-radius:17px; } .actions > * { width:100%; } }
+    @media print { body { background:#fff; } .shell { max-width:none; padding:0; } .topbar,.primary,.actions { display:none; } .card { border:0; box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="mark" aria-hidden="true">S</span><span>SERVIO <span class="subtle">· Printer setup</span></span></div>
+      <nav class="lang" aria-label="Language">
+        <button type="button" data-lang-button="ar" aria-pressed="true">العربية</button>
+        <button type="button" data-lang-button="en" aria-pressed="false">English</button>
+      </nav>
+    </header>
+    <article class="card">
+      <section class="language-panel" data-language="ar" lang="ar" dir="rtl">
+        <div class="hero"><p class="eyebrow">دليل إعداد جهاز الكاشير</p><h1>إعداد الطابعة والثقة المحلية</h1><p>خطوات بسيطة لإعداد QZ Tray على جهاز Windows، ثم اكتشاف الطابعات من لوحة الكاشير.</p></div>
+        <div class="content">
+          <p class="notice"><strong>مهم:</strong> زر التنزيل يحمّل الحزمة فقط. المتصفح لا يستطيع فك الملفات إلى مجلدات Windows المحمية، أو تثبيت شهادة النظام، أو تشغيل PowerShell تلقائيًا. ستحتاج إلى فك الضغط وتشغيل المثبّت بنفسك مرة واحدة بصلاحية مسؤول.</p>
+          <a class="primary" href="./servio-qz-setup.zip" download="servio-qz-setup.zip">⬇ تنزيل حزمة إعداد الطابعة (ZIP)</a>
+          <h2>قبل البدء</h2>
+          <ul><li>ثبّت <a href="https://qz.io/download/" target="_blank" rel="noopener noreferrer">QZ Tray من الموقع الرسمي</a> وشغّله.</li><li>ثبّت تعريف الطابعة وأضفها إلى Windows أولًا.</li><li>استخدم حساب Windows بصلاحية مسؤول عند تشغيل المثبّت.</li></ul>
+          <h2>التثبيت على Windows</h2>
+          <ol>
+            <li>نزّل الحزمة من الزر أعلاه، ثم فك ضغطها. اترك ملفاتها معًا داخل مجلد واحد مثل <code>C:\SERVIO-Printer-Setup</code>.</li>
+            <li>من قائمة Start، ابحث عن PowerShell، واضغط بزر الفأرة الأيمن واختر <strong>Run as administrator</strong>.</li>
+            <li>انتقل إلى مجلد الحزمة وشغّل المثبّت. غيّر مقاس الورق إلى 58mm أو 80mm أو A4 حسب طابعتك:</li>
+          </ol>
+          <pre><code>cd C:\SERVIO-Printer-Setup
+.\install-servio-qz-certificate.ps1 -PaperWidth 80mm</code></pre>
+          <p>إذا منع Windows تشغيل السكربت لهذه الجلسة فقط، نفّذ الأمر التالي ثم شغّل المثبّت مجددًا:</p>
+          <pre><code>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\install-servio-qz-certificate.ps1 -PaperWidth 80mm</code></pre>
+          <ol start="4"><li>أدخل اسم الطابعة كما يظهر في Windows، أو اتركه فارغًا لاكتشافها لاحقًا من SERVIO.</li><li>بعد ظهور نجاح التثبيت، أغلق QZ Tray بالكامل من أيقونة شريط النظام ثم شغّله مجددًا.</li><li>افتح SERVIO، ثم <strong>لوحة الكاشير ← واجهة الكاشير ← إعداد الطابعة</strong>. اضغط <strong>الاتصال واكتشاف الطابعات</strong>، وحدد الطابعة، ثم احفظ واختبر.</li></ol>
+          <h2>إذا ظهرت نافذة الثقة</h2>
+          <p>في تفاصيل الشهادة، يجب أن تطابق بصمة SHA-1 شهادة SERVIO التالية:</p>
+          <code class="fingerprint">9D:F0:6C:BD:33:BC:1F:0F:D3:86:01:25:D8:97:B1:A9:91:CD:4B:1F</code>
+          <ul><li>إذا ظهر <code>Validity: Invalid Certificate</code> أو <code>Trusted: Untrusted website</code>، أعد تشغيل المثبّت بصلاحية مسؤول، ثم أغلق QZ Tray بالكامل وأعد تشغيله. تحقق أيضًا من صحة تاريخ ووقت Windows.</li><li>ظهور <code>Signature: Not Required</code> لطلب QZ باسم <code>connect</code> طبيعي؛ لكن <code>Invalid Certificate</code> ليس طبيعيًا ويجب أن يزول بعد تحميل شهادة الثقة.</li><li>إذا ظهرت مطالبة الإذن بعد نجاح التثبيت، اختر <strong>Remember this decision</strong> ثم <strong>Allow</strong> مرة واحدة. لا تختَر Block.</li></ul>
+          <p class="subtle">ملف الشهادة داخل الحزمة عام. لا تتضمن الحزمة مفتاح التوقيع الخاص، ولا تطلبه من أي شخص.</p>
+          <div class="actions"><a class="secondary" href="https://servio-mvp.vercel.app/">العودة إلى SERVIO</a></div>
+        </div>
+        <footer class="footer">SERVIO · إعداد محلي لكل جهاز كاشير يعمل بنظام Windows.</footer>
+      </section>
+      <section class="language-panel" data-language="en" lang="en" dir="ltr" hidden>
+        <div class="hero"><p class="eyebrow">CASHIER DEVICE SETUP</p><h1>Printer and local trust setup</h1><p>Set up QZ Tray on Windows, then discover and select printers from the cashier dashboard.</p></div>
+        <div class="content">
+          <p class="notice"><strong>Important:</strong> The download button only downloads the package. Browsers cannot extract files into protected Windows folders, install system certificates, or run PowerShell automatically. Extract the ZIP and run the installer yourself once as an administrator.</p>
+          <a class="primary" href="./servio-qz-setup.zip" download="servio-qz-setup.zip">⬇ Download printer setup package (ZIP)</a>
+          <h2>Before you start</h2>
+          <ul><li>Install and run <a href="https://qz.io/download/" target="_blank" rel="noopener noreferrer">QZ Tray from its official website</a>.</li><li>Install the printer driver and add the printer in Windows first.</li><li>Use a Windows account with administrator rights to run the installer.</li></ul>
+          <h2>Install on Windows</h2>
+          <ol><li>Download the package above and extract it. Keep all files together in one folder, such as <code>C:\SERVIO-Printer-Setup</code>.</li><li>Open Start, search for PowerShell, right-click it, and select <strong>Run as administrator</strong>.</li><li>Change to the package folder and run the installer. Change the paper size to 58mm, 80mm, or A4 as appropriate:</li></ol>
+          <pre><code>cd C:\SERVIO-Printer-Setup
+.\install-servio-qz-certificate.ps1 -PaperWidth 80mm</code></pre>
+          <p>If Windows blocks the script, allow it for this PowerShell session only, then run the installer again:</p>
+          <pre><code>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\install-servio-qz-certificate.ps1 -PaperWidth 80mm</code></pre>
+          <ol start="4"><li>Enter the printer name exactly as it appears in Windows, or leave it blank and discover printers from SERVIO later.</li><li>When installation succeeds, fully exit QZ Tray from the system tray and start it again.</li><li>Open SERVIO, go to <strong>Cashier Dashboard → Cashier interface → Printer setup</strong>, select <strong>Connect and discover printers</strong>, choose your printer, then save and test.</li></ol>
+          <h2>If the trust window appears</h2>
+          <p>The certificate SHA-1 fingerprint in QZ Tray should match:</p>
+          <code class="fingerprint">9D:F0:6C:BD:33:BC:1F:0F:D3:86:01:25:D8:97:B1:A9:91:CD:4B:1F</code>
+          <ul><li>If QZ shows <code>Validity: Invalid Certificate</code> or <code>Trusted: Untrusted website</code>, rerun the installer as administrator, fully exit QZ Tray, and restart it. Also check the Windows date and time.</li><li><code>Signature: Not Required</code> for a QZ <code>connect</code> request is normal; <code>Invalid Certificate</code> is not and should clear after the trust certificate loads.</li><li>If an authorization prompt remains after successful setup, select <strong>Remember this decision</strong> and then <strong>Allow</strong> once. Do not select Block.</li></ul>
+          <p class="subtle">The certificate in the package is public. The package does not include the private signing key; never share or request that key.</p>
+          <div class="actions"><a class="secondary" href="https://servio-mvp.vercel.app/">Back to SERVIO</a></div>
+        </div>
+        <footer class="footer">SERVIO · Local setup for each Windows cashier device.</footer>
+      </section>
+    </article>
+  </main>
+  <script>
+    const languageButtons = document.querySelectorAll("[data-lang-button]");
+    const languagePanels = document.querySelectorAll("[data-language]");
+    languageButtons.forEach((button) => button.addEventListener("click", () => {
+      const selected = button.dataset.langButton;
+      document.documentElement.lang = selected;
+      document.documentElement.dir = selected === "ar" ? "rtl" : "ltr";
+      languageButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      languagePanels.forEach((panel) => { panel.hidden = panel.dataset.language !== selected; });
+    }));
+  </script>
+</body>
+</html>

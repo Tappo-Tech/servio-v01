@@ -23,6 +23,7 @@ import {
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import {
   createPrinterSettingsFile,
@@ -38,7 +39,11 @@ const COPY = {
   ar: {
     title: "إعداد الطابعة",
     help: "ثبّت QZ Tray وشغّله على جهاز الكاشير، ثم أضف الطابعة في نظام التشغيل. يحفظ SERVIO الاختيارات محليًا ويعيد الاتصال والاكتشاف عند دخول الكاشير؛ اختر الطابعات مرة واحدة فقط. يدعم USB وBluetooth والشبكة عبر تعريفاتها.",
-    certificate: "QZ Tray مجاني؛ لا يلزم اشتراك عند استخدام شهادة SERVIO الذاتية. لإخفاء التنبيهات يلزم تثبيت الشهادة مرة واحدة بصلاحية مسؤول وإضافة المفتاح الخاص إلى Vercel. راجع خطوات التفعيل في دليل التطوير.",
+    certificate: "إعداد الثقة يتم مرة واحدة لكل جهاز Windows. نزّل الحزمة أدناه وشغّل المُثبّت بصلاحية مسؤول، ثم أعد تشغيل QZ Tray. لا يستطيع المتصفح تثبيت شهادة النظام أو تشغيل ملف محلي تلقائيًا.",
+    setupTitle: "إعداد الطباعة الصامتة على Windows",
+    setupHelp: "نزّل الحزمة وفك ضغطها، ثم شغّل مُثبّت PowerShell بصلاحية مسؤول. بعد ذلك أعد تشغيل QZ Tray واتبع خطوات التحقق في الدليل.",
+    downloadSetup: "تنزيل حزمة التثبيت",
+    installGuide: "خطوات التثبيت",
     refresh: "الاتصال واكتشاف الطابعات",
     refreshBusy: "جارٍ الاتصال…",
     paper: "مقاس الورق",
@@ -74,7 +79,11 @@ const COPY = {
   en: {
     title: "Printer setup",
     help: "Install and run QZ Tray on this cashier device, then install the printer in the operating system. SERVIO saves the choices locally and reconnects/discovers them when the cashier opens; select printers only once. USB, Bluetooth, and network printers work through their drivers.",
-    certificate: "QZ Tray is free; the SERVIO self-signed certificate avoids a QZ subscription. To suppress prompts, install the certificate once as an administrator and add the private signing key in Vercel. See the development guide.",
+    certificate: "Set up trust once on each Windows device. Download the package below and run its installer as an administrator, then restart QZ Tray. Browsers cannot install system certificates or run local files automatically.",
+    setupTitle: "Set up silent printing on Windows",
+    setupHelp: "Download and extract the package, then run the PowerShell installer as an administrator. Restart QZ Tray and follow the verification steps in the guide.",
+    downloadSetup: "Download setup package",
+    installGuide: "Installation steps",
     refresh: "Connect and discover printers",
     refreshBusy: "Connecting…",
     paper: "Paper size",
@@ -246,6 +255,33 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
         <Stack spacing={1.5} sx={{ pt: 0.5 }}>
           <Typography variant="body2" color="text.secondary">{text.help}</Typography>
           <Alert severity="info">{text.certificate}</Alert>
+          <Box sx={{ p: 1.5, borderRadius: 2.5, border: "1px solid", borderColor: "primary.light", bgcolor: "action.hover" }}>
+            <Typography fontWeight={850} sx={{ mb: 0.4 }}>{text.setupTitle}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.2 }}>{text.setupHelp}</Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button
+                fullWidth
+                component="a"
+                href="/printer-setup/servio-qz-setup.zip"
+                download="servio-qz-setup.zip"
+                variant="contained"
+                startIcon={<DownloadRoundedIcon />}
+              >
+                {text.downloadSetup}
+              </Button>
+              <Button
+                fullWidth
+                component="a"
+                href="/printer-setup/"
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outlined"
+                startIcon={<HelpOutlineRoundedIcon />}
+              >
+                {text.installGuide}
+              </Button>
+            </Stack>
+          </Box>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
             <Chip size="small" color={connected ? "success" : "default"} label={connected ? text.connected : text.disconnected} />
             <Button variant="outlined" startIcon={busy ? <CircularProgress size={16} /> : <RefreshRoundedIcon />} disabled={busy} onClick={refreshPrinters}>
