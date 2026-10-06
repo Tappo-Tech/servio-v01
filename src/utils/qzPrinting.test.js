@@ -290,21 +290,20 @@ describe("QZ Tray printer integration", () => {
 
     expect(failure).toMatchObject({
       printDestination: "cashier",
-      alreadyPrintedByGroup: { drinks: ["Cashier A"] },
+      alreadyPrintedByGroup: { cashier: ["Cashier A"] },
       kitchenPrintResult: { printers: ["Drinks Printer"], receiptCount: 1 },
     });
     qz.print.mockResolvedValue();
 
-    const result = await printReceiptGroups(groups, {}, {
+    const result = await printReceipt(order, {}, {
       settings,
-      ignoreCategoryPrinters: true,
-      alreadyPrintedByGroup: failure.alreadyPrintedByGroup,
+      printersOverride: ["Cashier B"],
     });
 
     expect(qz.configs.create.mock.calls.map(([printer]) => printer)).toEqual([
       "Drinks Printer", "Cashier A", "Cashier B", "Cashier B",
     ]);
-    expect(result).toMatchObject({ printers: ["Cashier B"], receiptCount: 1 });
+    expect(result).toMatchObject({ printers: ["Cashier B"] });
   });
 
   test("routes unpaid invoices to kitchen only by default", async () => {

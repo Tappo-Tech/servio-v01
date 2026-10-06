@@ -63,6 +63,7 @@ function configureSecurity(qz) {
 }
 
 function normalizePrinterSettings(settings) {
+  const kitchenPrinter = typeof settings?.kitchenPrinter === "string" ? settings.kitchenPrinter.trim() : "";
   const categoryPrinters = settings?.categoryPrinters && typeof settings.categoryPrinters === "object" && !Array.isArray(settings.categoryPrinters)
     ? Object.fromEntries(Object.entries(settings.categoryPrinters)
       .filter(([categoryId, name]) => categoryId.trim() && typeof name === "string" && name.trim())
@@ -70,10 +71,10 @@ function normalizePrinterSettings(settings) {
     : {};
   return {
     printers: Array.isArray(settings?.printers)
-      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()))].slice(0, 2)
+      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()).filter((name) => name !== kitchenPrinter))].slice(0, 2)
       : [],
     paperWidth: PAPER_WIDTHS.includes(settings?.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth,
-    kitchenPrinter: typeof settings?.kitchenPrinter === "string" ? settings.kitchenPrinter.trim() : "",
+    kitchenPrinter,
     categoryPrinters,
     unpaidInvoicePolicy: UNPAID_INVOICE_POLICIES.has(settings?.unpaidInvoicePolicy) ? settings.unpaidInvoicePolicy : DEFAULT_SETTINGS.unpaidInvoicePolicy,
   };
@@ -405,19 +406,26 @@ export async function printOrderByPaymentStatus(order, groups, storeInfo, option
 
   if (plan.cashier) {
     try {
-      cashierResult = await printReceiptGroups(groups, storeInfo, { ...options, settings, ignoreCategoryPrinters: true });
+      const cashierPrinters = settings.printers.filter((printer) => printer !== settings.kitchenPrinter);
+      cashierResult = await printReceipt(order, storeInfo, {
+        ...options,
+        settings,
+        printersOverride: cashierPrinters,
+        receiptTitle: null,
+      });
     } catch (error) {
       error.kitchenPrintResult = kitchenResult;
       error.printDestination = "cashier";
+      error.alreadyPrintedByGroup = { cashier: [...(error.succeededPrinters || [])] };
       throw error;
     }
   }
 
   return {
     printers: [...new Set([...(kitchenResult?.printers || []), ...(cashierResult?.printers || [])])],
-    receiptCount: (kitchenResult?.receiptCount || 0) + (cashierResult?.receiptCount || 0),
+    receiptCount: (kitchenResult?.receiptCount || 0) + (cashierResult ? 1 : 0),
     kitchenReceiptCount: kitchenResult?.receiptCount || 0,
-    cashierReceiptCount: cashierResult?.receiptCount || 0,
+    cashierReceiptCount: cashierResult ? 1 : 0,
     destinations: plan.cashier ? ["kitchen", "cashier"] : ["kitchen"],
     paymentStatus: plan.paymentStatus,
   };

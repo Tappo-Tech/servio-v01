@@ -34,7 +34,7 @@ function OrderItemCard({ order }) {
   const [paymentError, setPaymentError] = useState("");
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
-  const isAwaitingPayment = order.status === "awaiting_payment";
+  const isAwaitingPayment = order.status === "awaiting_payment" || (order.status === "ready" && !isPaid);
   useEffect(() => {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
@@ -42,7 +42,7 @@ function OrderItemCard({ order }) {
   const changeStatus = async (status) => {
     if (sending) return;
     setSending(true);
-    const nextStatus = status === "served" && !isPaid ? "awaiting_payment" : status;
+    const nextStatus = !isPaid && ["ready", "served"].includes(status) ? "awaiting_payment" : status;
     await updateOrderStatus(order.id, nextStatus);
     setSending(false);
   };

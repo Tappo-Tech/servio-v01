@@ -20,7 +20,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import { useMenu } from "../../../context/MenuContext";
 import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
 import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
-import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
+import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
   const shortOrderId = String(order?.id || "").slice(-6).toUpperCase();
@@ -315,12 +315,13 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false 
     setPrintState(null);
     try {
       if (activeRetryState.destination === "cashier") {
-        const result = await printReceiptGroups(receiptGroups, storeInfo, {
+        const settings = getPrinterSettings();
+        const completedCashierPrinters = new Set(activeRetryState.alreadyPrintedByGroup?.cashier || []);
+        const result = await printReceipt(order, storeInfo, {
           language,
           currency,
-          settings: getPrinterSettings(),
-          ignoreCategoryPrinters: true,
-          alreadyPrintedByGroup: activeRetryState.alreadyPrintedByGroup,
+          settings,
+          printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter && !completedCashierPrinters.has(printer))
         });
         setPrintState({
           severity: "success",
