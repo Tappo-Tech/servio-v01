@@ -38,6 +38,7 @@ import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
+import CashierShiftGate from "../components/cashier-dashboard/CashierShiftGate";
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
@@ -334,6 +335,7 @@ function CashierPOSPage() {
   return (
     <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", bgcolor: "#f6f7f9", py: { xs: 2, md: 3 }, px: { xs: 1.5, sm: 2.5, lg: 4 } }}>
       <Box sx={{ maxWidth: 1500, mx: "auto" }}>
+        <CashierShiftGate />
         <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>
           <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={1.5}>
             <Stack direction="row" alignItems="center" spacing={1.3}>
