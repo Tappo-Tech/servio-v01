@@ -48,13 +48,13 @@ export default function PaymentStatusControl({
 
   return (
     <Stack
-      direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "stretch", sm: "center" }}
-      spacing={0.9}
+      direction="column"
+      alignItems="stretch"
+      spacing={0.85}
       useFlexGap
       sx={{ minWidth: 0, width: "100%" }}
     >
-      <Stack direction="row" alignItems="center" spacing={0.8} flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} spacing={0.8} flexWrap="wrap" useFlexGap sx={{ minWidth: 0, width: "100%" }}>
         <Typography variant="caption" color="text.secondary" fontWeight={800}>
           {text.label}
         </Typography>
@@ -68,7 +68,8 @@ export default function PaymentStatusControl({
           }}
           aria-label={text.label}
           sx={{
-            "& .MuiToggleButton-root": { px: 1.1, py: 0.5, textTransform: "none", fontWeight: 800, borderRadius: "9px !important" },
+            maxWidth: "100%",
+            "& .MuiToggleButton-root": { px: 1, py: 0.5, minWidth: 0, whiteSpace: "nowrap", textTransform: "none", fontWeight: 800, borderRadius: "9px !important" },
             gap: 0.55,
             "& .MuiToggleButtonGroup-grouped:not(:first-of-type)": { borderLeft: "1px solid", borderColor: "divider" },
           }}
@@ -78,7 +79,7 @@ export default function PaymentStatusControl({
         </ToggleButtonGroup>
         {!status && <Chip size="small" variant="outlined" label={text.unknown} />}
       </Stack>
-      <FormControl size="small" disabled={disabled} sx={{ minWidth: { xs: "100%", sm: 170 }, flex: { sm: "1 1 170px" }, maxWidth: { sm: 220 } }}>
+      <FormControl size="small" disabled={disabled} sx={{ minWidth: 0, width: "100%", maxWidth: "100%", flex: "none" }}>
         <InputLabel id={`${methodFieldId}-label`}>{text.method}</InputLabel>
         <Select
           labelId={`${methodFieldId}-label`}
