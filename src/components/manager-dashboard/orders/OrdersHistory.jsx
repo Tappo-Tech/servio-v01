@@ -59,10 +59,17 @@ const renderStatusChip = (status, t) => {
   );
 };
 
+const orderLocation = (order) => {
+  const value = String(order.table_number || "").toLowerCase();
+  if (/سفري|takeaway/.test(value)) return "takeaway";
+  if (/محلي|cashier|pos|محل/.test(value)) return "cashier";
+  return "table";
+};
+
 function OrderRow({ order, currency, t, language }) {
   const [open, setOpen] = useState(false);
   const [openInvoice, setOpenInvoice] = useState(false);
-  const shortOrderId = String(order.id || "").slice(-6).toUpperCase();
+  const shortOrderId = order.order_number || order.displayOrderNumber || "—";
 
   return (
     <>
@@ -195,13 +202,15 @@ function OrdersHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
 
   const filteredOrders = useMemo(() => {
     return orders
       .filter((order) => order.is_completed)
       .filter((order) => {
         const matchesSearch =
-          String(order.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.order_number || order.displayOrderNumber || "").includes(searchQuery.trim()) ||
           String(order.table_number).includes(searchQuery);
 
         const matchesStatus =
@@ -211,9 +220,16 @@ function OrdersHistory() {
           ? dayjs(order.created_at).isSame(selectedDate, "day")
           : true;
 
-        return matchesSearch && matchesStatus && matchesDate;
+        const matchesPayment = paymentFilter === "all"
+          ? true
+          : paymentFilter === "paid" ? order.payment_status === "paid"
+            : paymentFilter === "unpaid" ? order.payment_status !== "paid"
+              : order.payment_method === paymentFilter;
+        const matchesLocation = locationFilter === "all" || orderLocation(order) === locationFilter;
+
+        return matchesSearch && matchesStatus && matchesDate && matchesPayment && matchesLocation;
       });
-  }, [orders, searchQuery, statusFilter, selectedDate]);
+  }, [orders, searchQuery, statusFilter, selectedDate, paymentFilter, locationFilter]);
 
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
@@ -255,6 +271,19 @@ function OrdersHistory() {
               <MenuItem value="served">{t("managerServed")}</MenuItem>
               <MenuItem value="unclaimed">{t("managerUnclaimed")}</MenuItem>
               <MenuItem value="cancelled">{t("managerCancelled")}</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
+            <InputLabel id="payment-filter-label">طريقة الدفع</InputLabel>
+            <Select labelId="payment-filter-label" value={paymentFilter} label="طريقة الدفع" onChange={(e) => setPaymentFilter(e.target.value)}>
+              <MenuItem value="all">الكل</MenuItem><MenuItem value="paid">مدفوع</MenuItem><MenuItem value="unpaid">غير مدفوع</MenuItem><MenuItem value="cash">نقد</MenuItem><MenuItem value="card">شبكة</MenuItem><MenuItem value="split">كاش + شبكة</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
+            <InputLabel id="location-filter-label">نوع الطلب</InputLabel>
+            <Select labelId="location-filter-label" value={locationFilter} label="نوع الطلب" onChange={(e) => setLocationFilter(e.target.value)}>
+              <MenuItem value="all">الكل</MenuItem><MenuItem value="table">طاولة</MenuItem><MenuItem value="takeaway">سفري</MenuItem><MenuItem value="cashier">كاشير</MenuItem>
             </Select>
           </FormControl>
 

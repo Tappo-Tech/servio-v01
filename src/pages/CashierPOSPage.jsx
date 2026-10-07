@@ -72,6 +72,10 @@ const copy = {
     paid: "مدفوع",
     unpaid: "غير مدفوع",
     paymentStatus: "حالة الدفع",
+    splitPayment: "تقسيم الدفع",
+    cashAmount: "المبلغ النقدي",
+    cardAmount: "مبلغ الشبكة",
+    splitPaymentHint: "يجب أن يساوي مجموع النقد والشبكة إجمالي الفاتورة.",
     dineIn: "محلي",
     takeaway: "سفري",
     tableNumber: "رقم الطاولة (اختياري)",
@@ -123,6 +127,10 @@ const copy = {
     paid: "Paid",
     unpaid: "Unpaid",
     paymentStatus: "Payment status",
+    splitPayment: "Split payment",
+    cashAmount: "Cash amount",
+    cardAmount: "Network amount",
+    splitPaymentHint: "Cash plus network must equal the invoice total.",
     dineIn: "Dine-in",
     takeaway: "Takeaway",
     tableNumber: "Table number (optional)",
@@ -192,6 +200,8 @@ function CashierPOSPage() {
   const [orderType, setOrderType] = useState("dineIn");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [paymentMethod, setPaymentMethod] = useState(null);
+  const [cashAmount, setCashAmount] = useState(0);
+  const [cardAmount, setCardAmount] = useState(0);
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -254,6 +264,8 @@ function CashierPOSPage() {
     setCart(Array.isArray(editOrder.items) ? editOrder.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
     setPaymentStatus(editOrder.payment_status === "paid" ? "paid" : "unpaid");
     setPaymentMethod(editOrder.payment_method || null);
+    setCashAmount(Number(editOrder.cash_amount ?? (editOrder.payment_method === "cash" ? editOrder.total_price : 0)) || 0);
+    setCardAmount(Number(editOrder.card_amount ?? (editOrder.payment_method === "card" ? editOrder.total_price : 0)) || 0);
     setNotes(editOrder.notes || "");
     setEditingOrderId(editOrder.id);
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
@@ -403,6 +415,10 @@ function CashierPOSPage() {
   const submitOrder = async () => {
     if (!tenantId || cart.length === 0 || saving) return;
     if (shiftRequired && !currentShift?.id) { setCheckoutError(text.shiftRequired); return; }
+    if (paymentMethod === "split" && paymentStatus === "paid" && Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) > 0.01) {
+      setCheckoutError(text.splitPaymentHint);
+      return;
+    }
     setSaving(true);
     setCheckoutError("");
     setSavedMessage("");
@@ -417,6 +433,8 @@ function CashierPOSPage() {
         notes: notes.trim() || null,
         payment_status: paymentStatus,
         payment_method: paymentMethod,
+        cash_amount: paymentMethod === "split" ? Number(cashAmount || 0) : paymentMethod === "cash" ? grossAmount : 0,
+        card_amount: paymentMethod === "split" ? Number(cardAmount || 0) : paymentMethod === "card" ? grossAmount : 0,
         completeImmediately: true,
       };
       const result = editingOrderId
@@ -548,7 +566,19 @@ function CashierPOSPage() {
       <Divider sx={{ mb: 1.4 }} />
       <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
       <Box sx={{ mt: 1.25, p: 1.1, borderRadius: 2, bgcolor: "rgba(23,26,47,.025)", border: "1px solid", borderColor: "divider" }}>
-        <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={setPaymentMethod} language={language} />
+        <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={(method) => { setPaymentMethod(method); if (method === "split") { setCashAmount(Number(grossAmount.toFixed(2))); setCardAmount(0); } }} language={language} allowSplit />
+        {paymentMethod === "split" && (
+          <Box sx={{ mt: .7, p: 1, borderRadius: 2, bgcolor: "rgba(244,121,32,.08)", border: "1px solid rgba(244,121,32,.28)" }}>
+            <Typography variant="caption" fontWeight={850} color="text.secondary" sx={{ display: "block", mb: .7 }}>{text.splitPaymentHint}</Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={.8}>
+              <TextField size="small" fullWidth type="number" label={text.cashAmount} value={cashAmount} onChange={(event) => setCashAmount(Math.max(0, Number(event.target.value) || 0))} inputProps={{ min: 0, step: "0.01" }} />
+              <TextField size="small" fullWidth type="number" label={text.cardAmount} value={cardAmount} onChange={(event) => setCardAmount(Math.max(0, Number(event.target.value) || 0))} inputProps={{ min: 0, step: "0.01" }} />
+            </Stack>
+            <Typography variant="caption" sx={{ display: "block", mt: .7, fontWeight: 900, color: Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) <= .01 ? "success.main" : "error.main" }}>
+              {amount(Number(cashAmount || 0) + Number(cardAmount || 0))} / {amount(grossAmount)}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {cart.length > 0 && (
@@ -573,7 +603,7 @@ function CashierPOSPage() {
           <Stack spacing={.8}>
             {unpaidOrders.map((order) => (
               <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
-                <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{String(order.id).slice(-6).toUpperCase()} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
+                <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{order.order_number || order.displayOrderNumber || "—"} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
                 <Stack direction="row" spacing={.6}>
                   <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
                   <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
@@ -668,7 +698,7 @@ function CashierPOSPage() {
               <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
               <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
             </Stack>
-            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
+            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, position: { md: "sticky" }, top: { md: 12 }, alignSelf: "start", zIndex: 2, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {orderedCategories.map((category) => (
                 <Chip

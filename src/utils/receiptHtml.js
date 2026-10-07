@@ -65,18 +65,18 @@ export function buildReceiptHtml({
       notes: "Notes", addons: "Add-ons", adjustment: "Order adjustment", net: "Before VAT",
       vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE",
       amountNote: "Prices include 15% Saudi VAT.", paid: "Paid", unpaid: "Unpaid", unknown: "Not set", itemCount: "Items",
-      paymentMethod: "Payment method", methodUnknown: "Not specified", cash: "Cash", card: "Card / network (mada)", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other",
+      paymentMethod: "Payment method", methodUnknown: "Not specified", cash: "Cash", card: "Card / network (mada)", split: "Cash + network", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other",
     }
     : {
       invoice: "فاتورة الكاشير", kitchen: "تذكرة المطبخ", order: "رقم الطلب", table: "الطاولة",
       notes: "ملاحظات", addons: "إضافات", adjustment: "تسوية الطلب", net: "المبلغ قبل الضريبة",
       vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع",
       amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%.", paid: "مدفوع", unpaid: "غير مدفوع", unknown: "غير محدد", itemCount: "عدد الأصناف",
-      paymentMethod: "طريقة الدفع", methodUnknown: "غير محددة", cash: "نقدًا", card: "بطاقة / شبكة (مدى)", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى",
+      paymentMethod: "طريقة الدفع", methodUnknown: "غير محددة", cash: "نقدًا", card: "بطاقة / شبكة (مدى)", split: "كاش + شبكة", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى",
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemCount = orderItems.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 1)), 0);
-  const shortId = order?.displayOrderNumber || order?.order_number || String(order?.id || "").slice(-6).toUpperCase();
+  const shortId = order?.displayOrderNumber || order?.order_number || "—";
   const tableNumber = escapeReceiptHtml(order?.table_number || "—");
   const notes = order?.notes ? `<div class="notes"><strong>${labels.notes}:</strong> ${escapeReceiptHtml(order.notes)}</div>` : "";
   const formatMoney = (value) => `${new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
@@ -136,6 +136,9 @@ export function buildReceiptHtml({
   const paymentStatus = order?.payment_status === "paid" ? labels.paid : order?.payment_status === "unpaid" ? labels.unpaid : labels.unknown;
   const paymentLabel = language === "en" ? "Payment" : "حالة الدفع";
   const paymentMethod = labels[order?.payment_method] || labels.methodUnknown;
+  const splitPaymentRows = order?.payment_method === "split"
+    ? `<div class="row payment"><span>${language === "en" ? "Cash portion" : "الجزء النقدي"}</span><span>${formatMoney(order.cash_amount)}</span></div><div class="row payment"><span>${language === "en" ? "Network portion" : "جزء الشبكة"}</span><span>${formatMoney(order.card_amount)}</span></div>`
+    : "";
 
   return `<!doctype html><html lang="${language === "en" ? "en" : "ar"}" dir="${direction}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
     @page { size: ${paper.page}mm auto; margin: 2mm; }
@@ -166,7 +169,7 @@ export function buildReceiptHtml({
     <hr class="rule"><div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
     <hr class="rule"><section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>${notes}
     <hr class="rule"><div class="muted">${labels.amountNote}</div>${adjustmentRow}<div class="row amount-row"><span>${labels.net}</span><span>${formatMoney(amounts.net)}</span></div><div class="row amount-row"><span>${labels.vat}</span><span>${formatMoney(amounts.vat)}</span></div>
-    <hr class="rule"><div class="row total"><span>${labels.total}</span><span>${formatMoney(amounts.gross)}</span></div><div class="row payment"><span>${paymentLabel}</span><span>${escapeReceiptHtml(paymentStatus)}</span></div><div class="row payment"><span>${labels.paymentMethod}</span><span>${escapeReceiptHtml(paymentMethod)}</span></div><hr class="rule">
+    <hr class="rule"><div class="row total"><span>${labels.total}</span><span>${formatMoney(amounts.gross)}</span></div><div class="row payment"><span>${paymentLabel}</span><span>${escapeReceiptHtml(paymentStatus)}</span></div><div class="row payment"><span>${labels.paymentMethod}</span><span>${escapeReceiptHtml(paymentMethod)}</span></div>${splitPaymentRows}<hr class="rule">
     <footer class="center muted">${contact}<div class="footer">${footer}</div></footer>
   </main></body></html>`;
 }

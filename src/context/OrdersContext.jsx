@@ -9,8 +9,8 @@ import { createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/p
 const OrdersContext = createContext();
 
 // نطلب الأعمدة التي تحتاجها البطاقات والفواتير والتحليلات فقط، بدل جلب كل أعمدة الجدول.
-const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id,payment_status,paid_at,payment_method";
-const UPDATE_COLUMNS = "id,status,is_completed,completed_at,payment_status,paid_at,payment_method";
+const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id,payment_status,paid_at,payment_method,cash_amount,card_amount";
+const UPDATE_COLUMNS = "id,status,is_completed,completed_at,payment_status,paid_at,payment_method,cash_amount,card_amount";
 const RETRY_DELAYS_MS = [250, 650];
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
 
@@ -60,6 +60,8 @@ const mergeOrder = (existing, incoming = {}) => {
     payment_status: Object.prototype.hasOwnProperty.call(incoming, "payment_status") ? next.payment_status : existing.payment_status,
     paid_at: Object.prototype.hasOwnProperty.call(incoming, "paid_at") ? next.paid_at : existing.paid_at,
     payment_method: Object.prototype.hasOwnProperty.call(incoming, "payment_method") ? next.payment_method : existing.payment_method,
+    cash_amount: Object.prototype.hasOwnProperty.call(incoming, "cash_amount") ? next.cash_amount : existing.cash_amount,
+    card_amount: Object.prototype.hasOwnProperty.call(incoming, "card_amount") ? next.card_amount : existing.card_amount,
   });
 };
 
@@ -304,6 +306,8 @@ export const OrdersProvider = ({ children }) => {
         completed_at: completedAt,
         ...createPaymentStatusUpdate(newOrder.payment_status === "paid" ? "paid" : "unpaid"),
         ...paymentMethodUpdate,
+        cash_amount: newOrder.cash_amount == null ? null : Number(newOrder.cash_amount),
+        card_amount: newOrder.card_amount == null ? null : Number(newOrder.card_amount),
       }])
       .select(ORDER_COLUMNS)
       .single();
@@ -337,6 +341,8 @@ export const OrdersProvider = ({ children }) => {
       notes: changes.notes ? String(changes.notes) : null,
       ...createPaymentStatusUpdate(changes.payment_status || target.payment_status || "unpaid"),
       ...paymentMethodUpdate,
+      cash_amount: changes.cash_amount == null ? (target.cash_amount ?? null) : Number(changes.cash_amount),
+      card_amount: changes.card_amount == null ? (target.card_amount ?? null) : Number(changes.card_amount),
     };
     const optimistic = formatOrder({ ...target, ...payload });
     setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));

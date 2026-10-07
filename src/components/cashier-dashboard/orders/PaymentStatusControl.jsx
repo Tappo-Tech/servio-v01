@@ -16,6 +16,7 @@ const METHOD_LABELS = {
   ar: {
     cash: "نقدًا",
     card: "بطاقة / شبكة (مدى)",
+    split: "كاش + شبكة",
     wallet: "محفظة رقمية",
     transfer: "تحويل بنكي",
     other: "أخرى",
@@ -23,6 +24,7 @@ const METHOD_LABELS = {
   en: {
     cash: "Cash",
     card: "Card / network (mada)",
+    split: "Cash + network",
     wallet: "Digital wallet",
     transfer: "Bank transfer",
     other: "Other",
@@ -36,6 +38,7 @@ export default function PaymentStatusControl({
   onMethodChange,
   disabled = false,
   language = "ar",
+  allowSplit = false,
 }) {
   const isArabic = language !== "en";
   const methodFieldId = useId();
@@ -89,7 +92,7 @@ export default function PaymentStatusControl({
           onChange={(event) => onMethodChange?.(event.target.value === "__unset" ? null : event.target.value)}
         >
           <MenuItem value="__unset"><em>{text.methodUnknown}</em></MenuItem>
-          {Object.entries(methodLabels).map(([methodValue, label]) => (
+          {Object.entries(methodLabels).filter(([methodValue]) => allowSplit || methodValue !== "split").map(([methodValue, label]) => (
             <MenuItem key={methodValue} value={methodValue}>{label}</MenuItem>
           ))}
         </Select>

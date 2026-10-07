@@ -23,7 +23,7 @@ import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
 import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
-  const shortOrderId = order?.displayOrderNumber || order?.order_number || String(order?.id || "").slice(-6).toUpperCase();
+  const shortOrderId = order?.displayOrderNumber || order?.order_number || "—";
   const invoiceAmounts = amounts || calculateInclusiveVat(order?.total_price);
   const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
     minimumFractionDigits: 2,
