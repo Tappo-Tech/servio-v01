@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
@@ -78,6 +79,8 @@ const attachSequentialOrderNumbers = (orderList) => {
 
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
+  const { pathname } = useLocation();
+  const isCashierSurface = pathname === "/dashboard" || pathname === "/dashboard/pos" || pathname.startsWith("/cashier/");
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersLoadError, setOrdersLoadError] = useState(null);
@@ -214,7 +217,7 @@ export const OrdersProvider = ({ children }) => {
 
         if (eventType === "INSERT" && !existing && hasCompleteItems(incoming) && !notifiedRealtimeOrders.current.has(incoming.id)) {
           notifiedRealtimeOrders.current.add(incoming.id);
-          playRealtimeNotification("order");
+          if (isCashierSurface) playRealtimeNotification("order");
           const tableValue = String(incoming.table_number || "").trim().toLowerCase();
           const isPosOrder = !tableValue || /pos|cashier|takeaway|سفري|محل/.test(tableValue);
           if (!isPosOrder) setNewTableOrderAlert(incoming);
@@ -264,7 +267,7 @@ export const OrdersProvider = ({ children }) => {
       if (reloadOrdersRef.current === loadInitialOrders) reloadOrdersRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [tenantId, isPublic, tenantLoading]);
+  }, [tenantId, isPublic, tenantLoading, isCashierSurface]);
 
   const addOrder = (newOrder) => guard("orders:add", async () => {
     const items = compactOrderItems(newOrder.items);
