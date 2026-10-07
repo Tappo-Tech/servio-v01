@@ -37,11 +37,10 @@ function OrderItemCard({ order, onEdit }) {
   const [sending, setSending] = useState(false);
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState("");
-  const [receiptConfirmed, setReceiptConfirmed] = useState(false);
   const [confirmingStatus, setConfirmingStatus] = useState(null);
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
-  const isAwaitingPayment = order.status === "awaiting_payment" || (order.status === "ready" && !isPaid);
+  const isAwaitingPayment = order.status === "awaiting_payment";
   const statusVisual = order.status === "pending"
     ? { accent: "#F47920", soft: "rgba(244,121,32,.10)", label: language === "ar" ? "جديد" : "New" }
     : order.status === "preparing"
@@ -56,10 +55,10 @@ function OrderItemCard({ order, onEdit }) {
   const performStatusChange = async (status) => {
     if (sending) return;
     setSending(true);
-    // قاعدة البيانات تعتبر الطلب غير المدفوع الجاهز حالة ready؛ وتقوم LiveOrders بعرضه في صف انتظار السداد.
-    const nextStatus = !isPaid && ["ready", "served"].includes(status) ? "ready" : status;
-    await updateOrderStatus(order.id, nextStatus);
-    if (nextStatus === "awaiting_payment") setReceiptConfirmed(true);
+    // لا نغيّر الصف لمجرد تعديل حالة الدفع؛ الانتقال يتم فقط عند ضغط جاهز للتسليم.
+    const nextStatus = !isPaid && status === "ready" ? "awaiting_payment" : status;
+    const result = await updateOrderStatus(order.id, nextStatus);
+    if (result?.error) setPaymentError(language === "ar" ? "تعذر نقل الطلب إلى انتظار السداد. أعد المحاولة." : "Could not move the order to payment queue. Retry.");
     setSending(false);
   };
   const changeStatus = (status) => {
@@ -174,7 +173,7 @@ function OrderItemCard({ order, onEdit }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          {(!isAwaitingPayment || receiptConfirmed) && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />}
+          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />}
           {paymentError && <Typography variant="caption" color="error" sx={{ px: 0.25, overflowWrap: "anywhere" }}>{paymentError}</Typography>}
         </Box>
 
@@ -348,8 +347,8 @@ function OrderItemCard({ order, onEdit }) {
               <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 800 }}>
                 {t("paymentRequired")}
               </Typography>
-              <Button color="success" variant="contained" onClick={receiptConfirmed && !isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
-                {receiptConfirmed && !isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
+              <Button color="success" variant="contained" onClick={!isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
+                {!isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
               </Button>
               {onEdit && <Button variant="outlined" onClick={() => onEdit(order)} disabled={sending}>{language === "ar" ? "تعديل الطلب" : "Edit order"}</Button>}
               {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>

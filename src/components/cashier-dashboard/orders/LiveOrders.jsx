@@ -76,7 +76,7 @@ function LiveOrders() {
 
   const getOrdersByStatus = (status) => activeOrders.filter((order) => (
     status === "awaiting_payment"
-      ? order.status === "awaiting_payment" || (order.payment_status !== "paid" && ["ready", "unclaimed"].includes(order.status))
+      ? order.status === "awaiting_payment"
       : order.status === status && (status !== "ready" || order.payment_status === "paid")
   ));
 
