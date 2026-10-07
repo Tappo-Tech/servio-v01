@@ -684,7 +684,7 @@ function CashierPOSPage() {
         </Paper>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: { sm: "auto" }, overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "start" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflow: "hidden", overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, gridTemplateRows: { xs: filtersOpen ? "auto auto auto minmax(0,1fr)" : "auto auto minmax(0,1fr)", md: "auto auto minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "stretch" }}>
             <TextField
               fullWidth
               size="small"
@@ -696,13 +696,13 @@ function CashierPOSPage() {
                 startAdornment: <InputAdornment position="start"><SearchRoundedIcon color="action" /></InputAdornment>,
                 endAdornment: search ? <InputAdornment position="end"><IconButton size="small" aria-label={text.clearSearch} onClick={() => setSearch("")} edge="end"><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment> : null,
               }}
-              sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" } }}
+              sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" }, alignSelf: "start" }}
             />
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: { xs: "1", md: filtersOpen ? "1" : "1 / -1" }, mb: .8 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: { xs: "1", md: filtersOpen ? "1" : "1 / -1" }, mb: .8, alignSelf: "start" }}>
               <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
               <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
             </Stack>
-            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, overflowX: { xs: "auto", md: "visible" }, overflowY: { md: "auto" }, maxHeight: { md: "min(58vh, 520px)" }, position: { md: "sticky" }, top: { md: 12 }, alignSelf: "start", zIndex: 2, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
+            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, gridRow: { xs: "3", md: "3" }, minHeight: 0, overflowX: { xs: "auto", md: "hidden" }, overflowY: { md: "auto" }, alignSelf: "stretch", zIndex: 2, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {orderedCategories.map((category) => (
                 <Chip
@@ -727,7 +727,7 @@ function CashierPOSPage() {
               ))}
             </Stack>}
 
-            <Box sx={{ gridColumn: { xs: "1", md: filtersOpen ? "2" : "1" }, minWidth: 0 }}>
+            <Box sx={{ gridColumn: { xs: "1", md: filtersOpen ? "2" : "1" }, gridRow: { xs: filtersOpen ? "4" : "3", md: "3" }, minWidth: 0, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", scrollbarWidth: "thin", pr: { md: .35 } }}>
             {tenantLoading || menuLoading ? (
               <Box sx={{ py: 8, display: "grid", justifyItems: "center", gap: 1 }}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Box>
             ) : menuError ? (
