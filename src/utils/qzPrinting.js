@@ -222,18 +222,20 @@ export async function printReceipt(order, storeInfo, options = {}) {
     error.code = "QZ_NO_PRINTERS_SELECTED";
     throw error;
   }
-  const qz = await connectQzTray();
   const width = PAPER_WIDTHS.includes(settings.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth;
   const html = buildReceiptHtml({ ...options, order, storeInfo, language: options.language, currency: options.currency, paperWidth: width });
-  const images = await renderReceiptHtmlToImages(html, width);
+  // تجهيز صورة الإيصال والاتصال بـ QZ مستقلان؛ تشغيلهما بالتوازي يقلل زمن الانتظار خصوصًا عند أول طباعة.
+  const qzPromise = connectQzTray();
+  const imagesPromise = renderReceiptHtmlToImages(html, width);
+  const [qz, images] = await Promise.all([qzPromise, imagesPromise]);
   if (!images.length) throw new Error("تعذر إنشاء صورة الإيصال للطباعة");
   const succeeded = [];
   const failed = [];
   const pageWidth = PAPER_WIDTH_MM[width];
   const data = images.map((image) => ({ type: "pixel", format: "image", flavor: "base64", data: image.data }));
   // يُرسل PNG بدل نص HTML: المتصفح يشكّل العربية أولًا، ثم تطبع QZ الصورة دون نافذة حوار.
-  // تسلسل الإرسال يمنع تداخل مهام QZ عند اختيار أكثر من طابعة.
-  for (const printer of printers) {
+  // الطابعات مستقلة؛ إرسال النسخ بالتوازي يمنع تأخر الطابعة الثانية بسبب الأولى.
+  const printResults = await Promise.allSettled(printers.map(async (printer) => {
     const config = qz.configs.create(printer, {
       margins: 0,
       scaleContent: true,
@@ -245,13 +247,13 @@ export async function printReceipt(order, storeInfo, options = {}) {
       colorType: "grayscale",
       interpolation: "bicubic",
     });
-    try {
-      await qz.print(config, data);
-      succeeded.push(printer);
-    } catch {
-      failed.push(printer);
-    }
-  }
+    await qz.print(config, data);
+    return printer;
+  }));
+  printResults.forEach((result, index) => {
+    if (result.status === "fulfilled") succeeded.push(result.value);
+    else failed.push(printers[index]);
+  });
   if (failed.length) {
     const error = new Error(succeeded.length
       ? `تم إرسال الفاتورة إلى ${succeeded.join("، ")}، وتعذر الإرسال إلى ${failed.join("، ")}.`
