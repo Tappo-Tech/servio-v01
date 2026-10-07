@@ -31,7 +31,7 @@ function CashierSalesDrawer({ open, onClose }) {
   const currency = storeInfo.currency || (language === "ar" ? "ر.س" : "SAR");
   const anchor = language === "ar" ? "right" : "left";
   const text = language === "ar" ? {
-    search: "ابحث برقم الطلب", date: "كل التواريخ", payment: "طريقة الدفع", status: "الحالة", location: "نوع الطلب", all: "الكل", paid: "مدفوع", unpaid: "غير مدفوع", cash: "نقد", card: "شبكة", split: "كاش + شبكة", table: "طاولة", takeaway: "سفري", cashier: "كاشير", served: "تم التسليم", cancelled: "ملغي", ready: "جاهز", print: "طباعة", noOrders: "لا توجد طلبات مطابقة للفلاتر", clear: "مسح الفلاتر", dateLabel: "التاريخ",
+    search: "ابحث برقم الطلب", date: "كل التواريخ", payment: "طريقة الدفع", status: "الحالة", location: "نوع الطلب", all: "الكل", paid: "مدفوع", unpaid: "غير مدفوع", cash: "نقد", card: "شبكة", split: "نقدًا + شبكة", table: "طاولة", takeaway: "سفري", cashier: "كاشير", served: "تم التسليم", cancelled: "ملغي", ready: "جاهز", print: "طباعة", noOrders: "لا توجد طلبات مطابقة للفلاتر", clear: "مسح الفلاتر", dateLabel: "التاريخ",
   } : {
     search: "Search by order number", date: "All dates", payment: "Payment method", status: "Status", location: "Order type", all: "All", paid: "Paid", unpaid: "Unpaid", cash: "Cash", card: "Network", split: "Cash + network", table: "Table", takeaway: "Takeaway", cashier: "Cashier", served: "Served", cancelled: "Cancelled", ready: "Ready", print: "Print", noOrders: "No orders match these filters", clear: "Clear filters", dateLabel: "Date",
   };

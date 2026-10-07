@@ -56,7 +56,8 @@ function OrderItemCard({ order, onEdit }) {
   const performStatusChange = async (status) => {
     if (sending) return;
     setSending(true);
-    const nextStatus = !isPaid && ["ready", "served"].includes(status) ? "awaiting_payment" : status;
+    // قاعدة البيانات تعتبر الطلب غير المدفوع الجاهز حالة ready؛ وتقوم LiveOrders بعرضه في صف انتظار السداد.
+    const nextStatus = !isPaid && ["ready", "served"].includes(status) ? "ready" : status;
     await updateOrderStatus(order.id, nextStatus);
     if (nextStatus === "awaiting_payment") setReceiptConfirmed(true);
     setSending(false);

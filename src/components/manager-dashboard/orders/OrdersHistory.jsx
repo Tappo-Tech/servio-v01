@@ -277,7 +277,7 @@ function OrdersHistory() {
           <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
             <InputLabel id="payment-filter-label">طريقة الدفع</InputLabel>
             <Select labelId="payment-filter-label" value={paymentFilter} label="طريقة الدفع" onChange={(e) => setPaymentFilter(e.target.value)}>
-              <MenuItem value="all">الكل</MenuItem><MenuItem value="paid">مدفوع</MenuItem><MenuItem value="unpaid">غير مدفوع</MenuItem><MenuItem value="cash">نقد</MenuItem><MenuItem value="card">شبكة</MenuItem><MenuItem value="split">كاش + شبكة</MenuItem>
+              <MenuItem value="all">الكل</MenuItem><MenuItem value="paid">مدفوع</MenuItem><MenuItem value="unpaid">غير مدفوع</MenuItem><MenuItem value="cash">نقد</MenuItem><MenuItem value="card">شبكة</MenuItem><MenuItem value="split">نقدًا + شبكة</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>

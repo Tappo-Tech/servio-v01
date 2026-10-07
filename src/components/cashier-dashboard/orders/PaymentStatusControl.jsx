@@ -16,7 +16,7 @@ const METHOD_LABELS = {
   ar: {
     cash: "نقدًا",
     card: "بطاقة / شبكة (مدى)",
-    split: "كاش + شبكة",
+    split: "نقدًا + شبكة",
     wallet: "محفظة رقمية",
     transfer: "تحويل بنكي",
     other: "أخرى",

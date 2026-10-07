@@ -72,7 +72,7 @@ export function buildReceiptHtml({
       notes: "ملاحظات", addons: "إضافات", adjustment: "تسوية الطلب", net: "المبلغ قبل الضريبة",
       vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع",
       amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%.", paid: "مدفوع", unpaid: "غير مدفوع", unknown: "غير محدد", itemCount: "عدد الأصناف",
-      paymentMethod: "طريقة الدفع", methodUnknown: "غير محددة", cash: "نقدًا", card: "بطاقة / شبكة (مدى)", split: "كاش + شبكة", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى",
+      paymentMethod: "طريقة الدفع", methodUnknown: "غير محددة", cash: "نقدًا", card: "بطاقة / شبكة (مدى)", split: "نقدًا + شبكة", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى",
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemCount = orderItems.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 1)), 0);
