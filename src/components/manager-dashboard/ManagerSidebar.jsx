@@ -109,7 +109,7 @@ function ManagerSidebar({
             sx={{ width: 35, height: 35, borderRadius: 0.8 }}
           />
           <Typography
-            sx={{ fontSize: "25px", fontWeight: "800", letterSpacing: "0.5px" }}
+            sx={{ fontSize: "25px", fontWeight: "800", letterSpacing: "0.5px", color: "#fff" }}
             variant="h4"
             component="h1"
           >

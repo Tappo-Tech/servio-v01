@@ -356,13 +356,13 @@ export default function CashierShiftGate() {
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: .55 }}>
-                  <Chip size="small" label={ar ? "غير نشطة" : "NOT STARTED"} sx={{ height: 23, color: "#FFD9BE", bgcolor: "rgba(244,121,32,.18)", fontWeight: 850, borderRadius: 1.5 }} />
-                  {schedule && <Typography variant="caption" sx={{ color: "rgba(255,255,255,.68)" }}>{ar ? "الدوام" : "Hours"}: {schedule}</Typography>}
+                  <Chip size="small" label={ar ? "غير نشطة" : "NOT STARTED"} sx={{ height: 23, color: "#fff", bgcolor: "rgba(244,121,32,.22)", fontWeight: 850, borderRadius: 1.5 }} />
+                  {schedule && <Typography variant="caption" sx={{ color: "#fff" }}>{ar ? "الدوام" : "Hours"}: {schedule}</Typography>}
                 </Stack>
                 <Typography id="shift-gate-title" variant="h6" fontWeight={950} sx={{ fontSize: { xs: "1.05rem", sm: "1.2rem" }, lineHeight: 1.35 }}>
                   {ar ? "ابدأ ورديتك لتسجيل المبيعات" : "Start your shift to record sales"}
                 </Typography>
-                <Typography variant="body2" sx={{ mt: .5, maxWidth: 620, color: "rgba(255,255,255,.72)", lineHeight: 1.65 }}>
+                <Typography variant="body2" sx={{ mt: .5, maxWidth: 620, color: "#fff", lineHeight: 1.65 }}>
                   {ar ? "أدخل رصيد درج النقدية أولاً؛ بعدها يمكنك اعتماد المبيعات ومراجعة تقرير الوردية." : "Record the opening cash first, then complete sales and review the shift report."}
                 </Typography>
               </Box>
@@ -372,7 +372,7 @@ export default function CashierShiftGate() {
               size="large"
               startIcon={<PlayCircleOutlineRoundedIcon />}
               onClick={() => openDialog("start")}
-              sx={{ minWidth: { sm: 190 }, minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: "0 9px 20px rgba(244,121,32,.24)" }}
+              sx={{ minWidth: { sm: 190 }, minHeight: 48, borderRadius: 2.5, fontWeight: 900, alignSelf: { xs: "flex-end", sm: "center" }, marginInlineStart: { sm: "auto" }, flexShrink: 0, boxShadow: "0 9px 20px rgba(244,121,32,.24)" }}
             >
               {ar ? "بدء الوردية" : "Start shift"}
             </Button>
