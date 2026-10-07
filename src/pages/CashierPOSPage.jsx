@@ -537,25 +537,29 @@ function CashierPOSPage() {
       {cart.length === 0 ? (
         <Typography color="text.secondary" align="center" sx={{ py: 5 }}>{text.empty}</Typography>
       ) : (
-        <Stack spacing={0.7} sx={{ py: 1.1, maxHeight: mobileView ? "30dvh" : { sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: "auto", overscrollBehavior: "contain" }}>
-          {cart.map((item) => {
+        <Stack spacing={1} sx={{ py: 1.1, maxHeight: mobileView ? "30dvh" : { sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: "auto", overscrollBehavior: "contain", pr: .25 }}>
+          {cart.map((item, itemIndex) => {
             const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
             const lineId = getCartLineKey(item);
             return (
-              <Box key={lineId} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: .75, alignItems: "center", py: .65, borderBottom: "1px solid rgba(23,26,47,.06)" }}>
+              <Box key={lineId} sx={{ position: "relative", display: "grid", gridTemplateColumns: "32px minmax(0,1fr) auto", gap: 1, alignItems: "center", p: 1.1, borderRadius: 2.4, bgcolor: itemIndex % 2 === 0 ? "rgba(255,255,255,.88)" : "rgba(238,241,247,.72)", border: "1px solid rgba(23,26,47,.09)", borderInlineStart: "4px solid #F47920", boxShadow: "0 5px 14px rgba(23,26,47,.045)" }}>
+                <Box sx={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: "50%", bgcolor: "rgba(244,121,32,.14)", color: "primary.dark", fontWeight: 950, fontSize: ".82rem", fontVariantNumeric: "tabular-nums" }}>{itemIndex + 1}</Box>
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography fontWeight={950} sx={{ fontSize: { xs: ".86rem", sm: ".92rem" }, lineHeight: 1.25, overflowWrap: "anywhere" }}>{item.name}</Typography>
+                  <Typography fontWeight={950} sx={{ fontSize: { xs: ".9rem", sm: ".98rem" }, lineHeight: 1.25, overflowWrap: "anywhere", color: "#171A2F" }}>{item.name}</Typography>
                   {item.selected_addons?.length > 0 && (
-                    <Typography variant="caption" color="primary.main" display="block" sx={{ overflowWrap: "anywhere" }}>
-                      {item.selected_addons.map((addon) => addon.name).join(language === "ar" ? "، " : ", ")}
-                    </Typography>
+                    <Stack direction="row" spacing={.4} useFlexGap flexWrap="wrap" sx={{ mt: .55 }}>
+                      {item.selected_addons.map((addon, addonIndex) => <Chip key={`${lineId}-addon-${addonIndex}`} label={typeof addon === "string" ? addon : addon.name} size="small" sx={{ height: 22, fontSize: ".68rem", fontWeight: 800, bgcolor: "rgba(40,120,200,.10)", color: "#245F99", maxWidth: "100%", "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" } }} />)}
+                    </Stack>
                   )}
-                  <Typography variant="caption" color="text.secondary">{amount(lineTotal)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: .55, fontWeight: 750 }}>{amount(item.price)} {language === "ar" ? "للوحدة" : "each"}</Typography>
                 </Box>
-                <Stack direction="row" alignItems="center" spacing={.1}>
-                  <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)}><RemoveRoundedIcon fontSize="small" /></IconButton>
-                  <Typography sx={{ minWidth: 22, textAlign: "center", fontWeight: 900 }}>{item.quantity}</Typography>
-                  <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)}><AddRoundedIcon fontSize="small" /></IconButton>
+                <Stack alignItems="flex-end" spacing={.65}>
+                  <Typography sx={{ fontWeight: 950, color: "primary.dark", fontSize: { xs: ".9rem", sm: "1rem" }, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>{amount(lineTotal)}</Typography>
+                  <Stack direction="row" alignItems="center" sx={{ borderRadius: 1.7, bgcolor: "#171A2F", p: .25, gap: .2 }}>
+                    <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)} sx={{ color: "#fff", width: 29, height: 29, borderRadius: 1.2, "&:hover": { bgcolor: "rgba(255,255,255,.15)" } }}><RemoveRoundedIcon fontSize="small" /></IconButton>
+                    <Typography sx={{ minWidth: 25, textAlign: "center", color: "#fff", fontWeight: 950, fontSize: ".9rem", fontVariantNumeric: "tabular-nums" }}>{item.quantity}</Typography>
+                    <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)} sx={{ color: "#fff", width: 29, height: 29, borderRadius: 1.2, "&:hover": { bgcolor: "rgba(255,255,255,.15)" } }}><AddRoundedIcon fontSize="small" /></IconButton>
+                  </Stack>
                 </Stack>
               </Box>
             );
