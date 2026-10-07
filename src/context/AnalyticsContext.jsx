@@ -69,7 +69,7 @@ export function AnalyticsProvider({ children }) {
     const hourlySales = aggregateHourlySales(todaysOrders, schedule);
 
     const itemSalesMap = {};
-    validFinishedOrders.forEach((order) => {
+    todaysOrders.forEach((order) => {
       const items = Array.isArray(order.items) ? order.items : [];
       items.forEach((item) => {
         const name = item.name || "غير معروف";

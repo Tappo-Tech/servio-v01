@@ -12,9 +12,17 @@ export function getPresetDateRange(period, now = new Date(), workdayStartMinutes
   const operationalToday = shiftBusinessDate(now, workdayStartMinutes) || now;
   const today = new Date(operationalToday.getFullYear(), operationalToday.getMonth(), operationalToday.getDate());
   let from = new Date(today);
-  if (period === "weekly") from.setDate(today.getDate() - today.getDay());
-  if (period === "monthly") from = new Date(today.getFullYear(), today.getMonth(), 1);
-  return { from: toLocalDateKey(from), to: toLocalDateKey(today) };
+  let to = new Date(today);
+  if (period === "weekly") {
+    from.setDate(today.getDate() - today.getDay());
+    to = new Date(from);
+    to.setDate(from.getDate() + 6);
+  }
+  if (period === "monthly") {
+    from = new Date(today.getFullYear(), today.getMonth(), 1);
+    to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  }
+  return { from: toLocalDateKey(from), to: toLocalDateKey(to) };
 }
 
 function parseLocalDateKey(value) {

@@ -10,6 +10,7 @@ import { useOrders } from "../../../context/OrdersContext";
 import { useStore } from "../../../context/StoreInfoContext";
 import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useShift } from "../../../context/ShiftContext";
 
 const locationOf = (order, language) => {
   const value = String(order.table_number || "").toLowerCase();
@@ -22,6 +23,7 @@ function CashierSalesDrawer({ open, onClose }) {
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { storeInfo = {} } = useStore();
   const { language, t } = useLanguage();
+  const { currentShift } = useShift();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +46,15 @@ function CashierSalesDrawer({ open, onClose }) {
     const matchesLocation = locationFilter === "all" || locationOf(order, language) === locationFilter;
     return matchesSearch && matchesDate && matchesPayment && matchesStatus && matchesLocation;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)), [finishedOrders, searchQuery, selectedDate, paymentFilter, statusFilter, locationFilter, language]);
-  const sales = filteredOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
+  const shiftOrders = useMemo(() => {
+    const openedAt = currentShift?.opened_at ? new Date(currentShift.opened_at).getTime() : null;
+    if (!Number.isFinite(openedAt)) return [];
+    return finishedOrders.filter((order) => {
+      const saleAt = new Date(order.completed_at || order.created_at).getTime();
+      return Number.isFinite(saleAt) && saleAt >= openedAt;
+    });
+  }, [finishedOrders, currentShift?.opened_at]);
+  const shiftSales = shiftOrders.reduce((sum, order) => sum + Number(order.total_price || 0), 0);
   const topItems = useMemo(() => { const totals = new Map(); filteredOrders.forEach((order) => (order.items || []).forEach((item) => totals.set(item.name || "—", (totals.get(item.name || "—") || 0) + Number(item.quantity || 1)))); return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3); }, [filteredOrders]);
   const resetFilters = () => { setSearchQuery(""); setSelectedDate(""); setPaymentFilter("all"); setStatusFilter("all"); setLocationFilter("all"); };
 
@@ -60,7 +70,7 @@ function CashierSalesDrawer({ open, onClose }) {
           <TextField select size="small" label={text.location} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}><MenuItem value="all">{text.all}</MenuItem><MenuItem value="table">{text.table}</MenuItem><MenuItem value="takeaway">{text.takeaway}</MenuItem><MenuItem value="cashier">{text.cashier}</MenuItem></TextField>
           <Button onClick={resetFilters} variant="text" sx={{ fontWeight: 850 }}>{text.clear}</Button>
         </Box>
-        <Box sx={{ p: 2.2, borderRadius: 4, color: "#fff", background: "linear-gradient(135deg,#171A2F 0%,#2E3250 62%,#F47920 180%)", boxShadow: "0 18px 38px rgba(23,26,47,.16)" }}><Typography variant="body2" sx={{ color: "#fff", opacity: .9, fontWeight: 750 }}>{t("totalSales")}</Typography><Typography variant="h4" fontWeight={950} sx={{ mt: .4, color: "#fff" }}>{ordersLoading || ordersLoadError ? "—" : sales.toFixed(2)} {currency}</Typography><Typography variant="caption" sx={{ color: "#fff", opacity: .86 }}>{filteredOrders.length} {t("completedOrders")}</Typography></Box>
+        <Box sx={{ p: 2.2, borderRadius: 4, color: "#fff", background: "linear-gradient(135deg,#171A2F 0%,#2E3250 62%,#F47920 180%)", boxShadow: "0 18px 38px rgba(23,26,47,.16)" }}><Typography variant="body2" sx={{ color: "#fff", opacity: .9, fontWeight: 750 }}>{language === "ar" ? "مبيعات الوردية الحالية" : "Current shift sales"}</Typography><Typography variant="h4" fontWeight={950} sx={{ mt: .4, color: "#fff" }}>{ordersLoading || ordersLoadError ? "—" : shiftSales.toFixed(2)} {currency}</Typography><Typography variant="caption" sx={{ color: "#fff", opacity: .86 }}>{shiftOrders.length} {t("completedOrders")}</Typography></Box>
         <Box sx={{ p: 1.7, borderRadius: 3, bgcolor: "rgba(255,255,255,.82)", border: "1px solid rgba(23,26,47,.08)" }}><Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}><TrendingUpRoundedIcon color="primary" /><Typography fontWeight={900}>{language === "ar" ? "أعلى 3 أصناف" : "Top 3 items"}</Typography></Stack><Stack spacing={.7}>{topItems.length ? topItems.map(([name, quantity], index) => <Stack key={name} direction="row" justifyContent="space-between"><Stack direction="row" spacing={1} alignItems="center"><Chip label={index + 1} size="small" color={index === 0 ? "primary" : "default"} /><Typography fontWeight={700}>{name}</Typography></Stack><Typography fontWeight={900} color="primary.main">{quantity}×</Typography></Stack>) : <Typography variant="body2" color="text.secondary">{text.noOrders}</Typography>}</Stack></Box>
         <Divider />
         <Box sx={{ width: "100%" }}><Stack spacing={1}>{filteredOrders.map((order) => { const location = locationOf(order, language); return <Box key={order.id} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, bgcolor: "rgba(255,255,255,.9)", border: "1px solid rgba(23,26,47,.08)", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", minWidth: 0, gap: 1.5, boxShadow: "0 6px 18px rgba(23,26,47,.04)" }}><Box sx={{ minWidth: 0 }}><Stack direction="row" spacing={.8} alignItems="center" flexWrap="wrap"><Chip label={`#${order.order_number || order.displayOrderNumber || "—"}`} size="small" sx={{ fontWeight: 950, bgcolor: "rgba(244,121,32,.12)", color: "primary.dark" }} /><Chip label={location === "table" ? `${text.table} ${order.table_number}` : text[location]} size="small" variant="outlined" /><Chip label={order.payment_method === "split" ? text.split : order.payment_method === "card" ? text.card : order.payment_method === "cash" ? text.cash : order.payment_status === "paid" ? text.paid : text.unpaid} size="small" color={order.payment_status === "paid" ? "success" : "warning"} variant="outlined" /></Stack><Typography variant="caption" color="text.secondary">{dayjs(order.created_at).format("DD/MM/YY · hh:mm A")}</Typography></Box><Stack alignItems={language === "ar" ? "flex-start" : "flex-end"} spacing={.65}><Typography fontWeight={950}>{order.total_price} {currency}</Typography><Button size="small" variant="text" startIcon={<PrintRoundedIcon />} onClick={() => setSelectedOrder(order)} sx={{ minWidth: 0 }}>{text.print}</Button></Stack></Box>; })}{!filteredOrders.length && <Box sx={{ py: 8, textAlign: "center" }}><ReceiptLongRoundedIcon sx={{ fontSize: 42, color: "text.disabled", mb: 1 }} /><Typography color="text.secondary">{text.noOrders}</Typography></Box>}</Stack></Box>

@@ -7,10 +7,10 @@ import {
 } from "./salesReportUtils";
 
 describe("sales report calculations", () => {
-  test("uses Sunday-based Saudi-style weeks and calendar months", () => {
+  test("uses Sunday-based full weeks and full calendar months", () => {
     const monday = new Date(2026, 9, 5, 12, 0, 0);
-    expect(getPresetDateRange("weekly", monday)).toEqual({ from: "2026-10-04", to: "2026-10-05" });
-    expect(getPresetDateRange("monthly", monday)).toEqual({ from: "2026-10-01", to: "2026-10-05" });
+    expect(getPresetDateRange("weekly", monday)).toEqual({ from: "2026-10-04", to: "2026-10-10" });
+    expect(getPresetDateRange("monthly", monday)).toEqual({ from: "2026-10-01", to: "2026-10-31" });
     expect(getPresetDateRange("daily", monday)).toEqual({ from: "2026-10-05", to: "2026-10-05" });
   });
 

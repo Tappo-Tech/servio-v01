@@ -23,6 +23,7 @@ function AnalyticsOverview() {
     ordersLoadError,
     reloadOrders,
   } = useAnalytics();
+  const operationalDayLabel = language === "ar" ? "اليوم التشغيلي" : "Operational day";
 
   // دالة مساعدة لتنسيق شريحة نسبة النمو ديناميكياً
   const renderGrowthChip = (growthValue) => {
@@ -113,7 +114,7 @@ function AnalyticsOverview() {
                 textAlign: "start",
               }}
             >
-              {t("managerSalesToday")}
+              {language === "ar" ? `إجمالي المبيعات · ${operationalDayLabel}` : `Total sales · ${operationalDayLabel}`}
             </Typography>
             <Box
               sx={{
@@ -201,7 +202,7 @@ function AnalyticsOverview() {
                 textAlign: "start",
               }}
             >
-              {t("managerOrdersTodayCount")}
+              {language === "ar" ? `إجمالي الطلبات · ${operationalDayLabel}` : `Total orders · ${operationalDayLabel}`}
             </Typography>
             <Box
               sx={{
