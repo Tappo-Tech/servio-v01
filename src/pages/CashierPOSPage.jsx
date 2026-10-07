@@ -415,7 +415,7 @@ function CashierPOSPage() {
   const submitOrder = async () => {
     if (!tenantId || cart.length === 0 || saving) return;
     if (shiftRequired && !currentShift?.id) { setCheckoutError(text.shiftRequired); return; }
-    if (paymentMethod === "split" && paymentStatus === "paid" && Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) > 0.01) {
+    if (paymentMethod === "split" && Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) > 0.01) {
       setCheckoutError(text.splitPaymentHint);
       return;
     }
