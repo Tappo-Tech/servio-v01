@@ -123,7 +123,9 @@ export function buildReceiptHtml({
   const safeImage = safeReceiptImageSource(storeInfo.logo_url) || "/logo-icon.webp";
   const logo = `<img class="logo" src="${escapeReceiptHtml(safeImage)}" alt="${escapeReceiptHtml(storeName)}" crossorigin="anonymous" onerror="this.onerror=null;this.src='/logo-icon.webp'">`;
   const taxNumber = storeInfo.tax_number ? `<div>${language === "en" ? "VAT No." : "الرقم الضريبي"}: ${escapeReceiptHtml(storeInfo.tax_number)}</div>` : "";
-  const address = storeInfo.address ? `<div>${escapeReceiptHtml(storeInfo.address)}</div>` : "";
+  const commercialRegistration = storeInfo.commercial_registration_number ? `<div>${language === "en" ? "Commercial registration" : "السجل التجاري"}: ${escapeReceiptHtml(storeInfo.commercial_registration_number)}</div>` : "";
+  const fullAddress = [storeInfo.street_name, storeInfo.building_number, storeInfo.district, storeInfo.city, storeInfo.postal_code, storeInfo.country_code].filter(Boolean).map(escapeReceiptHtml).join(" · ");
+  const address = storeInfo.address ? `<div>${escapeReceiptHtml(storeInfo.address)}</div>` : fullAddress ? `<div>${fullAddress}</div>` : "";
   const contact = [
     storeInfo.phone && `${language === "en" ? "Phone" : "هاتف"}: ${escapeReceiptHtml(storeInfo.phone)}`,
     storeInfo.email && escapeReceiptHtml(storeInfo.email),
@@ -165,7 +167,7 @@ export function buildReceiptHtml({
     .notes { margin: 2mm 0; white-space: pre-wrap; }
     .footer { margin-top: 4mm; font-weight: 700; }
   </style></head><body><main class="receipt">
-    <header class="center">${logo}<h1 class="store">${storeName}</h1>${taxNumber}${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
+    <header class="center">${logo}<h1 class="store">${storeName}</h1>${taxNumber}${commercialRegistration}${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
     <hr class="rule"><div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
     <hr class="rule"><section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>${notes}
     <hr class="rule"><div class="muted">${labels.amountNote}</div>${adjustmentRow}<div class="row amount-row"><span>${labels.net}</span><span>${formatMoney(amounts.net)}</span></div><div class="row amount-row"><span>${labels.vat}</span><span>${formatMoney(amounts.vat)}</span></div>
