@@ -18,13 +18,13 @@ import dayjs from "dayjs";
 import { useStore } from "../../../context/StoreInfoContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useMenu } from "../../../context/MenuContext";
-import { calculateInclusiveVat, roundMoney } from "../../../utils/taxUtils";
+import { roundMoney } from "../../../utils/taxUtils";
 import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
 import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
-function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, amounts }) {
+function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, receiptType = "cashier" }) {
+  const isKitchen = receiptType === "kitchen";
   const shortOrderId = order?.displayOrderNumber || order?.order_number || "—";
-  const invoiceAmounts = amounts || calculateInclusiveVat(order?.total_price);
   const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -34,136 +34,49 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
     ? { cash: "نقدًا", card: "بطاقة / شبكة (مدى)", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى" }
     : { cash: "Cash", card: "Card / network (mada)", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other" };
   const paymentMethod = paymentMethods[order?.payment_method] || (language === "ar" ? "غير محددة" : "Not specified");
+  const label = language === "ar"
+    ? { internal: "إيصال داخلي — ليس فاتورة ضريبية", kitchen: "تذكرة المطبخ", total: "الإجمالي", add: "إضافة", remove: "إلغاء", notes: "ملاحظات", order: "رقم الطلب", table: "النوع / الطاولة", payment: "حالة الدفع", paymentMethod: "طريقة الدفع" }
+    : { internal: "INTERNAL RECEIPT — NOT A TAX INVOICE", kitchen: "Kitchen ticket", total: "Total", add: "ADD", remove: "CANCEL", notes: "Notes", order: "Order", table: "Type / table", payment: "Payment", paymentMethod: "Payment method" };
 
   return (
-    <Box
-      className="receipt-group"
-      sx={{
-        pb: 2,
-        mb: 2,
-        borderBottom: "1px dashed",
-        borderColor: "divider",
-        "&:last-of-type": { pb: 0, mb: 0, borderBottom: 0 },
-        "@media print": { breakInside: "avoid" },
-      }}
-    >
+    <Box className="receipt-group" sx={{ pb: 2, mb: 2, borderBottom: "1px dashed", borderColor: "divider", "&:last-of-type": { pb: 0, mb: 0, borderBottom: 0 }, "@media print": { breakInside: "avoid" } }}>
       <Box sx={{ textAlign: "center", mb: 2 }}>
-        <Box
-          component="img"
-          src={storeInfo.logo_url || "/logo-icon.webp"}
-          alt={storeInfo.store_name || "SERVIO"}
-          onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/logo-icon.webp"; }}
-          sx={{ width: 80, height: 80, borderRadius: 2, objectFit: "contain", mx: "auto", mb: 1 }}
-        />
-        <Typography variant="h6" sx={{ fontWeight: 900 }}>
-          {storeInfo.store_name || (language === "ar" ? "متجر SERVIO" : "SERVIO Store")}
-        </Typography>
-        {storeInfo.tax_number && (
-          <Typography variant="caption" display="block" color="text.secondary">
-            {language === "ar" ? "الرقم الضريبي" : "VAT No."}: {storeInfo.tax_number}
-          </Typography>
-        )}
-        {storeInfo.address && (
-        <Typography variant="caption" display="block" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
-          {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}
-          </Typography>
-        )}
-        <Typography variant="caption" color="text.secondary" display="block">
-          {receiptTitle || (language === "ar" ? "فاتورة مبيعات" : "Sales receipt")}
-        </Typography>
-        {isTest && (
-          <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.6, fontWeight: 900 }}>
-            {language === "ar" ? "اختبار الطابعة — ليست فاتورة بيع" : "Printer test — not a sale invoice"}
-          </Typography>
-        )}
-        <Typography variant="caption" display="block">
-          {dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A")}
-        </Typography>
+        <Box component="img" src={storeInfo.logo_url || "/logo-icon.webp"} alt={storeInfo.store_name || "SERVIO"} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/logo-icon.webp"; }} sx={{ width: 80, height: 80, borderRadius: 2, objectFit: "contain", mx: "auto", mb: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 900 }}>{storeInfo.store_name || (language === "ar" ? "متجر SERVIO" : "SERVIO Store")}</Typography>
+        {storeInfo.address && <Typography variant="caption" display="block" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>{language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}</Typography>}
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 900 }}>{isKitchen ? (receiptTitle || label.kitchen) : label.internal}</Typography>
+        {isTest && <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.6, fontWeight: 900 }}>{language === "ar" ? "اختبار الطابعة — ليس بيعًا" : "Printer test — not a sale"}</Typography>}
+        <Typography variant="caption" display="block">{dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A")}</Typography>
       </Box>
-
       <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0,1fr) auto" }, mb: 1, gap: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {language === "ar" ? "رقم الطلب" : "Order"}: #{shortOrderId}
-        </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {language === "ar" ? "النوع / الطاولة" : "Type / table"}: {order?.table_number || "—"}
-        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>{label.order}: #{shortOrderId}</Typography>
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>{label.table}: {order?.table_number || "—"}</Typography>
       </Box>
       <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-
       <Box sx={{ my: 2 }}>
         {(Array.isArray(order?.items) ? order.items : []).map((item, index) => (
           <Box key={`${item.id || item.cartItemId || item.name}-${index}`} sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 1, mb: 1, minWidth: 0 }}>
             <Box sx={{ minWidth: 0 }}>
+              {isKitchen && item.kitchenAction && <Typography variant="caption" display="block" color={item.kitchenAction === "remove" ? "error.main" : "primary.main"} sx={{ fontWeight: 950 }}>{item.kitchenAction === "remove" ? label.remove : label.add}</Typography>}
               <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>{item.name} × {item.quantity}</Typography>
-              {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && (
-                <Typography variant="caption" display="block" color="text.secondary">
-                  {language === "ar" ? "إضافات: " : "Add-ons: "}
-                  {item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}
-                </Typography>
-              )}
+              {Array.isArray(item.selected_addons) && item.selected_addons.length > 0 && <Typography variant="caption" display="block" color="text.secondary">{language === "ar" ? "إضافات: " : "Add-ons: "}{item.selected_addons.map((addon) => typeof addon === "string" ? addon : addon?.name).filter(Boolean).join(language === "ar" ? "، " : ", ")}</Typography>}
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-              {money(roundMoney(Number(item.price) * Number(item.quantity || 1)))}
-            </Typography>
+            {!isKitchen && <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{money(roundMoney(Number(item.price) * Number(item.quantity || 1)))}</Typography>}
           </Box>
         ))}
       </Box>
-
-      {orderAdjustment !== 0 && (
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, gap: 1 }}>
-          <Typography variant="body2">{language === "ar" ? "تسوية الطلب" : "Order adjustment"}</Typography>
-          <Typography variant="body2">{money(orderAdjustment)}</Typography>
-        </Box>
-      )}
-
+      {order?.notes && <Typography variant="caption" display="block" sx={{ mb: 1 }}>{label.notes}: {order.notes}</Typography>}
+      {!isKitchen && <>
+        {orderAdjustment !== 0 && <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, gap: 1 }}><Typography variant="body2">{language === "ar" ? "تسوية الطلب" : "Order adjustment"}</Typography><Typography variant="body2">{money(orderAdjustment)}</Typography></Box>}
+        <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
+        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}><Typography variant="subtitle1" sx={{ fontWeight: 900 }}>{label.total}</Typography><Typography variant="subtitle1" sx={{ fontWeight: 900, whiteSpace: "nowrap" }}>{money(order?.total_price)}</Typography></Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1, gap: 1 }}><Typography variant="body2" fontWeight={800}>{label.payment}</Typography><Chip size="small" color={order?.payment_status === "paid" ? "success" : order?.payment_status === "unpaid" ? "warning" : "default"} label={order?.payment_status === "paid" ? (language === "ar" ? "مدفوع" : "Paid") : order?.payment_status === "unpaid" ? (language === "ar" ? "غير مدفوع" : "Unpaid") : (language === "ar" ? "غير محدد" : "Not set")} sx={{ fontWeight: 850 }} /></Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.7, gap: 1 }}><Typography variant="body2" fontWeight={800}>{label.paymentMethod}</Typography><Typography variant="body2" color="text.secondary">{paymentMethod}</Typography></Box>
+      </>}
       <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-      {order?.notes && (
-        <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-          {language === "ar" ? "ملاحظات" : "Notes"}: {order.notes}
-        </Typography>
-      )}
-      <Box sx={{ mt: 2, pt: 1 }}>
-        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
-          {language === "ar" ? "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%." : "Item prices include 15% VAT."}
-        </Typography>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.8, gap: 1 }}>
-          <Typography variant="body2">{language === "ar" ? "المبلغ قبل الضريبة" : "Amount before VAT"}</Typography>
-          <Typography variant="body2">{money(invoiceAmounts.net)}</Typography>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, gap: 1 }}>
-          <Typography variant="body2">{language === "ar" ? "ضريبة القيمة المضافة 15% (مضمنة)" : "VAT 15% (included)"}</Typography>
-          <Typography variant="body2">{money(invoiceAmounts.vat)}</Typography>
-        </Box>
-        <Divider sx={{ borderStyle: "dashed", my: 1 }} />
-        <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "start", pt: 0.3, gap: 1 }}>
-          <Typography variant="subtitle1" sx={{ minWidth: 0, fontWeight: 900, fontSize: { xs: ".92rem", sm: "1rem" }, overflowWrap: "anywhere" }}>{language === "ar" ? "الإجمالي المستحق (شامل الضريبة)" : "Total due (VAT included)"}</Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900, whiteSpace: "nowrap", fontSize: { xs: ".92rem", sm: "1rem" } }}>{money(invoiceAmounts.gross)}</Typography>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1, gap: 1 }}>
-          <Typography variant="body2" fontWeight={800}>{language === "ar" ? "حالة الدفع" : "Payment"}</Typography>
-          <Chip
-            size="small"
-            color={order?.payment_status === "paid" ? "success" : order?.payment_status === "unpaid" ? "warning" : "default"}
-            label={order?.payment_status === "paid" ? (language === "ar" ? "مدفوع" : "Paid") : order?.payment_status === "unpaid" ? (language === "ar" ? "غير مدفوع" : "Unpaid") : (language === "ar" ? "غير محدد" : "Not set")}
-            sx={{ fontWeight: 850 }}
-          />
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.7, gap: 1 }}>
-          <Typography variant="body2" fontWeight={800}>{language === "ar" ? "طريقة الدفع" : "Payment method"}</Typography>
-          <Typography variant="body2" color="text.secondary">{paymentMethod}</Typography>
-        </Box>
-      </Box>
-
-      <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5, mt: 1 }}>
-        {storeInfo.phone && <Typography variant="caption" sx={{ fontWeight: 600 }}>{language === "ar" ? "هاتف" : "Phone"}: {storeInfo.phone}</Typography>}
-        {storeInfo.email && <Typography variant="caption" sx={{ fontWeight: 600 }}>{language === "ar" ? "البريد" : "Email"}: {storeInfo.email}</Typography>}
-      </Box>
-      <Typography variant="caption" align="center" display="block" sx={{ mt: 2, color: "text.secondary", fontWeight: 700 }}>
-        {storeInfo.receipt_footer || (language === "ar" ? "شكرًا لزيارتكم" : "Thank you for your visit")}
-      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5, mt: 1 }}>{storeInfo.phone && <Typography variant="caption" sx={{ fontWeight: 600 }}>{language === "ar" ? "هاتف" : "Phone"}: {storeInfo.phone}</Typography>}{storeInfo.email && <Typography variant="caption" sx={{ fontWeight: 600 }}>{language === "ar" ? "البريد" : "Email"}: {storeInfo.email}</Typography>}</Box>
+      {!isKitchen && <Typography variant="caption" align="center" display="block" sx={{ mt: 2, color: "text.secondary", fontWeight: 700 }}>{storeInfo.receipt_footer || (language === "ar" ? "شكرًا لزيارتكم" : "Thank you for your visit")}</Typography>}
     </Box>
   );
 }
@@ -179,7 +92,20 @@ function getPrintRetryState(error, orderId) {
   return null;
 }
 
-function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false, printMode = "order" }) {
+function InvoiceModal({
+  open,
+  onClose,
+  order,
+  autoPrint = false,
+  isTest = false,
+  printMode = "order",
+  isInternalReceipt = false,
+  suppressKitchenReprint = false,
+  isEditMode = false,
+  kitchenUpdateItems = [],
+  onKitchenTicketPrinted,
+  onKitchenUpdatePrinted,
+}) {
   const { t, language } = useLanguage();
   const { storeInfo = {} } = useStore();
   const { categoriesList = [], items: menuItems = [], menuLoading, menuError, refreshMenu } = useMenu();
@@ -192,11 +118,19 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
     () => buildOrderReceiptGroups(order, categoriesList, menuItems, language),
     [order, categoriesList, menuItems, language],
   );
+  const kitchenUpdateOrder = useMemo(
+    () => ({ ...order, items: Array.isArray(kitchenUpdateItems) ? kitchenUpdateItems : [] }),
+    [order, kitchenUpdateItems],
+  );
+  const kitchenUpdateGroups = useMemo(
+    () => isEditMode ? buildOrderReceiptGroups(kitchenUpdateOrder, categoriesList, menuItems, language) : [],
+    [isEditMode, kitchenUpdateOrder, categoriesList, menuItems, language],
+  );
 
   const getPrintErrorMessage = useCallback((error) => {
     const base = error?.message || (language === "ar" ? "تعذرت الطباعة عبر QZ Tray" : "QZ Tray printing failed");
     if (error?.kitchenPrintResult?.receiptCount) {
-      const partial = language === "ar" ? "تم إرسال تذكرة المطبخ قبل تعذر فاتورة الكاشير." : "The kitchen ticket was sent before the cashier receipt failed.";
+      const partial = language === "ar" ? "تم إرسال تذكرة المطبخ قبل تعذر الإيصال الداخلي." : "The kitchen ticket was sent before the internal receipt failed.";
       return `${base} ${partial}`;
     }
     if (!error?.printedReceiptCount) return base;
@@ -210,13 +144,13 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
     const { printers = [], receiptCount = 0, kitchenReceiptCount = 0, cashierReceiptCount = 0 } = result || {};
     const destinations = [];
     if (kitchenReceiptCount) destinations.push(language === "ar" ? "تذكرة المطبخ" : "kitchen ticket");
-    if (cashierReceiptCount) destinations.push(language === "ar" ? "فاتورة الكاشير" : "cashier receipt");
+    if (cashierReceiptCount) destinations.push(language === "ar" ? "الإيصال الداخلي" : "internal receipt");
     if (destinations.length) {
       const label = destinations.join(" + ");
       return language === "ar" ? `أُرسلت ${label} إلى: ${printers.join("، ")}` : `Sent ${label} to: ${printers.join(", ")}`;
     }
     if (language === "ar") {
-      const sentText = receiptCount > 1 ? `أُرسلت ${receiptCount} إيصالات` : "أُرسلت الفاتورة";
+      const sentText = receiptCount > 1 ? `أُرسلت ${receiptCount} إيصالات` : "أُرسل الإيصال الداخلي";
       return `${sentText} إلى: ${printers.join("، ")}`;
     }
     const receiptLabel = receiptCount === 1 ? "receipt" : "receipts";
@@ -227,7 +161,9 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
     if (menuLoading) throw new Error(language === "ar" ? "جارٍ تحميل إعدادات التصنيفات، حاول بعد لحظات." : "Category settings are still loading; try again shortly.");
     if (menuError) throw new Error(language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد تحميل المنيو قبل الطباعة." : "Category settings could not be loaded. Reload the menu before printing.");
     const settings = getPrinterSettings();
-    if (printMode === "cashier") {
+    if (printMode === "kitchen-update") return runKitchenPrint();
+    if (isTest) return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest, settings });
+    if (printMode === "cashier" || isInternalReceipt) {
       return printReceipt(order, storeInfo, {
         language,
         currency,
@@ -235,14 +171,17 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
         printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter),
       });
     }
-    if (isTest) return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest, settings });
     return printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings });
   };
 
   const runKitchenPrint = () => {
     if (menuLoading) throw new Error(language === "ar" ? "جارٍ تحميل إعدادات التصنيفات، حاول بعد لحظات." : "Category settings are still loading; try again shortly.");
     if (menuError) throw new Error(language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد تحميل المنيو قبل الطباعة." : "Category settings could not be loaded. Reload the menu before printing.");
-    return printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency });
+    const groups = isEditMode ? kitchenUpdateGroups : receiptGroups;
+    if (isEditMode && !groups.some((group) => group.items?.length)) {
+      throw new Error(language === "ar" ? "لا توجد أصناف جديدة أو معدلة لإرسالها للمطبخ." : "There are no new or changed items to send to the kitchen.");
+    }
+    return printKitchenTicketGroups(groups, storeInfo, { language, currency, settings: getPrinterSettings(), isModification: isEditMode });
   };
 
   useEffect(() => {
@@ -250,7 +189,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
       setPrintState(null);
       return undefined;
     }
-    if (!autoPrint || !order?.id || autoPrintedOrderRef.current === order.id || menuLoading) return undefined;
+    if (!autoPrint || isEditMode || !order?.id || autoPrintedOrderRef.current === order.id || menuLoading) return undefined;
     if (menuError) {
       setPrintState({ severity: "error", message: language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ لم تُطبع الفاتورة لتجنب دمج أصناف يفترض فصلها." : "Category settings could not be loaded; printing was paused to avoid combining items that should be separate." });
       return undefined;
@@ -269,15 +208,21 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
         .then((result) => {
           setRetryState(null);
           setPrintState({ severity: "success", message: getPrintSuccessMessage(result) });
+          if (!isTest && (result?.kitchenReceiptCount > 0 || (autoPrint === "kitchen" && result?.receiptCount > 0))) {
+            onKitchenTicketPrinted?.(order.id, order.items);
+          }
         })
         .catch((error) => {
           setRetryState(getPrintRetryState(error, order?.id));
           setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
+          if (!isTest && error?.kitchenPrintResult?.receiptCount > 0) {
+            onKitchenTicketPrinted?.(order.id, order.items);
+          }
         })
         .finally(() => setPrinting(false));
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [autoPrint, open, order?.id, order, storeInfo, language, currency, isTest, printMode, menuLoading, menuError, receiptGroups, getPrintErrorMessage, getPrintSuccessMessage]);
+  }, [autoPrint, open, order?.id, order, storeInfo, language, currency, isTest, printMode, isEditMode, menuLoading, menuError, receiptGroups, getPrintErrorMessage, getPrintSuccessMessage, onKitchenTicketPrinted]);
 
   if (!order) return null;
 
@@ -287,6 +232,9 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
   const paperWidth = printerSettings.paperWidth;
   const browserPageSize = paperWidth === "A4" ? "A4 portrait" : `${paperWidth} auto`;
   const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth;
+  const showKitchenPrintButton = isEditMode
+    ? kitchenUpdateItems.length > 0
+    : (!suppressKitchenReprint || order?._kitchenTicketSent === false);
 
   const handlePrint = async () => {
     setPrinting(true);
@@ -309,8 +257,12 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
     try {
       const result = await runKitchenPrint();
       setRetryState(null);
-      const prefix = language === "ar" ? (result.receiptCount > 1 ? "أُرسلت تذاكر المطبخ" : "أُرسلت تذكرة المطبخ") : (result.receiptCount > 1 ? "Kitchen tickets sent" : "Kitchen ticket sent");
+      const prefix = isEditMode
+        ? (language === "ar" ? (result.receiptCount > 1 ? "أُرسلت تحديثات المطبخ" : "أُرسل تحديث المطبخ") : (result.receiptCount > 1 ? "Kitchen updates sent" : "Kitchen update sent"))
+        : (language === "ar" ? (result.receiptCount > 1 ? "أُرسلت تذاكر المطبخ" : "أُرسلت تذكرة المطبخ") : (result.receiptCount > 1 ? "Kitchen tickets sent" : "Kitchen ticket sent"));
       setPrintState({ severity: "success", message: `${prefix}: ${result.printers.join(language === "ar" ? "، " : ", ")}` });
+      if (isEditMode) onKitchenUpdatePrinted?.(order.id, order.items);
+      else onKitchenTicketPrinted?.(order.id, order.items);
     } catch (error) {
       setRetryState(getPrintRetryState(error, order?.id));
       setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
@@ -338,14 +290,20 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
           message: getPrintSuccessMessage({ ...result, kitchenReceiptCount: 0, cashierReceiptCount: result.receiptCount }),
         });
       } else {
-        const result = await printKitchenTicketGroups(receiptGroups, storeInfo, {
+        const kitchenGroups = isEditMode ? kitchenUpdateGroups : receiptGroups;
+        const result = await printKitchenTicketGroups(kitchenGroups, storeInfo, {
           language,
           currency,
           settings: getPrinterSettings(),
+          isModification: isEditMode,
           alreadyPrintedByGroup: activeRetryState.alreadyPrintedByGroup,
         });
-        const prefix = language === "ar" ? "أُرسلت تذاكر المطبخ المتبقية" : "Remaining kitchen tickets sent";
+        const prefix = isEditMode
+          ? (language === "ar" ? "أُرسلت تحديثات المطبخ المتبقية" : "Remaining kitchen updates sent")
+          : (language === "ar" ? "أُرسلت تذاكر المطبخ المتبقية" : "Remaining kitchen tickets sent");
         setPrintState({ severity: "success", message: `${prefix}: ${result.printers.join(language === "ar" ? "، " : ", ")}` });
+        if (isEditMode) onKitchenUpdatePrinted?.(order.id, order.items);
+        else onKitchenTicketPrinted?.(order.id, order.items);
       }
       setRetryState(null);
     } catch (error) {
@@ -364,23 +322,12 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
       window.print();
       return;
     }
-    setPrinting(true);
-    setPrintState(null);
-    try {
-      await printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: printerSettings });
-      setPrintState({
-        severity: "info",
-        message: language === "ar"
-          ? "أُرسلت تذكرة المطبخ عبر QZ؛ أكمل طباعة إيصال الكاشير في نافذة النظام."
-          : "Kitchen ticket sent through QZ; complete the cashier receipt in the system dialog.",
-      });
-      window.setTimeout(() => window.print(), 100);
-    } catch (error) {
-      setRetryState(getPrintRetryState(error, order?.id));
-      setPrintState({ severity: "error", message: getPrintErrorMessage(error) });
-    } finally {
-      setPrinting(false);
+    if (printMode === "kitchen-update") {
+      await handleKitchenPrint();
+      return;
     }
+    // نافذة النظام مخصصة للإيصال الداخلي فقط؛ لا نعيد إرسال تذكرة مطبخ قد طُبعت.
+    window.print();
   };
 
   return (
@@ -422,7 +369,7 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
             ? (language === "ar" ? "أُرسلت تذكرة المطبخ. أعد محاولة إيصالات الكاشير غير المرسلة فقط لتجنب تكرار التذاكر." : "Kitchen tickets were sent. Retry only cashier receipts not yet sent to avoid duplicate tickets.")
             : (language === "ar" ? "أُرسلت بعض تذاكر المطبخ؛ ستُعاد التذاكر غير المرسلة فقط." : "Some kitchen tickets were sent; only unsent tickets will be retried.")}
         </Alert>}
-        {!isTest && order.payment_status === "unpaid" && !printPlan.cashier && <Alert severity="info" sx={{ mb: 1.5, "@media print": { display: "none" } }}>{language === "ar" ? "غير مدفوع: تُرسل تذكرة المطبخ فقط؛ تُتاح فاتورة الكاشير بعد تسجيل السداد." : "Unpaid: only the kitchen ticket is sent. The cashier receipt is available after payment is recorded."}</Alert>}
+        {!isTest && order.payment_status === "unpaid" && !printPlan.cashier && <Alert severity="info" sx={{ mb: 1.5, "@media print": { display: "none" } }}>{language === "ar" ? "غير مدفوع: تُرسل تذكرة المطبخ فقط؛ يتاح الإيصال الداخلي بعد تسجيل السداد." : "Unpaid: only the kitchen ticket is sent. The internal receipt is available after payment is recorded."}</Alert>}
         {menuError && (
           <Alert
             severity="warning"
@@ -432,34 +379,29 @@ function InvoiceModal({ open, onClose, order, autoPrint = false, isTest = false,
             {language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد المحاولة قبل الطباعة." : "Category printing settings could not be loaded. Retry before printing."}
           </Alert>
         )}
-        {receiptGroups.map((group) => (
-          <ReceiptPreview
-            key={group.key}
-            order={group.order}
-            storeInfo={storeInfo}
-            language={language}
-            currency={currency}
-            isTest={isTest}
-            receiptTitle={group.receiptTitle}
-            amounts={group.amounts}
-          />
-        ))}
+        <ReceiptPreview
+          order={printMode === "kitchen-update" ? kitchenUpdateOrder : order}
+          storeInfo={storeInfo}
+          language={language}
+          currency={currency}
+          isTest={isTest}
+          receiptType={printMode === "kitchen-update" ? "kitchen" : "cashier"}
+          receiptTitle={printMode === "kitchen-update" ? (language === "ar" ? "تعديل على الطلب" : "Order modification") : null}
+        />
       </DialogContent>
 
       <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, flexWrap: "wrap", gap: 1, "& .MuiButton-root": { minWidth: { xs: "100%", sm: "auto" } } }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
-        <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)} title={language === "ar" ? "يفتح حوار طباعة يدوي؛ الفاتورة العادية ترسل تذكرة المطبخ عبر QZ أولًا." : "Opens a manual print dialog; regular invoices send the kitchen ticket through QZ first."}>
-          {isTest
-            ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)")
-            : (language === "ar" ? "إيصال الكاشير عبر النظام" : "Cashier receipt (system dialog)")}
-        </Button>
+        {printMode !== "kitchen-update" && <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)} title={language === "ar" ? "يفتح نافذة طباعة الإيصال الداخلي فقط دون إعادة إرسال تذكرة المطبخ." : "Opens the internal-receipt print dialog only; it does not resend the kitchen ticket."}>
+          {isTest ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)") : (language === "ar" ? "الإيصال الداخلي عبر النظام" : "Internal receipt (system dialog)")}
+        </Button>}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
-          <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
-            {language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket"}
-          </Button>
-          <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
-            {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (language === "ar" ? "طباعة حسب حالة السداد" : "Print by payment status")}
-          </Button>
+          {showKitchenPrintButton && <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
+            {isEditMode ? (language === "ar" ? "طباعة تحديث المطبخ" : "Print kitchen update") : (language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket")}
+          </Button>}
+          {printMode !== "kitchen-update" && <Button variant="contained" startIcon={printing ? undefined : <PrintIcon />} onClick={handlePrint} color="primary" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)}>
+            {printing ? (language === "ar" ? "جارٍ الطباعة…" : "Printing…") : (isInternalReceipt ? (language === "ar" ? "طباعة الإيصال الداخلي" : "Print internal receipt") : (language === "ar" ? "طباعة حسب حالة السداد" : "Print by payment status"))}
+          </Button>}
         </Stack>
       </DialogActions>
     </Dialog>

@@ -357,9 +357,14 @@ export async function printKitchenTicketGroups(groups, storeInfo, options = {}) 
     }
     if ((printedByGroup[groupKey] || []).includes(printer)) continue;
     try {
-      const title = group.isSeparate && group.categoryName
-        ? (options.language === "en" ? `Kitchen ticket — ${group.categoryName}` : `تذكرة مطبخ — ${group.categoryName}`)
-        : null;
+      const categorySuffix = group.isSeparate && group.categoryName
+        ? (options.language === "en" ? ` — ${group.categoryName}` : ` — ${group.categoryName}`)
+        : "";
+      const title = options.isModification
+        ? (options.language === "en" ? `UPDATED ORDER${categorySuffix}` : `تعديل الطلب${categorySuffix}`)
+        : group.isSeparate && group.categoryName
+          ? (options.language === "en" ? `Kitchen ticket — ${group.categoryName}` : `تذكرة مطبخ — ${group.categoryName}`)
+          : options.receiptTitle || null;
       lastResult = await printReceipt(group.order, storeInfo, {
         ...options,
         receiptType: "kitchen",

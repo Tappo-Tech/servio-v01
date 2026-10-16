@@ -32,13 +32,13 @@ describe("receipt HTML", () => {
     expect(html).toContain(`size: ${expectedCssWidth} auto`);
   });
 
-  test("shows the included Saudi VAT breakdown without changing the total", () => {
-    const html = buildReceiptHtml({ order, language: "en", currency: "SAR" });
-    expect(html).toContain("Before VAT");
-    expect(html).toContain("VAT 15% included");
-    expect(html).toContain("Total due (VAT included)");
-    expect(html).toContain("100.00 SAR");
-    expect(html).toContain("15.00 SAR");
+  test("clearly labels the cashier print as internal and omits tax invoice fields", () => {
+    const html = buildReceiptHtml({ order, language: "en", currency: "SAR", storeInfo: { tax_number: "310000000000003" } });
+    expect(html).toContain("INTERNAL RECEIPT — NOT A TAX INVOICE");
+    expect(html).toContain("Total");
+    expect(html).not.toContain("VAT");
+    expect(html).not.toContain("Before VAT");
+    expect(html).not.toContain("310000000000003");
     expect(html).toContain("115.00 SAR");
   });
 
@@ -81,20 +81,31 @@ describe("receipt HTML", () => {
     expect(html).not.toContain("115.00");
   });
 
-  test("escapes a separate category receipt title and prints its allocated adjustment and VAT totals", () => {
+  test("escapes a supplied internal receipt title and shows only the full-order total", () => {
     const html = buildReceiptHtml({
       order: { ...order, total_price: 19, receipt_adjustment: -1 },
       language: "en",
       currency: "SAR",
-      receiptTitle: "Separate receipt — Drinks <fresh>",
-      taxBreakdown: { gross: 19, net: 16.52, vat: 2.48 },
+      receiptTitle: "Internal receipt — Drinks <fresh>",
     });
 
-    expect(html).toContain("Separate receipt — Drinks &lt;fresh&gt;");
+    expect(html).toContain("Internal receipt — Drinks &lt;fresh&gt;");
     expect(html).toContain("Order adjustment");
     expect(html).toContain("-1.00 SAR");
-    expect(html).toContain("16.52 SAR");
-    expect(html).toContain("2.48 SAR");
     expect(html).toContain("19.00 SAR");
+    expect(html).not.toContain("VAT");
+  });
+
+  test("marks kitchen changes as additions or cancellations without price fields", () => {
+    const html = buildReceiptHtml({
+      order: { ...order, items: [
+        { id: "tea", name: "Tea", quantity: 2, kitchenAction: "add" },
+        { id: "cake", name: "Cake", quantity: 1, kitchenAction: "remove" },
+      ] },
+      receiptType: "kitchen",
+    });
+    expect(html).toContain("إضافة");
+    expect(html).toContain("إلغاء");
+    expect(html).not.toContain("115.00");
   });
 });
