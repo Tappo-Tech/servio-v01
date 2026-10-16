@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useTenant } from "../../context/TenantContext";
-import { calculateInclusiveVat, toMinorUnits } from "../../utils/taxUtils";
+import { toMinorUnits } from "../../utils/taxUtils";
 import { getCartLineKey } from "../../utils/cartItemUtils";
 
 function CartDrawer({ open, close }) {
@@ -38,7 +38,6 @@ function CartDrawer({ open, close }) {
     0,
   );
   const totalPrice = totalMinorUnits / 100;
-  const vatBreakdown = calculateInclusiveVat(totalPrice);
   const itemCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
   const handleConfirmOrder = async () => {
@@ -174,25 +173,12 @@ function CartDrawer({ open, close }) {
           justifyContent: "start",
         }}
       >
-        <Box sx={{ mb: 1.2 }}>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: .6 }}>
-            الأسعار شاملة ضريبة القيمة المضافة 15%، والتفصيل أدناه من دون زيادة الإجمالي.
-          </Typography>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: .4 }}>
-            <Typography variant="caption" color="text.secondary">المبلغ قبل الضريبة</Typography>
-            <Typography variant="caption">{vatBreakdown.net.toFixed(2)} ر.س</Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="caption" color="text.secondary">VAT 15% (مضمنة)</Typography>
-            <Typography variant="caption">{vatBreakdown.vat.toFixed(2)} ر.س</Typography>
-          </Box>
-        </Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography
             variant="body1"
             sx={{ color: "text.secondary", fontWeight: 600 }}
           >
-            الإجمالي المستحق شامل الضريبة:
+            الإجمالي:
           </Typography>
           <Typography
             variant="h6"

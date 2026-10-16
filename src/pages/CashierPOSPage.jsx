@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -47,7 +47,8 @@ import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-con
 import { useShift } from "../context/ShiftContext";
 import { useUser } from "../context/UserContext";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
-import { calculateInclusiveVat, roundMoney, toMinorUnits } from "../utils/taxUtils";
+import { roundMoney, toMinorUnits } from "../utils/taxUtils";
+import { buildKitchenOrderDelta } from "../utils/orderKitchenDelta";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
 
@@ -57,7 +58,7 @@ const POS_CARD_ACCENTS = ["#F47920", "#2878C8", "#159A68", "#8B5CF6", "#D96210",
 const copy = {
   ar: {
     title: "كاشير — بيع جديد",
-    subtitle: "اختر الأصناف وعدّل السلة ثم اعتمد الطلب؛ تُطبع تذكرة المطبخ دائمًا، وتُضاف فاتورة الكاشير إذا كان مدفوعًا.",
+    subtitle: "اختر الأصناف واحفظ البيع. الإيصال المطبوع داخلي وليس فاتورة ضريبية.",
     back: "العودة للطلبات",
     search: "ابحث عن صنف",
     all: "الكل",
@@ -75,20 +76,21 @@ const copy = {
     splitPayment: "تقسيم الدفع",
     cashAmount: "المبلغ النقدي",
     cardAmount: "مبلغ الشبكة",
-    splitPaymentHint: "يجب أن يساوي مجموع النقد والشبكة إجمالي الفاتورة.",
+    splitPaymentHint: "يجب أن يساوي مجموع النقد والشبكة إجمالي الطلب.",
     dineIn: "محلي",
     takeaway: "سفري",
     tableNumber: "رقم الطاولة (اختياري)",
     tableNumberHint: "مثال: 4",
-    notes: "ملاحظات على الفاتورة (اختياري)",
-    vatNote: "الأسعار شاملة VAT 15%؛ نفصل الضريبة من الإجمالي من دون زيادته.",
-    net: "المبلغ قبل الضريبة",
-    vat: "ضريبة القيمة المضافة 15% (مضمنة)",
-    gross: "الإجمالي المستحق (شامل الضريبة)",
-    submit: "اعتماد البيع مكتملًا وطباعة الفاتورة",
+    notes: "ملاحظات الطلب (اختياري)",
+    gross: "الإجمالي",
+    submit: "حفظ البيع",
+    saveEdit: "حفظ التعديل",
+    editSaved: "تم حفظ التعديل. لم تتم إعادة طباعة تذكرة الطلب كاملة.",
+    kitchenUpdate: "طباعة تحديث المطبخ",
+    internalReceipt: "طباعة الإيصال الداخلي",
     submitting: "جارٍ حفظ البيع…",
-    saved: "تم تسجيل البيع كمكتمل وإضافته إلى سجل المبيعات وإجمالي اليوم.",
-    error: "تعذر حفظ الفاتورة. تحقق من الاتصال والصلاحية ثم حاول مرة أخرى.",
+    saved: "تم حفظ البيع وإضافته إلى سجل المبيعات وإجمالي اليوم.",
+    error: "تعذر حفظ الطلب. تحقق من الاتصال والصلاحية ثم حاول مرة أخرى.",
     noItems: "لا توجد أصناف متاحة تطابق البحث.",
     loading: "جارٍ تحميل المنيو…",
     reload: "إعادة المحاولة",
@@ -101,9 +103,9 @@ const copy = {
     cancel: "إلغاء",
     cashier: "طلب كاشير",
     printerSetup: "إعداد الطابعة",
-    autoPrint: "طباعة اختبار الطابعة تلقائيًا عبر QZ Tray",
-    printerHelp: "تُرسل الفاتورة إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
-    testPrint: "اكتشاف الطابعات / اختبار الفاتورة",
+    autoPrint: "طباعة الإيصال تلقائيًا بعد الحفظ عبر QZ Tray",
+    printerHelp: "يُرسل الإيصال الداخلي إلى الطابعات المختارة في إعداد QZ Tray. عند عدم توفر الجسر تبقى نافذة النظام كبديل يدوي.",
+    testPrint: "اكتشاف الطابعات / اختبار الإيصال",
     close: "إغلاق",
     printerTestItem: "اختبار الطباعة",
     printerTestLocation: "اختبار طابعة — لا يوجد طلب",
@@ -112,7 +114,7 @@ const copy = {
   },
   en: {
     title: "Cashier — New sale",
-    subtitle: "Choose items and save the sale; a kitchen ticket always prints, and paid sales also print the cashier invoice.",
+    subtitle: "Choose items and save the sale. Printed receipts are internal and are not tax invoices.",
     back: "Back to orders",
     search: "Search menu items",
     all: "All",
@@ -130,20 +132,21 @@ const copy = {
     splitPayment: "Split payment",
     cashAmount: "Cash amount",
     cardAmount: "Network amount",
-    splitPaymentHint: "Cash plus network must equal the invoice total.",
+    splitPaymentHint: "Cash plus network must equal the order total.",
     dineIn: "Dine-in",
     takeaway: "Takeaway",
     tableNumber: "Table number (optional)",
     tableNumberHint: "For example: 4",
-    notes: "Invoice/order notes (optional)",
-    vatNote: "Menu prices include 15% VAT; it is separated from the total without increasing it.",
-    net: "Amount before VAT",
-    vat: "VAT 15% (included)",
-    gross: "Amount due (VAT included)",
-    submit: "Complete sale and print invoice",
+    notes: "Order notes (optional)",
+    gross: "Total",
+    submit: "Save sale",
+    saveEdit: "Save changes",
+    editSaved: "Changes saved. The full kitchen ticket was not printed again.",
+    kitchenUpdate: "Print kitchen update",
+    internalReceipt: "Print internal receipt",
     submitting: "Saving sale…",
-    saved: "Sale marked completed and added to history and today's sales.",
-    error: "Could not save the invoice. Check the connection and access, then try again.",
+    saved: "Sale saved and added to history and today's sales.",
+    error: "Could not save the order. Check the connection and access, then try again.",
     noItems: "No available items match this search.",
     loading: "Loading menu…",
     reload: "Retry",
@@ -156,8 +159,8 @@ const copy = {
     cancel: "Cancel",
     cashier: "Cashier sale",
     printerSetup: "Printer setup",
-    autoPrint: "Automatically print the printer test through QZ Tray",
-    printerHelp: "The receipt is sent to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
+    autoPrint: "Automatically print the receipt after saving via QZ Tray",
+    printerHelp: "The internal receipt is sent to the printers selected in QZ Tray settings. If the bridge is unavailable, the system dialog remains available as a manual fallback.",
     testPrint: "Discover printers / test receipt",
     close: "Close",
     printerTestItem: "Printer test",
@@ -210,6 +213,9 @@ function CashierPOSPage() {
   const [addonDialogItem, setAddonDialogItem] = useState(null);
   const [addonDraft, setAddonDraft] = useState([]);
   const [invoiceIsTest, setInvoiceIsTest] = useState(false);
+  const [invoiceAutoPrint, setInvoiceAutoPrint] = useState(true);
+  const [invoiceIsEditMode, setInvoiceIsEditMode] = useState(false);
+  const [invoiceKitchenUpdateItems, setInvoiceKitchenUpdateItems] = useState([]);
   const [invoicePrintMode, setInvoicePrintMode] = useState("order");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
@@ -219,6 +225,8 @@ function CashierPOSPage() {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [unpaidOrders, setUnpaidOrders] = useState([]);
   const [editingOrderId, setEditingOrderId] = useState(null);
+  const [editingOrderSnapshot, setEditingOrderSnapshot] = useState(null);
+  const [savedEditOrder, setSavedEditOrder] = useState(null);
   const [autoPrintAfterSave, setAutoPrintAfterSave] = useState(() => {
     try {
       return window.localStorage.getItem(AUTO_PRINT_KEY) !== "false";
@@ -226,6 +234,25 @@ function CashierPOSPage() {
       return true;
     }
   });
+
+  const loadOrderForEdit = useCallback((order) => {
+    const tableValue = String(order?.table_number || "");
+    const isTakeaway = /^(takeaway|سفري)$/i.test(tableValue.trim());
+    const parsedTable = isTakeaway ? "" : tableValue.replace(/^(محلي|dine[ -]?in)(?:\s*[-–:]\s*)?/i, "").trim();
+    setCart(Array.isArray(order?.items) ? order.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
+    setOrderType(isTakeaway ? "takeaway" : "dineIn");
+    setTableNumber(parsedTable);
+    setPaymentStatus(order?.payment_status === "paid" ? "paid" : "unpaid");
+    setPaymentMethod(order?.payment_method || null);
+    setCashAmount(Number(order?.cash_amount ?? (order?.payment_method === "cash" ? order?.total_price : 0)) || 0);
+    setCardAmount(Number(order?.card_amount ?? (order?.payment_method === "card" ? order?.total_price : 0)) || 0);
+    setNotes(order?.notes || "");
+    setEditingOrderId(order?.id || null);
+    setEditingOrderSnapshot(order || null);
+    setSavedEditOrder(null);
+    setCheckoutError("");
+    setSavedMessage(language === "ar" ? "تم تحميل الطلب في السلة للتعديل." : "The order is loaded into the cart for editing.");
+  }, [language]);
 
   useEffect(() => {
     if (!tenantId) return;
@@ -261,15 +288,9 @@ function CashierPOSPage() {
   useEffect(() => {
     const editOrder = location.state?.editOrder;
     if (!editOrder?.id || editingOrderId === editOrder.id) return;
-    setCart(Array.isArray(editOrder.items) ? editOrder.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
-    setPaymentStatus(editOrder.payment_status === "paid" ? "paid" : "unpaid");
-    setPaymentMethod(editOrder.payment_method || null);
-    setCashAmount(Number(editOrder.cash_amount ?? (editOrder.payment_method === "cash" ? editOrder.total_price : 0)) || 0);
-    setCardAmount(Number(editOrder.card_amount ?? (editOrder.payment_method === "card" ? editOrder.total_price : 0)) || 0);
-    setNotes(editOrder.notes || "");
-    setEditingOrderId(editOrder.id);
+    loadOrderForEdit(editOrder);
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-  }, [location.state, editingOrderId]);
+  }, [location.state, editingOrderId, loadOrderForEdit]);
 
   const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
   const addonChoiceCounts = useMemo(() => new Map(availableItems.map((item) => (
@@ -327,7 +348,6 @@ function CashierPOSPage() {
   );
   const grossAmount = grossMinorUnits / 100;
   const cartItemCount = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-  const breakdown = calculateInclusiveVat(grossAmount);
   const amount = (value) => `${formatAmount(value, language)} ${currency}`;
 
   const addItem = (menuItem, selectedAddons = []) => {
@@ -386,6 +406,46 @@ function CashierPOSPage() {
       .filter((item) => item.quantity > 0));
   };
 
+  const markKitchenTicketPrinted = (orderId, printedItems = []) => {
+    const printMetadata = { _kitchenTicketSent: true, _kitchenPrintBaseline: printedItems, _pendingKitchenDelta: [] };
+    setUnpaidOrders((current) => current.map((order) => order.id === orderId ? { ...order, ...printMetadata } : order));
+    setInvoiceOrder((current) => current?.id === orderId ? { ...current, ...printMetadata } : current);
+    setSavedEditOrder((current) => current?.id === orderId ? { ...current, ...printMetadata } : current);
+  };
+
+  const markKitchenUpdatePrinted = (orderId, currentItems = []) => {
+    const orderNumber = savedEditOrder?.id === orderId
+      ? savedEditOrder.order_number
+      : unpaidOrders.find((order) => order.id === orderId)?.order_number;
+    const printMetadata = { _kitchenTicketSent: true, _kitchenPrintBaseline: currentItems, _pendingKitchenDelta: [] };
+    setUnpaidOrders((current) => current.map((order) => order.id === orderId ? { ...order, ...printMetadata } : order));
+    setSavedEditOrder((current) => current?.id === orderId ? { ...current, ...printMetadata } : current);
+    setInvoiceKitchenUpdateItems([]);
+    setInvoiceOrder(null);
+    setInvoiceIsEditMode(false);
+    setSavedMessage(language === "ar" ? `تم إرسال تحديث المطبخ للطلب #${orderNumber || "—"}.` : `Kitchen update sent for order #${orderNumber || "—"}.`);
+  };
+
+  const openKitchenUpdate = (order) => {
+    const delta = Array.isArray(order?._pendingKitchenDelta) ? order._pendingKitchenDelta : [];
+    if (!delta.length) return;
+    setInvoiceOrder(order);
+    setInvoiceIsTest(false);
+    setInvoiceAutoPrint(false);
+    setInvoicePrintMode("kitchen-update");
+    setInvoiceIsEditMode(true);
+    setInvoiceKitchenUpdateItems(delta);
+  };
+
+  const openInternalReceipt = (order) => {
+    setInvoiceOrder(order);
+    setInvoiceIsTest(false);
+    setInvoiceAutoPrint(false);
+    setInvoicePrintMode("cashier");
+    setInvoiceIsEditMode(true);
+    setInvoiceKitchenUpdateItems(Array.isArray(order?._pendingKitchenDelta) ? order._pendingKitchenDelta : []);
+  };
+
   const handleAutoPrintChange = (event) => {
     const enabled = event.target.checked;
     setAutoPrintAfterSave(enabled);
@@ -402,6 +462,10 @@ function CashierPOSPage() {
     setCheckoutError("");
     setSavedMessage("");
     setInvoiceIsTest(true);
+    setInvoiceAutoPrint(autoPrintAfterSave);
+    setInvoiceIsEditMode(false);
+    setInvoiceKitchenUpdateItems([]);
+    setInvoicePrintMode("order");
     setInvoiceOrder({
       id: `PRINTER-TEST-${now.getTime()}`,
       created_at: now,
@@ -423,9 +487,16 @@ function CashierPOSPage() {
     setCheckoutError("");
     setSavedMessage("");
     try {
+      const isEditing = Boolean(editingOrderId);
+      const previousOrder = editingOrderSnapshot || unpaidOrders.find((order) => order.id === editingOrderId) || null;
+      const hasPrintedKitchenTicket = isEditing ? previousOrder?._kitchenTicketSent !== false : false;
+      const kitchenBaseline = isEditing
+        ? (hasPrintedKitchenTicket ? (previousOrder?._kitchenPrintBaseline || previousOrder?.items || []) : [])
+        : [];
+      const kitchenDelta = isEditing ? buildKitchenOrderDelta(kitchenBaseline, cart) : [];
       const orderInput = {
         items: cart,
-        // المبلغ المحفوظ مستحق شامل VAT؛ والبيع النقدي المكتمل لا يمر بطابور المطبخ.
+        // يحفظ الإجمالي كما هو من أسعار أصناف المنيو الحالية.
         total_price: grossAmount,
         table_number: orderType === "takeaway"
           ? text.takeaway
@@ -437,27 +508,42 @@ function CashierPOSPage() {
         card_amount: paymentMethod === "split" ? Number(cardAmount || 0) : paymentMethod === "card" ? grossAmount : 0,
         completeImmediately: true,
       };
-      const result = editingOrderId
+      const result = isEditing
         ? await updateOrder(editingOrderId, orderInput)
         : await addOrder(orderInput);
       if (result?.error || !result?.data) throw result?.error || new Error(text.error);
+      const savedOrder = isEditing
+        ? {
+          ...result.data,
+          _kitchenTicketSent: hasPrintedKitchenTicket,
+          _kitchenPrintBaseline: kitchenBaseline,
+          _pendingKitchenDelta: kitchenDelta,
+        }
+        : { ...result.data, _kitchenTicketSent: false, _kitchenPrintBaseline: [], _pendingKitchenDelta: [] };
       setInvoiceIsTest(false);
+      setInvoiceAutoPrint(isEditing ? false : autoPrintAfterSave);
+      setInvoiceIsEditMode(isEditing);
+      setInvoiceKitchenUpdateItems(kitchenDelta);
       setInvoicePrintMode("order");
-      setInvoiceOrder(result.data);
+      setInvoiceOrder(savedOrder);
       if (paymentStatus !== "paid") {
-        setUnpaidOrders((current) => editingOrderId
-          ? current.map((row) => row.id === editingOrderId ? result.data : row)
-          : [...current.filter((row) => row.id !== result.data.id), result.data]);
-      } else if (editingOrderId) {
+        setUnpaidOrders((current) => isEditing
+          ? current.map((row) => row.id === editingOrderId ? savedOrder : row)
+          : [...current.filter((row) => row.id !== savedOrder.id), savedOrder]);
+      } else if (isEditing) {
         setUnpaidOrders((current) => current.filter((row) => row.id !== editingOrderId));
       }
+      if (isEditing) setSavedEditOrder(savedOrder);
       setCart([]);
       setNotes("");
       setPaymentStatus("unpaid");
       setPaymentMethod(null);
       setEditingOrderId(null);
+      setEditingOrderSnapshot(null);
       setCartDrawerOpen(false);
-      setSavedMessage(text.saved);
+      setSavedMessage(isEditing
+        ? `${text.editSaved}${savedOrder.order_number ? ` #${savedOrder.order_number}` : ""}`
+        : text.saved);
     } catch (error) {
       console.error("تعذر حفظ بيع الكاشير:", { code: error?.code, status: error?.status, message: error?.message });
       setCheckoutError(text.error);
@@ -475,9 +561,12 @@ function CashierPOSPage() {
     const paidOrder = { ...order, payment_status: "paid", paid_at: new Date().toISOString() };
     setUnpaidOrders((current) => current.filter((row) => row.id !== order.id));
     setInvoiceIsTest(false);
+    setInvoiceAutoPrint(true);
+    setInvoiceIsEditMode(false);
+    setInvoiceKitchenUpdateItems([]);
     setInvoicePrintMode("cashier");
     setInvoiceOrder(paidOrder);
-    setSavedMessage(language === "ar" ? "تم تسجيل السداد وطباعة فاتورة الكاشير فقط." : "Payment recorded and cashier invoice printed only.");
+    setSavedMessage(language === "ar" ? "تم تسجيل السداد؛ سيُطبع الإيصال الداخلي فقط دون تكرار تذكرة المطبخ." : "Payment recorded; only the internal receipt will print, without resending the kitchen ticket.");
   };
 
   const confirmDeleteUnpaidOrder = async () => {
@@ -493,18 +582,14 @@ function CashierPOSPage() {
   };
 
   const editUnpaidOrder = (order) => {
-    setCart(Array.isArray(order.items) ? order.items.map((item) => ({ ...item, cartItemId: item.cartItemId || uuidV4(), quantity: Number(item.quantity || 1) })) : []);
-    setPaymentStatus(order.payment_status === "paid" ? "paid" : "unpaid");
-    setPaymentMethod(order.payment_method || null);
-    setNotes(order.notes || "");
-    setEditingOrderId(order.id);
-    setCheckoutError("");
-    setSavedMessage(language === "ar" ? "تم تحميل الطلب في السلة للتعديل." : "The order is loaded into the cart for editing.");
+    loadOrderForEdit(order);
   };
 
   const closeInvoice = () => {
     setInvoiceOrder(null);
     setInvoiceIsTest(false);
+    setInvoiceIsEditMode(false);
+    setInvoiceKitchenUpdateItems([]);
     setInvoicePrintMode("order");
   };
 
@@ -587,28 +672,36 @@ function CashierPOSPage() {
 
       {cart.length > 0 && (
         <Box sx={{ mt: 1.25, p: 1.35, borderRadius: 2.2, bgcolor: "#f7f8fb", border: "1px solid rgba(23,26,47,.07)" }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: .8, lineHeight: 1.5 }}>{text.vatNote}</Typography>
           <Stack spacing={.65}>
-            <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.net}</Typography><Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{amount(breakdown.net)}</Typography></Stack>
-            <Stack direction="row" justifyContent="space-between" gap={1}><Typography variant="body2" color="text.secondary">{text.vat}</Typography><Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{amount(breakdown.vat)}</Typography></Stack>
-            <Divider />
             <Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={950} sx={{ minWidth: 0 }}>{text.gross}</Typography><Typography fontWeight={950} color="primary.main" sx={{ whiteSpace: "nowrap" }}>{amount(grossAmount)}</Typography></Stack>
           </Stack>
         </Box>
       )}
 
       {savedMessage && <Alert severity="success" sx={{ mt: 1.2 }}>{savedMessage}</Alert>}
+      {savedEditOrder && (
+        <Alert severity="info" sx={{ mt: 1.2 }}>
+          <Typography variant="body2" fontWeight={850} sx={{ mb: .75 }}>
+            {language === "ar" ? `الطلب #${savedEditOrder.order_number || "—"} محفوظ.` : `Order #${savedEditOrder.order_number || "—"} saved.`}
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={.6}>
+            {savedEditOrder._pendingKitchenDelta?.length > 0 && <Button size="small" variant="outlined" onClick={() => openKitchenUpdate(savedEditOrder)}>{text.kitchenUpdate}</Button>}
+            {savedEditOrder.payment_status === "paid" && <Button size="small" variant="outlined" onClick={() => openInternalReceipt(savedEditOrder)}>{text.internalReceipt}</Button>}
+          </Stack>
+        </Alert>
+      )}
       {shiftRequired && !currentShift && <Alert severity="warning" sx={{ mt: 1.2, borderRadius: 2 }}>{text.shiftRequired}</Alert>}
       {checkoutError && <Alert severity="error" sx={{ mt: 1.2 }}>{checkoutError}</Alert>}
       {unpaidOrders.length > 0 && (
         <Box sx={{ mt: 1.5, p: 1.35, borderRadius: 2.2, bgcolor: "rgba(244,121,32,.07)", border: "1px solid", borderColor: "warning.light" }}>
           <Typography fontWeight={900} sx={{ mb: .35 }}>{language === "ar" ? "أصناف معلقة — بانتظار الدفع" : "Pending items — awaiting payment"}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{language === "ar" ? "تظل الطلبات هنا بعد طباعة تذكرة المطبخ حتى تسجيل السداد، ثم تُطبع فاتورة الكاشير." : "Orders stay here after the kitchen ticket prints until payment is recorded, then the cashier invoice prints."}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{language === "ar" ? "تظل الطلبات هنا حتى تسجيل السداد. بعد التعديل تُطبع الأصناف الجديدة أو المتغيرة فقط عند اختيارك." : "Orders stay here until payment is recorded. After an edit, only new or changed items print when you choose."}</Typography>
           <Stack spacing={.8}>
             {unpaidOrders.map((order) => (
               <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
                 <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{order.order_number || order.displayOrderNumber || "—"} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
-                <Stack direction="row" spacing={.6}>
+                <Stack direction="row" spacing={.35} useFlexGap flexWrap="wrap" justifyContent="flex-end">
+                  {order._pendingKitchenDelta?.length > 0 && <Button size="small" variant="outlined" onClick={() => openKitchenUpdate(order)} sx={{ minWidth: 0, px: .8 }}>{text.kitchenUpdate}</Button>}
                   <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
                   <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
                   <IconButton size="small" color="error" aria-label={language === "ar" ? "حذف الطلب المعلق" : "Delete pending order"} onClick={() => setDeleteTarget(order)}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton>
@@ -620,7 +713,7 @@ function CashierPOSPage() {
       )}
       <Box sx={{ position: mobileView ? "sticky" : "static", bottom: 0, pt: 1.2, bgcolor: mobileView ? "background.paper" : "transparent" }}>
         <Button fullWidth variant="contained" size="large" startIcon={saving ? <CircularProgress size={19} color="inherit" /> : <ShoppingCartCheckoutRoundedIcon />} disabled={!tenantId || cart.length === 0 || saving || (shiftRequired && !currentShift?.id)} onClick={submitOrder} sx={{ py: 1.2, minHeight: 50, borderRadius: 2.2, fontWeight: 900 }}>
-          {saving ? text.submitting : text.submit}
+          {saving ? text.submitting : editingOrderId ? text.saveEdit : text.submit}
         </Button>
       </Box>
     </Box>
@@ -702,7 +795,7 @@ function CashierPOSPage() {
               <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
               <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
             </Stack>
-            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, gridRow: { xs: "3", md: "3" }, minHeight: 0, overflowX: { xs: "auto", md: "visible" }, overflowY: "visible", alignSelf: "start", pb: 1, mb: .5, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
+            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, gridRow: { xs: "3", md: "3" }, position: { md: "sticky" }, top: { md: 12 }, zIndex: 2, maxHeight: { md: "calc(100dvh - 150px)" }, minHeight: 0, overflowX: { xs: "auto", md: "visible" }, overflowY: { xs: "visible", md: "auto" }, alignSelf: "start", pb: 1, mb: .5, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {orderedCategories.map((category) => (
                 <Chip
@@ -783,7 +876,7 @@ function CashierPOSPage() {
             </Box>
           </Paper>
 
-          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
+          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, position: { sm: "sticky" }, top: { sm: 12 }, alignSelf: "start", maxHeight: { sm: "calc(100dvh - 24px)" }, overflowY: { sm: "auto" }, overscrollBehaviorY: "auto", p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
             {renderCartContents(false)}
           </Paper>
         </Box>
@@ -928,9 +1021,15 @@ function CashierPOSPage() {
         open={Boolean(invoiceOrder)}
         onClose={closeInvoice}
         order={invoiceOrder}
-        autoPrint={invoiceIsTest ? autoPrintAfterSave : true}
+        autoPrint={invoiceAutoPrint}
         isTest={invoiceIsTest}
         printMode={invoicePrintMode}
+        isInternalReceipt
+        suppressKitchenReprint
+        isEditMode={invoiceIsEditMode}
+        kitchenUpdateItems={invoiceKitchenUpdateItems}
+        onKitchenTicketPrinted={markKitchenTicketPrinted}
+        onKitchenUpdatePrinted={markKitchenUpdatePrinted}
       />
     </Box>
   );

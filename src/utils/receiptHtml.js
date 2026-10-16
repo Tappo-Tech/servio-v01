@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { calculateInclusiveVat, roundMoney } from "./taxUtils";
+import { roundMoney } from "./taxUtils";
 
 const PAPER_SIZES = {
   "58mm": { page: 58, content: 54 },
@@ -37,7 +37,12 @@ function getItemRows(items, labels, language, formatMoney, receiptType) {
       : "";
 
     if (receiptType === "kitchen") {
-      return `<div class="item-group"><div class="kitchen-item"><strong>${escapeReceiptHtml(quantity)} ×</strong><strong class="kitchen-name">${name}</strong></div>${addonLine}</div>`;
+      const actionLabel = item?.kitchenAction === "remove"
+        ? `<span class="kitchen-action cancel">${labels.actionRemove}:</span>`
+        : item?.kitchenAction === "add"
+          ? `<span class="kitchen-action add">${labels.actionAdd}:</span>`
+          : "";
+      return `<div class="item-group"><div class="kitchen-item">${actionLabel}<strong>${escapeReceiptHtml(quantity)} ×</strong><strong class="kitchen-name">${name}</strong></div>${addonLine}</div>`;
     }
 
     const lineTotal = roundMoney(Number(item?.price || 0) * quantity);
@@ -53,7 +58,6 @@ export function buildReceiptHtml({
   paperWidth = "80mm",
   isTest = false,
   receiptTitle = null,
-  taxBreakdown = null,
   receiptType = "cashier",
 }) {
   const paper = PAPER_SIZES[paperWidth] || PAPER_SIZES["80mm"];
@@ -61,17 +65,17 @@ export function buildReceiptHtml({
   const isKitchen = receiptType === "kitchen";
   const labels = language === "en"
     ? {
-      invoice: "Cashier receipt", kitchen: "Kitchen ticket", order: "Order", table: "Table",
-      notes: "Notes", addons: "Add-ons", adjustment: "Order adjustment", net: "Before VAT",
-      vat: "VAT 15% included", total: "Total due (VAT included)", test: "PRINTER TEST — NOT A SALE",
-      amountNote: "Prices include 15% Saudi VAT.", paid: "Paid", unpaid: "Unpaid", unknown: "Not set", itemCount: "Items",
+      invoice: "INTERNAL RECEIPT — NOT A TAX INVOICE", kitchen: "Kitchen ticket", order: "Order", table: "Table",
+      notes: "Notes", addons: "Add-ons", adjustment: "Order adjustment", total: "Total",
+      test: "PRINTER TEST — NOT A SALE", paid: "Paid", unpaid: "Unpaid", unknown: "Not set", itemCount: "Items",
+      actionAdd: "ADD", actionRemove: "CANCEL",
       paymentMethod: "Payment method", methodUnknown: "Not specified", cash: "Cash", card: "Card / network (mada)", split: "Cash + network", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other",
     }
     : {
-      invoice: "فاتورة الكاشير", kitchen: "تذكرة المطبخ", order: "رقم الطلب", table: "الطاولة",
-      notes: "ملاحظات", addons: "إضافات", adjustment: "تسوية الطلب", net: "المبلغ قبل الضريبة",
-      vat: "ضريبة القيمة المضافة 15% (مضمنة)", total: "الإجمالي المستحق (شامل الضريبة)", test: "اختبار طابعة — ليست فاتورة بيع",
-      amountNote: "أسعار الأصناف شاملة لضريبة القيمة المضافة 15%.", paid: "مدفوع", unpaid: "غير مدفوع", unknown: "غير محدد", itemCount: "عدد الأصناف",
+      invoice: "إيصال داخلي — ليس فاتورة ضريبية", kitchen: "تذكرة المطبخ", order: "رقم الطلب", table: "الطاولة",
+      notes: "ملاحظات", addons: "إضافات", adjustment: "تسوية الطلب", total: "الإجمالي",
+      test: "اختبار طابعة — ليس بيعًا", paid: "مدفوع", unpaid: "غير مدفوع", unknown: "غير محدد", itemCount: "عدد الأصناف",
+      actionAdd: "إضافة", actionRemove: "إلغاء",
       paymentMethod: "طريقة الدفع", methodUnknown: "غير محددة", cash: "نقدًا", card: "بطاقة / شبكة (مدى)", split: "نقدًا + شبكة", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى",
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
@@ -101,6 +105,8 @@ export function buildReceiptHtml({
       .kitchen-item { display: flex; align-items: flex-start; justify-content: flex-start; gap: 2mm; direction: ${direction}; font-size: 13pt; line-height: 1.35; }
       .kitchen-item strong { font-weight: 900; }
       .kitchen-name { overflow-wrap: anywhere; }
+      .kitchen-action { display: inline-block; padding: 0 1mm; border: 1px solid #111; font-size: 9pt; font-weight: 900; }
+      .kitchen-action.cancel { border-style: dashed; }
       .muted { font-size: 10pt; }
       .addons { margin-top: 1mm; padding-inline-start: 3mm; font-weight: 700; }
       .count { font-weight: 900; }
@@ -114,15 +120,10 @@ export function buildReceiptHtml({
     </main></body></html>`;
   }
 
-  const hasTaxBreakdown = taxBreakdown && ["net", "vat", "gross"].every((key) => Number.isFinite(Number(taxBreakdown[key])));
-  const amounts = hasTaxBreakdown
-    ? { net: Number(taxBreakdown.net), vat: Number(taxBreakdown.vat), gross: Number(taxBreakdown.gross) }
-    : calculateInclusiveVat(order?.total_price);
   const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const storeName = escapeReceiptHtml(storeInfo.store_name || (language === "en" ? "SERVIO Store" : "متجر SERVIO"));
   const safeImage = safeReceiptImageSource(storeInfo.logo_url) || "/logo-icon.webp";
   const logo = `<img class="logo" src="${escapeReceiptHtml(safeImage)}" alt="${escapeReceiptHtml(storeName)}" crossorigin="anonymous" onerror="this.onerror=null;this.src='/logo-icon.webp'">`;
-  const taxNumber = storeInfo.tax_number ? `<div>${language === "en" ? "VAT No." : "الرقم الضريبي"}: ${escapeReceiptHtml(storeInfo.tax_number)}</div>` : "";
   const address = storeInfo.address ? `<div>${escapeReceiptHtml(storeInfo.address)}</div>` : "";
   const contact = [
     storeInfo.phone && `${language === "en" ? "Phone" : "هاتف"}: ${escapeReceiptHtml(storeInfo.phone)}`,
@@ -165,11 +166,10 @@ export function buildReceiptHtml({
     .notes { margin: 2mm 0; white-space: pre-wrap; }
     .footer { margin-top: 4mm; font-weight: 700; }
   </style></head><body><main class="receipt">
-    <header class="center">${logo}<h1 class="store">${storeName}</h1>${taxNumber}${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
+    <header class="center">${logo}<h1 class="store">${storeName}</h1>${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${receiptTitle ? `<div class="muted">${labels.invoice}</div>` : ""}${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
     <hr class="rule"><div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
     <hr class="rule"><section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>${notes}
-    <hr class="rule"><div class="muted">${labels.amountNote}</div>${adjustmentRow}<div class="row amount-row"><span>${labels.net}</span><span>${formatMoney(amounts.net)}</span></div><div class="row amount-row"><span>${labels.vat}</span><span>${formatMoney(amounts.vat)}</span></div>
-    <hr class="rule"><div class="row total"><span>${labels.total}</span><span>${formatMoney(amounts.gross)}</span></div><div class="row payment"><span>${paymentLabel}</span><span>${escapeReceiptHtml(paymentStatus)}</span></div><div class="row payment"><span>${labels.paymentMethod}</span><span>${escapeReceiptHtml(paymentMethod)}</span></div>${splitPaymentRows}<hr class="rule">
+    <hr class="rule">${adjustmentRow}<div class="row total"><span>${labels.total}</span><span>${formatMoney(order?.total_price)}</span></div><div class="row payment"><span>${paymentLabel}</span><span>${escapeReceiptHtml(paymentStatus)}</span></div><div class="row payment"><span>${labels.paymentMethod}</span><span>${escapeReceiptHtml(paymentMethod)}</span></div>${splitPaymentRows}<hr class="rule">
     <footer class="center muted">${contact}<div class="footer">${footer}</div></footer>
   </main></body></html>`;
 }
