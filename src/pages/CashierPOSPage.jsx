@@ -537,7 +537,7 @@ function CashierPOSPage() {
       {cart.length === 0 ? (
         <Typography color="text.secondary" align="center" sx={{ py: 5 }}>{text.empty}</Typography>
       ) : (
-        <Stack spacing={1} sx={{ py: 1.1, maxHeight: mobileView ? "30dvh" : { sm: "min(32vh, 300px)", lg: "min(38vh, 420px)" }, overflowY: "auto", overscrollBehavior: "contain", pr: .25 }}>
+        <Stack spacing={1} sx={{ py: 1.1, pr: .25 }}>
           {cart.map((item, itemIndex) => {
             const lineTotal = toMinorUnits(item.price) * item.quantity / 100;
             const lineId = getCartLineKey(item);
@@ -627,7 +627,7 @@ function CashierPOSPage() {
   );
 
   return (
-    <Box dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, background: "radial-gradient(circle at 84% 4%, rgba(244,121,32,.14), transparent 23%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 46%, #eef1f7 100%)", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 } }}>
+    <Box className="cashier-pos-page" dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, background: "radial-gradient(circle at 84% 4%, rgba(244,121,32,.14), transparent 23%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 46%, #eef1f7 100%)", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 }, "& .MuiPaper-root, & .MuiCard-root": { backdropFilter: "none", WebkitBackdropFilter: "none", boxShadow: "0 5px 16px rgba(23,26,47,.045)" } }}>
       <NewTableOrderAlert />
       <Box sx={{ maxWidth: 1500, minWidth: 0, mx: "auto" }}>
         <CashierShiftGate />
@@ -684,7 +684,7 @@ function CashierPOSPage() {
         </Paper>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, maxHeight: { sm: "calc(100vh - 104px)" }, overflow: "hidden", overscrollBehavior: "contain", display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, gridTemplateRows: { xs: filtersOpen ? "auto auto auto minmax(0,1fr)" : "auto auto minmax(0,1fr)", md: "auto auto minmax(0,1fr)" }, columnGap: { md: 1.8 }, alignItems: "stretch" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, gridTemplateRows: "auto auto auto auto", columnGap: { md: 1.8 }, alignItems: "start" }}>
             <TextField
               fullWidth
               size="small"
@@ -702,7 +702,7 @@ function CashierPOSPage() {
               <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
               <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
             </Stack>
-            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, gridRow: { xs: "3", md: "3" }, minHeight: 0, overflowX: { xs: "auto", md: "hidden" }, overflowY: { md: "auto" }, alignSelf: "stretch", zIndex: 2, pb: 1.2, mb: .8, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
+            {filtersOpen && <Stack direction={{ xs: "row", md: "column" }} spacing={0.8} sx={{ gridColumn: { xs: "1", md: "1" }, gridRow: { xs: "3", md: "3" }, minHeight: 0, overflowX: { xs: "auto", md: "visible" }, overflowY: "visible", alignSelf: "start", pb: 1, mb: .5, maxWidth: "100%", scrollbarWidth: "thin", "& > *": { flexShrink: 0, justifyContent: { md: "flex-start" }, width: { md: "100%" }, minHeight: { md: 42 }, borderRadius: { md: 1.8 } } }}>
               <Chip label={text.all} clickable color={selectedCategory === "all" ? "primary" : "default"} variant={selectedCategory === "all" ? "filled" : "outlined"} onClick={() => setSelectedCategory("all")} />
               {orderedCategories.map((category) => (
                 <Chip
@@ -722,12 +722,12 @@ function CashierPOSPage() {
                   onDrop={(event) => { event.preventDefault(); moveCategoryBefore(category.id); stopCategoryHold(); }}
                   onDragEnd={stopCategoryHold}
                   title={language === "ar" ? "اضغط باستمرار ثم اسحب لترتيب الفلتر" : "Press and hold, then drag to reorder this filter"}
-                  sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
+                  sx={{ opacity: draggingCategory === String(category.id) ? .55 : 1, cursor: draggingCategory ? "grabbing" : "grab", userSelect: "none", touchAction: "auto" }}
                 />
               ))}
             </Stack>}
 
-            <Box sx={{ gridColumn: { xs: "1", md: filtersOpen ? "2" : "1" }, gridRow: { xs: filtersOpen ? "4" : "3", md: "3" }, minWidth: 0, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", scrollbarWidth: "thin", pr: { md: .35 } }}>
+            <Box sx={{ gridColumn: { xs: "1", md: filtersOpen ? "2" : "1" }, gridRow: { xs: filtersOpen ? "4" : "3", md: "3" }, minWidth: 0, minHeight: 0, pr: { md: .35 } }}>
             {tenantLoading || menuLoading ? (
               <Box sx={{ py: 8, display: "grid", justifyItems: "center", gap: 1 }}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Box>
             ) : menuError ? (
@@ -762,7 +762,7 @@ function CashierPOSPage() {
                       ) : (
                         <Box sx={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "primary.main", background: "linear-gradient(145deg, rgba(244,121,32,.10), rgba(23,26,47,.035))" }}><ReceiptLongRoundedIcon sx={{ fontSize: 34, opacity: .8 }} /></Box>
                       )}
-                      {category && <Chip size="small" label={language === "en" ? (category.name_en || category.name) : category.name} sx={{ position: "absolute", top: 8, insetInlineStart: 8, bgcolor: "rgba(255,255,255,.92)", backdropFilter: "blur(8px)", fontWeight: 800, maxWidth: "80%", height: 24 }} />}
+                      {category && <Chip size="small" label={language === "en" ? (category.name_en || category.name) : category.name} sx={{ position: "absolute", top: 8, insetInlineStart: 8, bgcolor: "rgba(255,255,255,.96)", fontWeight: 800, maxWidth: "80%", height: 24 }} />}
                       <Box sx={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: "50%", color: "primary.main", bgcolor: "rgba(255,255,255,.94)", boxShadow: "0 3px 9px rgba(23,26,47,.14)" }}><AddRoundedIcon fontSize="small" /></Box>
                     </Box>
                     <Box sx={{ p: { xs: 1, sm: 1.35 }, minWidth: 0, width: "100%", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: .6 }}>
@@ -783,7 +783,7 @@ function CashierPOSPage() {
             </Box>
           </Paper>
 
-          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", position: { sm: "sticky" }, top: { sm: 12 }, maxHeight: { sm: "calc(100vh - 104px)" }, overflowY: "auto", overscrollBehavior: "contain", minWidth: 0, boxShadow: { sm: "0 8px 24px rgba(23,26,47,.07)" } }}>
+          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
             {renderCartContents(false)}
           </Paper>
         </Box>
@@ -799,7 +799,7 @@ function CashierPOSPage() {
         <Box sx={{ width: "100%", maxWidth: 680, mx: "auto" }}>{renderCartContents(true)}</Box>
       </Drawer>
       {cart.length > 0 && (
-        <Box component="footer" sx={{ display: { xs: "block", sm: "none" }, position: "fixed", insetInline: 0, bottom: 0, zIndex: (theme) => theme.zIndex.appBar + 1, px: 1.25, pt: .9, pb: "calc(10px + env(safe-area-inset-bottom))", bgcolor: "rgba(246,247,249,.94)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(23,26,47,.08)" }}>
+        <Box component="footer" sx={{ display: { xs: "block", sm: "none" }, position: "fixed", insetInline: 0, bottom: 0, zIndex: (theme) => theme.zIndex.appBar + 1, px: 1.25, pt: .9, pb: "calc(10px + env(safe-area-inset-bottom))", bgcolor: "rgba(246,247,249,.98)", borderTop: "1px solid rgba(23,26,47,.08)" }}>
           <Button fullWidth variant="contained" onClick={() => setCartDrawerOpen(true)} aria-label={`${text.cartReview}: ${cartItemCount} ${text.selectedCount}, ${amount(grossAmount)}`} sx={{ minHeight: 58, px: 1.6, borderRadius: 2.6, bgcolor: "secondary.main", color: "common.white", textTransform: "none", boxShadow: "0 8px 22px rgba(23,26,47,.18)", "&:hover": { bgcolor: "secondary.dark" } }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, textAlign: "start" }}>
