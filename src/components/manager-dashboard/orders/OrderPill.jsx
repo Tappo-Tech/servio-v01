@@ -63,9 +63,14 @@ function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptT
             {language === "ar" ? "الرقم الضريبي" : "VAT No."}: {storeInfo.tax_number}
           </Typography>
         )}
-        {storeInfo.address && (
-        <Typography variant="caption" display="block" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
-          {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address}
+        {storeInfo.commercial_registration_number && (
+          <Typography variant="caption" display="block" color="text.secondary">
+            {language === "ar" ? "السجل التجاري" : "Commercial registration"}: {storeInfo.commercial_registration_number}
+          </Typography>
+        )}
+        {(storeInfo.address || storeInfo.street_name) && (
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
+            {language === "ar" ? "العنوان" : "Address"}: {storeInfo.address || [storeInfo.street_name, storeInfo.building_number, storeInfo.district, storeInfo.city, storeInfo.postal_code, storeInfo.country_code].filter(Boolean).join(" · ")}
           </Typography>
         )}
         <Typography variant="caption" color="text.secondary" display="block">

@@ -41,6 +41,13 @@ function StoreInfoSettings() {
     phone: storeInfo?.phone || "",
     email: storeInfo?.email || "",
     tax_number: storeInfo?.tax_number || "",
+    commercial_registration_number: storeInfo?.commercial_registration_number || "",
+    street_name: storeInfo?.street_name || "",
+    building_number: storeInfo?.building_number || "",
+    district: storeInfo?.district || "",
+    city: storeInfo?.city || "",
+    postal_code: storeInfo?.postal_code || "",
+    country_code: storeInfo?.country_code || "SA",
     currency: storeInfo?.currency || "SAR",
     address: storeInfo?.address || "",
     receipt_footer: storeInfo?.receipt_footer || "",
@@ -261,6 +268,13 @@ function StoreInfoSettings() {
             placeholder={t("taxExample")}
           />
         </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="رقم السجل التجاري / CRN" name="commercial_registration_number" value={formData.commercial_registration_number || ""} onChange={handleInputChange} size="small" /></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="الشارع / Street" name="street_name" value={formData.street_name || ""} onChange={handleInputChange} size="small" /></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="رقم المبنى الوطني / Building number" name="building_number" value={formData.building_number || ""} onChange={handleInputChange} size="small" inputProps={{ maxLength: 4, inputMode: "numeric" }} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="الحي / District" name="district" value={formData.district || ""} onChange={handleInputChange} size="small" /></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="المدينة / City" name="city" value={formData.city || ""} onChange={handleInputChange} size="small" /></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}><TextField fullWidth label="الرمز البريدي / Postal code" name="postal_code" value={formData.postal_code || ""} onChange={handleInputChange} size="small" inputProps={{ maxLength: 5, inputMode: "numeric" }} /></Grid>
 
         {/* Currency Select */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
