@@ -75,6 +75,7 @@ const copy = {
     submitting: "جارٍ حفظ البيع…",
     saved: "تم حفظ البيع وإضافته إلى سجل المبيعات وإجمالي اليوم.",
     error: "تعذر حفظ الطلب. تحقق من الاتصال والصلاحية ثم حاول مرة أخرى.",
+    unavailableCart: "تعذر حفظ البيع؛ توجد أصناف لم تعد متاحة بسبب حالة الصنف أو نفاد أحد مكوناته. أزلها من السلة ثم حدّث المنيو.",
     noItems: "لا توجد أصناف متاحة تطابق البحث.",
     loading: "جارٍ تحميل المنيو…",
     reload: "إعادة المحاولة",
@@ -131,6 +132,7 @@ const copy = {
     submitting: "Saving sale…",
     saved: "Sale saved and added to history and today's sales.",
     error: "Could not save the order. Check the connection and access, then try again.",
+    unavailableCart: "The sale could not be saved because some items are no longer available. Remove them from the cart and refresh the menu.",
     noItems: "No available items match this search.",
     loading: "Loading menu…",
     reload: "Retry",
@@ -281,7 +283,7 @@ function CashierPOSPage() {
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
   }, [location.state, editingOrderId, loadOrderForEdit]);
 
-  const availableItems = useMemo(() => items.filter((item) => item.available), [items]);
+  const availableItems = useMemo(() => items.filter((item) => item.available && item.isAvailableForSale !== false), [items]);
   const addonChoiceCounts = useMemo(() => new Map(availableItems.map((item) => (
     [String(item.id), buildAddonChoices(item, availableItems).length]
   ))), [availableItems]);
@@ -467,6 +469,11 @@ function CashierPOSPage() {
 
   const submitOrder = async () => {
     if (!tenantId || cart.length === 0 || saving) return;
+    const unavailableItems = cart.filter((cartItem) => !availableItems.some((item) => String(item.id) === String(cartItem.id)));
+    if (unavailableItems.length) {
+      setCheckoutError(text.unavailableCart);
+      return;
+    }
     if (shiftRequired && !currentShift?.id) { setCheckoutError(text.shiftRequired); return; }
     if (paymentMethod === "split" && Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) > 0.01) {
       setCheckoutError(text.splitPaymentHint);
@@ -535,7 +542,7 @@ function CashierPOSPage() {
         : text.saved);
     } catch (error) {
       console.error("تعذر حفظ بيع الكاشير:", { code: error?.code, status: error?.status, message: error?.message });
-      setCheckoutError(text.error);
+      setCheckoutError(String(error?.message || "").includes("MENU_ITEM_UNAVAILABLE") ? text.unavailableCart : text.error);
     } finally {
       setSaving(false);
     }

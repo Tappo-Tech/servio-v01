@@ -16,7 +16,7 @@ function FreeAddonItemsDrawer({
   const [draftIds, setDraftIds] = useState(() => normalizeAddonItemIds(selectedIds));
   const selectedSet = useMemo(() => new Set(draftIds), [draftIds]);
   const eligibleItems = useMemo(() => (items || [])
-    .filter((item) => item?.id && item.id !== excludeId && (item.available !== false || selectedSet.has(String(item.id))))
+    .filter((item) => item?.id && item.id !== excludeId && (item.isAvailableForSale !== false || selectedSet.has(String(item.id))))
     .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), language === "ar" ? "ar" : "en")),
   [items, excludeId, language, selectedSet]);
 
@@ -92,7 +92,7 @@ function FreeAddonItemsDrawer({
                       {language === "ar" ? "السعر عند الطلب منفردًا" : "Regular standalone price"}: {Number(item.price || 0).toFixed(2)} {language === "ar" ? "ر.س" : "SAR"}
                     </Typography>
                     <Typography variant="caption" sx={{ color: "success.dark", fontWeight: 700 }}>
-                      {item.available === false
+                      {item.isAvailableForSale === false
                         ? (language === "ar" ? "غير متاح حاليًا؛ أزله أو أعد إتاحته" : "Unavailable; remove it or make it available again")
                         : (language === "ar" ? "يُقدّم مجانًا كإضافة للصنف المرتبط" : "Free only as an add-on to the linked item")}
                     </Typography>

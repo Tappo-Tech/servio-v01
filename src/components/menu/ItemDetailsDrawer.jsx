@@ -226,7 +226,9 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
             py: 1.2,
           }}
         >
-          إضافة ({itemDetails?.price * quantity} ر.س)
+          {language === "en"
+            ? `Order (${itemDetails?.price * quantity} SAR)`
+            : `اطلب (${itemDetails?.price * quantity} ر.س)`}
         </Button>
       </Box>
     </SwipeableDrawer>

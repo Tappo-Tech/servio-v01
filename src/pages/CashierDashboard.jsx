@@ -29,7 +29,9 @@ import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-con
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import { useMenu } from "../context/MenuContext";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
+import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -119,10 +121,11 @@ function Dashboard() {
           <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 2, md: 2.5 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.68)", background: "rgba(255,255,255,.72)", backdropFilter: "blur(18px)", boxShadow: "0 16px 48px rgba(23,26,47,.06)", minHeight: { xs: 0, md: "calc(100vh - 168px)" }, minWidth: 0 }}>
             <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} variant="scrollable" scrollButtons="auto" aria-label={language === "ar" ? "تبويبات الكاشير" : "Cashier tabs"} sx={{ mb: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root": { fontWeight: 850, minHeight: 48 } }}>
               <Tab value="orders" label={language === "ar" ? "الطلبات الواردة" : "Incoming orders"} />
+              <Tab value="inventory" icon={<Inventory2OutlinedIcon />} iconPosition="start" label={language === "ar" ? "إدارة المخزون" : "Inventory"} />
               <Tab value="printing" icon={<PrintRoundedIcon />} iconPosition="start" label={language === "ar" ? "إعدادات الطباعة" : "Printer settings"} />
               <Tab value="shifts" icon={<AccessTimeRoundedIcon />} iconPosition="start" label={language === "ar" ? "الورديات" : "Shifts"} />
             </Tabs>
-            {activeTab === "orders" ? <LiveOrders /> : activeTab === "shifts" ? <ShiftReports /> : (
+            {activeTab === "orders" ? <LiveOrders /> : activeTab === "shifts" ? <ShiftReports /> : activeTab === "inventory" ? <IngredientInventory /> : (
               <Box sx={{ maxWidth: 760, mx: "auto", py: { xs: 2, md: 4 } }}>
                 <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider", background: "rgba(255,255,255,.82)" }}>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">

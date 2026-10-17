@@ -240,7 +240,7 @@ function MenuControl() {
                 border: "1px solid",
                 borderColor: "divider",
                 boxShadow: "none",
-                opacity: product.available ? 1 : 0.6,
+                opacity: product.isAvailableForSale === false ? 0.62 : 1,
                 transition: "opacity 0.2s ease-in-out",
               }}
             >
@@ -323,10 +323,26 @@ function MenuControl() {
                   }
                   label={
                     <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {product.available ? t("menuAvailable") : t("menuUnavailable")}
+                      {!product.available
+                        ? t("menuUnavailable")
+                        : product.unavailableIngredients?.length
+                          ? (language === "ar" ? "مفعّل، لكن متوقف بسبب المكونات" : "Enabled, but paused by ingredients")
+                          : t("menuAvailable")}
                     </Typography>
                   }
                 />
+                {product.unavailableIngredients?.length > 0 && (
+                  <Alert severity="warning" sx={{ mt: 0.5, py: 0, borderRadius: 1.5, "& .MuiAlert-message": { fontSize: ".76rem", fontWeight: 700 } }}>
+                    {language === "ar"
+                      ? `متوقف للطلب بسبب نفاد: ${product.unavailableIngredients.map((ingredient) => ingredient.name).join("، ")}`
+                      : `Unavailable due to: ${product.unavailableIngredients.map((ingredient) => ingredient.name).join(", ")}`}
+                  </Alert>
+                )}
+                {product.hasUnknownIngredient && (
+                  <Alert severity="error" sx={{ mt: 0.5, py: 0, borderRadius: 1.5, "& .MuiAlert-message": { fontSize: ".76rem", fontWeight: 700 } }}>
+                    {language === "ar" ? "الصنف متوقف مؤقتًا؛ تعذر التحقق من أحد مكوناته." : "Item paused; one of its ingredients could not be verified."}
+                  </Alert>
+                )}
                 <Box sx={{ mt: 1.25, p: 1, borderRadius: 1.8, bgcolor: "rgba(244,121,32,.06)", border: "1px solid rgba(244,121,32,.18)" }}>
                   <Typography variant="caption" sx={{ display: "block", fontWeight: 900, color: "text.primary" }}>
                     {language === "ar" ? "مكملات الصنف" : "Item complements"}

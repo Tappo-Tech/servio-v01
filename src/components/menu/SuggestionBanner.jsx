@@ -1,5 +1,6 @@
 import { useSuggestions } from "../../context/SuggestionsContext";
 import { useCart } from "../../context/CartContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -14,6 +15,8 @@ import CloseIcon from "@mui/icons-material/Close";
 function SuggestionBanner() {
   const { suggestedItems, dismissSuggestion } = useSuggestions();
   const { addToCart, cartItems } = useCart();
+  const { language } = useLanguage();
+  const isArabic = language !== "en";
 
   // عدم العرض إذا لم تكن هناك اقتراحات أو السلة فارغة
   if (!suggestedItems || suggestedItems.length === 0 || cartItems.length === 0) {
@@ -29,7 +32,7 @@ function SuggestionBanner() {
         position: "fixed",
         bottom: "120px", // ارتفاع متناسق فوق شريط السلة العائم
         left: "16px",
-        right: "80px", // ترك مسافة مريحة لزر نداء الجرسون في اليمين
+        right: "80px", // ترك مسافة مريحة لزر طلب المساعدة في اليمين
         height: "52px", // ارتفاع نحيف متوافق مع ارتفاع زر SpeedDial
         bgcolor: "background.paper",
         borderRadius: "26px", // حواف كبسولية مدورة بالكامل لتماثل الأزرار العائمة
@@ -74,7 +77,7 @@ function SuggestionBanner() {
               color="primary.main"
               sx={{ fontWeight: 800, fontSize: "0.65rem", lineHeight: 1 }}
             >
-              يناسب طلبك
+              {isArabic ? "قد يناسب طلبك" : "You may like this"}
             </Typography>
             <Chip
               size="small"
@@ -114,7 +117,7 @@ function SuggestionBanner() {
         </Box>
       </Box>
 
-      {/* الأزرار: إضافة وإغلاق */}
+      {/* الأزرار: الطلب والإغلاق */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.3, flexShrink: 0 }}>
         <Button
           size="small"
@@ -132,7 +135,7 @@ function SuggestionBanner() {
             "&:hover": { bgcolor: "primary.dark" },
           }}
         >
-          + إضافة
+          {isArabic ? "اطلب" : "Order"}
         </Button>
         <IconButton
           size="small"

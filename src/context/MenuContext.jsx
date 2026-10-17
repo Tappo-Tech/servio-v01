@@ -3,6 +3,7 @@ import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
 import { createRequestGuard } from "../utils/requestGuard";
 import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../utils/menuItemOptions";
+import { withIngredientAvailability } from "../utils/menuAvailability";
 
 const MenuContext = createContext();
 const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
@@ -12,6 +13,8 @@ export const MenuProvider = ({ children }) => {
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [addonComplements, setAddonComplements] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
+  const [menuItemIngredients, setMenuItemIngredients] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [menuLoading, setMenuLoading] = useState(true);
@@ -44,6 +47,8 @@ export const MenuProvider = ({ children }) => {
       setItems([]);
       setCategoriesList([]);
       setAddonComplements([]);
+      setIngredients([]);
+      setMenuItemIngredients([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError(null);
@@ -55,6 +60,8 @@ export const MenuProvider = ({ children }) => {
       setItems([]);
       setCategoriesList([]);
       setAddonComplements([]);
+      setIngredients([]);
+      setMenuItemIngredients([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError(null);
@@ -66,6 +73,8 @@ export const MenuProvider = ({ children }) => {
       setItems([]);
       setCategoriesList([]);
       setAddonComplements([]);
+      setIngredients([]);
+      setMenuItemIngredients([]);
       setMenuLoading(false);
       setMenuRefreshing(false);
       setMenuError("لم يتم تحديد النشاط الحالي");
@@ -77,6 +86,8 @@ export const MenuProvider = ({ children }) => {
     setItems([]);
     setCategoriesList([]);
     setAddonComplements([]);
+    setIngredients([]);
+    setMenuItemIngredients([]);
     setMenuLoading(true);
     setMenuRefreshing(false);
     setMenuError(null);
@@ -94,28 +105,45 @@ export const MenuProvider = ({ children }) => {
       setMenuError(null);
 
       try {
-        const [itemsResult, categoriesResult] = isPublic
-          ? await Promise.all([
-              supabase.rpc("get_public_menu_items", { p_slug: slug }),
-              supabase.rpc("get_public_categories", { p_slug: slug }),
-            ])
-          : await Promise.all([
-              supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).order("created_at", { ascending: true }),
-              supabase.from("categories").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: true }),
-            ]);
+        let itemsResult;
+        let categoriesResult;
+        let ingredientsResult = null;
+        let ingredientLinksResult = null;
+        if (isPublic) {
+          [itemsResult, categoriesResult] = await Promise.all([
+            supabase.rpc("get_public_menu_items", { p_slug: slug }),
+            supabase.rpc("get_public_categories", { p_slug: slug }),
+          ]);
+        } else {
+          [itemsResult, categoriesResult, ingredientsResult, ingredientLinksResult] = await Promise.all([
+            supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).order("created_at", { ascending: true }),
+            supabase.from("categories").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: true }),
+            supabase.from("menu_ingredients").select("id,name,available,tenant_id,created_at").eq("tenant_id", tenantId).order("name", { ascending: true }),
+            supabase.from("menu_item_ingredients").select("menu_item_id,ingredient_id,is_primary,tenant_id").eq("tenant_id", tenantId),
+          ]);
+        }
 
         if (!active) return;
         if (itemsResult.error) throw itemsResult.error;
         if (categoriesResult.error) throw categoriesResult.error;
+        if (ingredientsResult?.error) throw ingredientsResult.error;
+        if (ingredientLinksResult?.error) throw ingredientLinksResult.error;
 
         if (isPublic) {
           // المنيو العام يحتاج صورة الصنف لعرض بطاقة العميل.
           setItems(itemsResult.data || []);
+          setIngredients([]);
+          setMenuItemIngredients([]);
         } else {
           // لا تجعل صور Base64 الكبيرة تحجب أسماء وأسعار الأصناف عن لوحة المدير.
           // نحتفظ مؤقتًا بصورة الصنف الحالية كي لا تومض البطاقات عند إعادة المزامنة.
           const previousImages = new Map(itemsRef.current.map((item) => [item.id, item.image]));
-          const nextItems = (itemsResult.data || []).map((item) => ({ ...item, image: previousImages.get(item.id) || null }));
+          const nextIngredients = ingredientsResult.data || [];
+          const nextIngredientLinks = ingredientLinksResult.data || [];
+          const nextItems = withIngredientAvailability(itemsResult.data || [], nextIngredients, nextIngredientLinks)
+            .map((item) => ({ ...item, image: previousImages.get(item.id) || null }));
+          setIngredients(nextIngredients);
+          setMenuItemIngredients(nextIngredientLinks);
           setItems(nextItems);
           const currentItemIds = new Set(nextItems.map((item) => item.id));
 
@@ -218,11 +246,22 @@ export const MenuProvider = ({ children }) => {
     return reloadRef.current?.();
   }, []);
 
+  const linksForItem = (itemId, ingredientIds) => [
+    ...menuItemIngredients.filter((link) => String(link.menu_item_id) !== String(itemId)),
+    ...ingredientIds.map((ingredientId) => ({
+      tenant_id: tenantId,
+      menu_item_id: itemId,
+      ingredient_id: ingredientId,
+      is_primary: false,
+    })),
+  ];
+
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const addonOptions = normalizeAddonOptions(newItem.addon_options);
     const freeAddonItemIds = normalizeAddonItemIds(newItem.free_addon_item_ids).filter((id) => id !== newItem.id);
     const maxAddons = normalizeAddonLimit(newItem.max_addons, addonOptions.length + freeAddonItemIds.length);
+    const ingredientIds = normalizeAddonItemIds(newItem.ingredient_ids);
     const row = {
       id: newItem.id,
       name: newItem.name,
@@ -237,11 +276,17 @@ export const MenuProvider = ({ children }) => {
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,
       max_addons: maxAddons,
-      tenant_id: tenantId,
     };
-    const { data, error } = await supabase.from("menu_items").insert([row]).select(MENU_ITEM_COLUMNS).single();
-    const savedItem = data ? { ...data, image: newItem.image || null } : data;
-    if (!error && savedItem) setItems((prev) => [savedItem, ...prev.filter((item) => item.id !== savedItem.id)]);
+    const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
+      p_item: row,
+      p_ingredient_ids: ingredientIds,
+    });
+    const savedItem = { ...row, tenant_id: tenantId, created_at: new Date().toISOString(), image: newItem.image || null };
+    if (!error) {
+      const nextLinks = linksForItem(savedItem.id, ingredientIds);
+      setMenuItemIngredients(nextLinks);
+      setItems((prev) => withIngredientAvailability([savedItem, ...prev.filter((item) => item.id !== savedItem.id)], ingredients, nextLinks));
+    }
     return { data: savedItem, error };
   });
 
@@ -251,10 +296,79 @@ export const MenuProvider = ({ children }) => {
     const addonOptions = normalizeAddonOptions(updatedItem.addon_options);
     const freeAddonItemIds = normalizeAddonItemIds(updatedItem.free_addon_item_ids).filter((id) => id !== updatedItem.id);
     const maxAddons = normalizeAddonLimit(updatedItem.max_addons, addonOptions.length + freeAddonItemIds.length);
-    const { data, error } = await supabase.from("menu_items").update({ name: updatedItem.name, price: updatedItem.price, category_id: updatedItem.category_id, description: updatedItem.description, image: updatedItem.image, allergens: updatedItem.allergens, tags: updatedItem.tags, available: updatedItem.available, recommendation_item_ids: recommendationIds, addon_options: addonOptions, free_addon_item_ids: freeAddonItemIds, max_addons: maxAddons }).eq("id", updatedItem.id).eq("tenant_id", tenantId).select(MENU_ITEM_COLUMNS).maybeSingle();
-    const savedItem = data ? { ...data, image: updatedItem.image || null } : data;
-    if (!error && savedItem) setItems((prev) => prev.map((item) => item.id === updatedItem.id ? savedItem : item));
-    return { data: savedItem, error: error || (!data ? new Error("لم يتم العثور على الصنف") : null) };
+    const ingredientIds = normalizeAddonItemIds(updatedItem.ingredient_ids);
+    const row = {
+      id: updatedItem.id,
+      name: updatedItem.name,
+      price: updatedItem.price,
+      category_id: updatedItem.category_id,
+      description: updatedItem.description,
+      image: updatedItem.image,
+      allergens: updatedItem.allergens,
+      tags: updatedItem.tags,
+      available: updatedItem.available,
+      recommendation_item_ids: recommendationIds,
+      addon_options: addonOptions,
+      free_addon_item_ids: freeAddonItemIds,
+      max_addons: maxAddons,
+    };
+    const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
+      p_item: row,
+      p_ingredient_ids: ingredientIds,
+    });
+    const savedItem = { ...updatedItem, ...row, tenant_id: tenantId, image: updatedItem.image || null };
+    if (!error) {
+      const nextLinks = linksForItem(savedItem.id, ingredientIds);
+      setMenuItemIngredients(nextLinks);
+      setItems((prev) => withIngredientAvailability(prev.map((item) => item.id === savedItem.id ? savedItem : item), ingredients, nextLinks));
+    }
+    return { data: savedItem, error };
+  });
+
+  const addIngredient = (rawName) => guard("menu:add-ingredient", async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const name = String(rawName || "").trim().replace(/\s+/g, " ");
+    if (!name || name.length > 120) return { error: new Error("أدخل اسم مادة بين 1 و120 حرفًا") };
+    const { data, error } = await supabase
+      .from("menu_ingredients")
+      .insert([{ name, available: true, tenant_id: tenantId }])
+      .select("id,name,available,tenant_id,created_at")
+      .single();
+    if (!error && data) setIngredients((current) => [...current, data].sort((a, b) => a.name.localeCompare(b.name)));
+    return { data, error };
+  });
+
+  const updateIngredient = (ingredient) => guard(`menu:update-ingredient:${ingredient.id}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const name = String(ingredient.name || "").trim().replace(/\s+/g, " ");
+    if (!name || name.length > 120) return { error: new Error("أدخل اسم مادة بين 1 و120 حرفًا") };
+    const { data, error } = await supabase
+      .from("menu_ingredients")
+      .update({ name })
+      .eq("id", ingredient.id)
+      .eq("tenant_id", tenantId)
+      .select("id,name,available,tenant_id,created_at")
+      .maybeSingle();
+    if (!error && data) {
+      const nextIngredients = ingredients.map((entry) => entry.id === data.id ? data : entry).sort((a, b) => a.name.localeCompare(b.name));
+      setIngredients(nextIngredients);
+      setItems((current) => withIngredientAvailability(current, nextIngredients, menuItemIngredients));
+    }
+    return { data, error: error || (!data ? new Error("المادة غير موجودة") : null) };
+  });
+
+  const setIngredientAvailability = (ingredientId, available) => guard(`menu:ingredient-availability:${ingredientId}`, async () => {
+    if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const { error } = await supabase.rpc("set_menu_ingredient_availability", {
+      p_ingredient_id: ingredientId,
+      p_available: Boolean(available),
+    });
+    if (!error) {
+      const nextIngredients = ingredients.map((entry) => entry.id === ingredientId ? { ...entry, available: Boolean(available) } : entry);
+      setIngredients(nextIngredients);
+      setItems((current) => withIngredientAvailability(current, nextIngredients, menuItemIngredients));
+    }
+    return { error };
   });
 
   const addAddonComplement = (rawName) => guard("menu:add-complement", async () => {
@@ -276,7 +390,10 @@ export const MenuProvider = ({ children }) => {
   const deleteItem = (id) => guard(`menu:delete-item:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const { error } = await supabase.from("menu_items").delete().eq("id", id).eq("tenant_id", tenantId);
-    if (!error) setItems((prev) => prev.filter((item) => item.id !== id));
+    if (!error) {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      setMenuItemIngredients((prev) => prev.filter((link) => String(link.menu_item_id) !== String(id)));
+    }
     return { error };
   });
 
@@ -285,7 +402,7 @@ export const MenuProvider = ({ children }) => {
     const item = items.find((entry) => entry.id === id);
     if (!item) return { error: new Error("الصنف غير موجود") };
     const { error } = await supabase.from("menu_items").update({ available: !item.available }).eq("id", id).eq("tenant_id", tenantId);
-    if (!error) setItems((prev) => prev.map((entry) => entry.id === id ? { ...entry, available: !item.available } : entry));
+    if (!error) setItems((prev) => withIngredientAvailability(prev.map((entry) => entry.id === id ? { ...entry, available: !item.available } : entry), ingredients, menuItemIngredients));
     return { error };
   });
 
@@ -343,7 +460,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.available), categoriesList, addonComplements, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.isAvailableForSale ?? item.available), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
       {children}
     </MenuContext.Provider>
   );

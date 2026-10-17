@@ -13,7 +13,7 @@ function MenuSearchBar() {
       size="small"
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder="ابحث عن قهوتك أو حلاك المفضل..."
+      placeholder="ابحث عن صنفك المفضل..."
       variant="outlined"
       sx={{
         background: "rgba(248,249,250,.72)",
