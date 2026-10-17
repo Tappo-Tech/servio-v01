@@ -7,7 +7,7 @@ import { Box, Typography, IconButton, Rating, TextField, Button, Chip } from "@m
 
 // ICONS
 import CloseIcon from "@mui/icons-material/Close";
-import StarIcon from "@mui/icons-material/Star";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 
 // CONTEXTS
 import { useFeedbacks } from "../../context/FeedbackContext";
@@ -148,15 +148,17 @@ function ReviewSection({ open, close, tableNumber }) {
                   size="large"
                   aria-label="تقييم تجربتك من خمس نجوم"
                   emptyIcon={
-                    <StarIcon style={{ opacity: 1 }} fontSize="inherit" />
+                    <StarBorderRoundedIcon fontSize="inherit" />
                   }
                   sx={{
                     fontSize: "3.2rem",
                     gap: 0.5,
                     color: "#f5a623",
-                    "& .MuiRating-iconEmpty": { color: "#d4d8e0" },
-                    "& .MuiRating-iconFilled": { color: "#f5a623" },
-                    "& .MuiRating-iconHover": { color: "#e89400" },
+                    "& .MuiRating-iconEmpty": { color: "#a85d00", opacity: 1 },
+                    "& .MuiRating-iconEmpty svg": { fill: "none", stroke: "currentColor", strokeWidth: 1.25 },
+                    "& .MuiRating-iconFilled": { color: "#f5a623", opacity: 1 },
+                    "& .MuiRating-iconHover": { color: "#d97706", opacity: 1 },
+                    "& .MuiRating-icon svg": { display: "block", width: "1em", height: "1em", maxWidth: "none" },
                   }}
                 />
               </Box>
