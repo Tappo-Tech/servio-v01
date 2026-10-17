@@ -19,8 +19,8 @@ function FullscreenButton({ expanded, onClick, language }) {
       onClick={onClick}
       size="small"
       sx={{
-        position: "fixed",
-        insetBlockStart: 10,
+        position: "absolute",
+        insetBlockStart: 8,
         insetInlineEnd: 56,
         zIndex: 1400,
         width: 36,
