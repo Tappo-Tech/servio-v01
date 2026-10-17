@@ -1,10 +1,11 @@
+import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 // COMPONENTS
 import SidebarItem from "./SidebarItem";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
-import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+
 import Typography from "@mui/material/Typography";
 
 // MUI HOOKS

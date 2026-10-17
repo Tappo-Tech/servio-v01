@@ -1,5 +1,6 @@
+import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useMemo, useState } from "react";
-import { Box, Drawer, IconButton, Stack, Typography, Divider, Button, Chip, TextField, MenuItem } from "@mui/material";
+import { Box, IconButton, Stack, Typography, Divider, Button, Chip, TextField, MenuItem } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";

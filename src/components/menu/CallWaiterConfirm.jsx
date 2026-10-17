@@ -1,16 +1,9 @@
+import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 // HOOKS
 import { useState } from "react";
 
 // MUI COMPONENTS
-import {
-  SwipeableDrawer,
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Button, IconButton, Chip, Stack } from "@mui/material";
 
 // ICONS
 import CloseIcon from "@mui/icons-material/Close";

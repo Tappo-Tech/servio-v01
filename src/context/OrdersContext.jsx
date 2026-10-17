@@ -408,7 +408,7 @@ export const OrdersProvider = ({ children }) => {
     return { data: result.data, error: null };
   });
 
-  const updateOrderPaymentStatus = (orderId, newStatus) => guard(`orders:payment:${orderId}`, async () => {
+  const updateOrderPaymentStatus = (orderId, newStatus, paymentDetails = null) => guard(`orders:payment:${orderId}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const target = orders.find((order) => order.id === orderId);
     if (!target) return { error: new Error("الطلب غير موجود") };
@@ -416,6 +416,14 @@ export const OrdersProvider = ({ children }) => {
     let paymentUpdate;
     try {
       paymentUpdate = createPaymentStatusUpdate(newStatus);
+      if (paymentDetails) {
+        paymentUpdate = {
+          ...paymentUpdate,
+          ...createPaymentMethodUpdate(paymentDetails.method),
+          cash_amount: paymentDetails.method === "split" ? Number(paymentDetails.cashAmount) : null,
+          card_amount: paymentDetails.method === "split" ? Number(paymentDetails.cardAmount) : null,
+        };
+      }
     } catch (error) {
       return { error };
     }
@@ -430,7 +438,7 @@ export const OrdersProvider = ({ children }) => {
           .update(paymentUpdate)
           .eq("id", orderId)
           .eq("tenant_id", tenantId)
-          .select("id,payment_status,paid_at")
+          .select("id,payment_status,paid_at,payment_method,cash_amount,card_amount")
           .maybeSingle();
       } catch (networkError) {
         result = { data: null, error: networkError };

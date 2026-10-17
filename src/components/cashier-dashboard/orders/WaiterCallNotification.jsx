@@ -1,16 +1,6 @@
+import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 // MUI COMPONENTS
-import {
-  Drawer,
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Chip,
-  Stack,
-  IconButton,
-  Grid,
-} from "@mui/material";
+import { Box, Card, CardContent, Typography, Button, Chip, Stack, IconButton, Grid } from "@mui/material";
 
 // ICONS
 import CloseIcon from "@mui/icons-material/Close";

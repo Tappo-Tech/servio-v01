@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -66,7 +67,7 @@ function SuggestionBanner() {
             justifyContent: "center",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.55, mb: 0.2 }}>
             <AutoAwesomeIcon sx={{ fontSize: "0.75rem", color: "primary.main" }} />
             <Typography
               variant="caption"
@@ -75,6 +76,18 @@ function SuggestionBanner() {
             >
               يناسب طلبك
             </Typography>
+            <Chip
+              size="small"
+              label="اختيار سريع"
+              color="primary"
+              sx={{
+                height: 18,
+                borderRadius: "7px",
+                fontSize: "0.58rem",
+                fontWeight: 900,
+                "& .MuiChip-label": { px: 0.65 },
+              }}
+            />
           </Box>
 
           <Typography

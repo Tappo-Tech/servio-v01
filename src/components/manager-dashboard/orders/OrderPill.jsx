@@ -1,17 +1,7 @@
+import { FullscreenDialog as Dialog } from "../../common/FullscreenOverlays";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Divider,
-  Chip,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, DialogActions, DialogContent, Divider, Chip, Stack, Typography } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import dayjs from "dayjs";
 
