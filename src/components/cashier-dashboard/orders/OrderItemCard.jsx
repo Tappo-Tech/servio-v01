@@ -1,3 +1,4 @@
+import { FullscreenDialog as Dialog } from "../../common/FullscreenOverlays";
 import { useEffect, useState } from "react";
 
 // MUI COMPONENTS
@@ -9,7 +10,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
+
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";

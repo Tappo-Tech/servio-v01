@@ -1,17 +1,9 @@
+import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 // HOOKS
 import { useState } from "react";
 
 // MUI COMPONENTS
-import {
-  SwipeableDrawer,
-  Box,
-  Typography,
-  IconButton,
-  Rating,
-  TextField,
-  Button,
-  Chip,
-} from "@mui/material";
+import { Box, Typography, IconButton, Rating, TextField, Button, Chip } from "@mui/material";
 
 // ICONS
 import CloseIcon from "@mui/icons-material/Close";
@@ -154,10 +146,18 @@ function ReviewSection({ open, close, tableNumber }) {
                   value={rating}
                   onChange={(event, newValue) => setRating(newValue)}
                   size="large"
+                  aria-label="تقييم تجربتك من خمس نجوم"
                   emptyIcon={
-                    <StarIcon style={{ opacity: 0.3 }} fontSize="inherit" />
+                    <StarIcon style={{ opacity: 1 }} fontSize="inherit" />
                   }
-                  sx={{ fontSize: "3.2rem", gap: 0.5 }}
+                  sx={{
+                    fontSize: "3.2rem",
+                    gap: 0.5,
+                    color: "#f5a623",
+                    "& .MuiRating-iconEmpty": { color: "#d4d8e0" },
+                    "& .MuiRating-iconFilled": { color: "#f5a623" },
+                    "& .MuiRating-iconHover": { color: "#e89400" },
+                  }}
                 />
               </Box>
 

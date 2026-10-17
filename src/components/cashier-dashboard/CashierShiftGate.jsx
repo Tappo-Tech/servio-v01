@@ -1,21 +1,6 @@
+import { FullscreenDialog as Dialog } from "../common/FullscreenOverlays";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { Alert, Box, Button, Chip, DialogActions, DialogContent, IconButton, InputAdornment, Paper, Skeleton, Stack, TextField, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
 import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
@@ -174,8 +159,8 @@ function ShiftDialog({
             inputProps={{ min: 0, step: "0.01", inputMode: "decimal", dir: "ltr" }}
             InputProps={{ startAdornment: <InputAdornment position="start">{currency}</InputAdornment> }}
             helperText={starting
-              ? (ar ? "أدخل 0 إذا لم يوجد نقد في الدرج عند بداية الوردية." : "Enter 0 if there is no cash in the drawer at opening.")
-              : (ar ? "استخدم المبلغ الموجود فعليًا بعد عدّ النقد." : "Enter the amount physically present after counting cash.")}
+              ? (ar ? "يمكن إدخال الكسور حتى منزلتين عشريتين. أدخل 0 إذا لم يوجد نقد في الدرج." : "Fractions to two decimal places are accepted. Enter 0 if no cash is in the drawer.")
+              : (ar ? "يمكن إدخال الكسور حتى منزلتين عشريتين؛ أدخل الرصيد الفعلي بعد عدّ النقد." : "Fractions to two decimal places are accepted; enter the actual counted cash.")}
           />
           {!starting && (
             <TextField

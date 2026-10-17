@@ -1,10 +1,11 @@
+import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../../common/FullscreenOverlays";
 import { useState, useEffect } from "react";
 import { useMenu } from "../../../context/MenuContext";
 import { useLanguage } from "../../../context/LanguageContext";
 
 // MUI COMPONENTS
 import { styled } from "@mui/material/styles";
-import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -246,6 +247,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           size="small"
           fullWidth
           required
+          helperText={language === "ar" ? "يمكن إدخال السعر بالكسور حتى منزلتين عشريتين، مثل 12.50." : "Enter fractional prices to two decimal places, for example 12.50."}
         />
 
         <TextField

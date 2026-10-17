@@ -1,9 +1,10 @@
+import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 // COMPONENTS
 import CartItemCard from "./CartItemCard";
 
 // MUI COMPONENTS
 import Alert from "@mui/material/Alert";
-import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";

@@ -1,24 +1,8 @@
+import { FullscreenDialog as Dialog } from "../components/common/FullscreenOverlays";
+import { FullscreenDrawer as Drawer } from "../components/common/FullscreenOverlays";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Drawer,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputLabel, InputAdornment, MenuItem, Paper, Select, Stack, TextField, Typography } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -218,6 +202,11 @@ function CashierPOSPage() {
   const [invoiceKitchenUpdateItems, setInvoiceKitchenUpdateItems] = useState([]);
   const [invoicePrintMode, setInvoicePrintMode] = useState("order");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [settlementTarget, setSettlementTarget] = useState(null);
+  const [settlementMethod, setSettlementMethod] = useState("");
+  const [settlementCashAmount, setSettlementCashAmount] = useState("");
+  const [settlementCardAmount, setSettlementCardAmount] = useState("");
+  const [settlementSaving, setSettlementSaving] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [savedMessage, setSavedMessage] = useState("");
   const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
@@ -552,14 +541,38 @@ function CashierPOSPage() {
     }
   };
 
-  const settleUnpaidOrder = async (order) => {
-    const result = await updateOrderPaymentStatus(order.id, "paid");
+  const openSettlement = (order) => {
+    setCheckoutError("");
+    setSettlementTarget(order);
+    setSettlementMethod("");
+    setSettlementCashAmount("");
+    setSettlementCardAmount("");
+  };
+
+  const settleUnpaidOrder = async () => {
+    if (!settlementTarget || !settlementMethod || settlementSaving) return;
+    const order = settlementTarget;
+    const cash = Number(settlementCashAmount) || 0;
+    const card = Number(settlementCardAmount) || 0;
+    const total = Number(order.total_price) || 0;
+    if (settlementMethod === "split" && (cash < 0 || card < 0 || Math.abs(cash + card - total) > 0.01)) {
+      setCheckoutError(language === "ar" ? "يجب أن يساوي مجموع النقد والشبكة إجمالي الطلب." : "Cash and card amounts must equal the order total.");
+      return;
+    }
+    setSettlementSaving(true);
+    const result = await updateOrderPaymentStatus(order.id, "paid", {
+      method: settlementMethod,
+      cashAmount: cash,
+      cardAmount: card,
+    });
+    setSettlementSaving(false);
     if (result?.error) {
       setCheckoutError(language === "ar" ? "تعذر تسجيل السداد. أعد المحاولة." : "Could not record payment. Retry.");
       return;
     }
-    const paidOrder = { ...order, payment_status: "paid", paid_at: new Date().toISOString() };
+    const paidOrder = { ...order, ...result.data, payment_status: "paid", paid_at: result.data?.paid_at || new Date().toISOString() };
     setUnpaidOrders((current) => current.filter((row) => row.id !== order.id));
+    setSettlementTarget(null);
     setInvoiceIsTest(false);
     setInvoiceAutoPrint(true);
     setInvoiceIsEditMode(false);
@@ -703,7 +716,7 @@ function CashierPOSPage() {
                 <Stack direction="row" spacing={.35} useFlexGap flexWrap="wrap" justifyContent="flex-end">
                   {order._pendingKitchenDelta?.length > 0 && <Button size="small" variant="outlined" onClick={() => openKitchenUpdate(order)} sx={{ minWidth: 0, px: .8 }}>{text.kitchenUpdate}</Button>}
                   <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
-                  <Button size="small" variant="contained" color="success" onClick={() => settleUnpaidOrder(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
+                  <Button size="small" variant="contained" color="success" onClick={() => openSettlement(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
                   <IconButton size="small" color="error" aria-label={language === "ar" ? "حذف الطلب المعلق" : "Delete pending order"} onClick={() => setDeleteTarget(order)}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton>
                 </Stack>
               </Box>
@@ -917,6 +930,86 @@ function CashierPOSPage() {
         onTest={openPrinterTest}
       />
       <CategoryPrintRoutingDrawer open={categoryRoutingOpen} onClose={() => setCategoryRoutingOpen(false)} categories={categoriesList} onUpdateCategories={updateCategoryPrintRoutes} />
+
+      <Dialog
+        open={Boolean(settlementTarget)}
+        onClose={() => !settlementSaving && setSettlementTarget(null)}
+        fullWidth
+        maxWidth="sm"
+        dir={language === "ar" ? "rtl" : "ltr"}
+      >
+        <DialogTitle sx={{ fontWeight: 950 }}>
+          {language === "ar" ? "تأكيد سداد الطلب" : "Confirm payment"}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={1.5}>
+            <Typography color="text.secondary">
+              {language === "ar" ? "اختر طريقة الدفع لتسجيل السداد. اختيار الطريقة إلزامي." : "Choose a payment method to record settlement. This selection is required."}
+            </Typography>
+            <Typography fontWeight={900}>
+              {language === "ar" ? "إجمالي الطلب: " : "Order total: "}{amount(settlementTarget?.total_price)}
+            </Typography>
+            <FormControl fullWidth required>
+              <InputLabel id="settlement-method-label">{language === "ar" ? "طريقة الدفع *" : "Payment method *"}</InputLabel>
+              <Select
+                labelId="settlement-method-label"
+                label={language === "ar" ? "طريقة الدفع *" : "Payment method *"}
+                value={settlementMethod}
+                onChange={(event) => setSettlementMethod(event.target.value)}
+                required
+              >
+                <MenuItem value="cash">{language === "ar" ? "نقدًا" : "Cash"}</MenuItem>
+                <MenuItem value="card">{language === "ar" ? "بطاقة / شبكة (مدى)" : "Card / network (mada)"}</MenuItem>
+                <MenuItem value="split">{language === "ar" ? "نقدًا + شبكة" : "Cash + network"}</MenuItem>
+                <MenuItem value="wallet">{language === "ar" ? "محفظة رقمية" : "Digital wallet"}</MenuItem>
+                <MenuItem value="transfer">{language === "ar" ? "تحويل بنكي" : "Bank transfer"}</MenuItem>
+                <MenuItem value="other">{language === "ar" ? "أخرى" : "Other"}</MenuItem>
+              </Select>
+            </FormControl>
+            {settlementMethod === "split" && (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label={language === "ar" ? "المبلغ النقدي" : "Cash amount"}
+                  value={settlementCashAmount}
+                  onChange={(event) => setSettlementCashAmount(event.target.value)}
+                  inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }}
+                  required
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label={language === "ar" ? "مبلغ الشبكة" : "Card amount"}
+                  value={settlementCardAmount}
+                  onChange={(event) => setSettlementCardAmount(event.target.value)}
+                  inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }}
+                  required
+                />
+              </Stack>
+            )}
+            {settlementMethod === "split" && (
+              <Typography variant="caption" color={Math.abs((Number(settlementCashAmount) || 0) + (Number(settlementCardAmount) || 0) - (Number(settlementTarget?.total_price) || 0)) <= 0.01 ? "success.main" : "error.main"} fontWeight={850}>
+                {language === "ar" ? "مجموع المبلغين: " : "Combined amount: "}{amount((Number(settlementCashAmount) || 0) + (Number(settlementCardAmount) || 0))}
+              </Typography>
+            )}
+            {checkoutError && <Alert severity="error">{checkoutError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setSettlementTarget(null)} color="inherit" disabled={settlementSaving}>
+            {language === "ar" ? "إلغاء" : "Cancel"}
+          </Button>
+          <Button
+            onClick={settleUnpaidOrder}
+            color="success"
+            variant="contained"
+            disabled={!settlementMethod || settlementSaving || (settlementMethod === "split" && Math.abs((Number(settlementCashAmount) || 0) + (Number(settlementCardAmount) || 0) - (Number(settlementTarget?.total_price) || 0)) > 0.01)}
+          >
+            {settlementSaving ? (language === "ar" ? "جارٍ تسجيل السداد…" : "Recording payment…") : (language === "ar" ? "تأكيد السداد" : "Confirm payment")}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 950 }}>{language === "ar" ? "حذف الطلب المعلق؟" : "Delete pending order?"}</DialogTitle>

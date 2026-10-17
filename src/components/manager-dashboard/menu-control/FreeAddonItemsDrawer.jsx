@@ -1,16 +1,6 @@
+import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Checkbox,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Checkbox, Divider, IconButton, List, ListItemButton, Stack, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { normalizeAddonItemIds } from "../../../utils/menuItemOptions";
 
