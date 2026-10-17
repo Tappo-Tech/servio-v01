@@ -48,44 +48,13 @@ function FullscreenDialog({ children, fullScreen = false, language = "ar", ...pr
   );
 }
 
-function withPaperFullscreen(slotProps, expanded, drawerSx) {
-  const paper = slotProps?.paper || {};
-  const existingSx = paper.sx;
-  const paperSx = [
-    ...(Array.isArray(existingSx) ? existingSx : existingSx ? [existingSx] : []),
-    ...(expanded ? [{
-      width: "100vw !important",
-      maxWidth: "100vw !important",
-      height: "100dvh !important",
-      maxHeight: "100dvh !important",
-      borderRadius: 0,
-      boxSizing: "border-box",
-      ...drawerSx,
-    }] : []),
-  ];
-  return { ...slotProps, paper: { ...paper, sx: paperSx } };
+// Keep the historic wrapper exports to avoid churn at call sites; only centered Dialogs expand.
+function FullscreenDrawer({ language: _language, ...props }) {
+  return <Drawer {...props} />;
 }
 
-function FullscreenDrawer({ children, slotProps, PaperProps, language = "ar", ...props }) {
-  const [expanded, setExpanded] = useState(false);
-  const nextSlotProps = withPaperFullscreen(slotProps, expanded);
-  return (
-    <Drawer {...props} slotProps={nextSlotProps} PaperProps={PaperProps}>
-      <FullscreenButton expanded={expanded} onClick={() => setExpanded((value) => !value)} language={language} />
-      {children}
-    </Drawer>
-  );
-}
-
-function FullscreenSwipeableDrawer({ children, slotProps, PaperProps, language = "ar", ...props }) {
-  const [expanded, setExpanded] = useState(false);
-  const nextSlotProps = withPaperFullscreen(slotProps, expanded, { inset: 0 });
-  return (
-    <SwipeableDrawer {...props} slotProps={nextSlotProps} PaperProps={PaperProps}>
-      <FullscreenButton expanded={expanded} onClick={() => setExpanded((value) => !value)} language={language} />
-      {children}
-    </SwipeableDrawer>
-  );
+function FullscreenSwipeableDrawer({ language: _language, ...props }) {
+  return <SwipeableDrawer {...props} />;
 }
 
 export { FullscreenDialog, FullscreenDrawer, FullscreenSwipeableDrawer };

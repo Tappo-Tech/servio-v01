@@ -29,7 +29,7 @@ function FloatingActions({ handleReview, handleCallWaiter }) {
   const actions = [
     {
       icon: <NotificationsActiveIcon sx={{ color: "#ff9800" }} />,
-      name: "نداء الجرسون",
+      name: "طلب مساعدة الموظف",
       onClick: () => {
         handleDialClose();
         handleCallWaiter();

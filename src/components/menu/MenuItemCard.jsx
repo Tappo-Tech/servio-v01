@@ -18,9 +18,12 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 // CONTEXTS
 import { useCart } from "../../context/CartContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 function MenuItemCard({ itemDetails }) {
   const { addToCart } = useCart();
+  const { language } = useLanguage();
+  const isArabic = language !== "en";
 
   const hasAllergy = itemDetails.allergens && itemDetails.allergens.length > 0;
 
@@ -123,7 +126,7 @@ function MenuItemCard({ itemDetails }) {
                 },
               }}
             >
-              إضافة
+              {isArabic ? "اطلب" : "Order"}
             </Button>
           </Box>
         </Box>
@@ -149,7 +152,7 @@ function MenuItemCard({ itemDetails }) {
           />
 
           {hasAllergy && (
-            <Tooltip title="انقر لمعرفة التفاصيل" arrow>
+            <Tooltip title={isArabic ? "عرض تفاصيل مسببات الحساسية" : "View allergen details"} arrow>
               <Box
                 sx={{
                   position: "absolute",

@@ -6,7 +6,7 @@ export default function TrialNotice() {
   const { language } = useLanguage();
   const message = language === "en"
     ? "SERVIO is currently in a product trial and proof-of-concept phase. It is not a registered company at this time; features may change during the trial."
-    : "SERVIO خدمة في فترة تجربة المنتج وإثبات المفهوم حاليًا، وليست شركة مسجّلة حتى الآن. قد تتغير الميزات خلال فترة التجربة.";
+    : "تنويه: SERVIO حاليًا في مرحلة تجربة المنتج وإثبات الفكرة، وليست شركة مسجّلة بعد. قد تتغير بعض الميزات خلال هذه المرحلة.";
 
   return (
     <Box

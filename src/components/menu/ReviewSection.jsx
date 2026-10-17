@@ -17,7 +17,7 @@ const QUICK_TAGS = [
   "جودة ممتازة",
   "المكان مزدحم",
   "تأخير في الطلب",
-  "تعامل راقي",
+  "تعامل ممتاز",
 ];
 
 function ReviewSection({ open, close, tableNumber }) {
@@ -198,7 +198,7 @@ function ReviewSection({ open, close, tableNumber }) {
                 multiline
                 rows={4}
                 variant="outlined"
-                placeholder="عندك تفاصيل أكثر؟ (اختياري)"
+                placeholder="هل لديك ملاحظة إضافية؟ (اختياري)"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 sx={{
@@ -226,7 +226,7 @@ function ReviewSection({ open, close, tableNumber }) {
                 mt: 2,
               }}
             >
-              {loading ? "جاري الإرسال..." : "إرسال التقييم"}
+              {loading ? "جارٍ الإرسال..." : "إرسال التقييم"}
             </Button>
           </>
         ) : (
@@ -245,13 +245,13 @@ function ReviewSection({ open, close, tableNumber }) {
               color="primary"
               gutterBottom
             >
-              شكراً لك!
+              شكرًا لك!
             </Typography>
             <Typography
               variant="body1"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              تم استلام رأيك بنجاح، ونتمنى نشوفك قريباً.
+              وصلنا تقييمك، شكرًا لمشاركته. نأمل زيارتك مجددًا.
             </Typography>
           </Box>
         )}

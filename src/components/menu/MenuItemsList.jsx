@@ -23,7 +23,7 @@ function MenuItemsList() {
         align="center"
         sx={{ py: 6, fontWeight: 500 }}
       >
-        لا توجد أصناف متوفرة حالياً في هذا القسم.
+        لا توجد أصناف متاحة في هذا القسم حاليًا. جرّب اختيار قسم آخر.
       </Typography>
     );
   }

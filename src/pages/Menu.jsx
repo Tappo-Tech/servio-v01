@@ -30,8 +30,8 @@ function Menu() {
   const isValidTable = tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true;
   useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
   if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
-  if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="الرابط لا يشير إلى كافيه مسجل في SERVIO." /></Container>;
-  if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="طاولة غير صالحة" message="عذراً، لم نتمكن من التعرف على رقم الطاولة." /></Container>;
+  if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="تعذّر العثور على الكافيه من خلال هذا الرابط." /></Container>;
+  if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="رقم الطاولة غير صالح" message="تحقّق من رابط المنيو أو اطلب المساعدة من الموظف." /></Container>;
   return (
     <Box sx={{ minHeight: "100vh", background: "radial-gradient(circle at 100% 0%, rgba(244,121,32,.08), transparent 28%), linear-gradient(180deg, #fafbfc 0%, #f6f7f9 100%)", pb: 3 }}>
       <Box sx={{ px: { xs: 1.2, sm: 2 }, pt: { xs: 1, sm: 1.5 } }}>
@@ -44,7 +44,7 @@ function Menu() {
         {slug === "mzaj-ryfy" && (
           <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
             {language === "ar"
-              ? "معلومات الحساسية للأصناف المضافة من القائمة المصورة تقديرية ومبنية على وصفات مقترحة، وليست مؤكدة من المطبخ. اسأل الموظف عن المكونات واحتمال التلامس العرضي قبل الطلب."
+              ? "تنويه: معلومات مسببات الحساسية للأصناف المستندة إلى صورة المنيو تقديرية وغير معتمدة من المطبخ. اسأل فريق الخدمة عن المكونات واحتمال التلامس العرضي قبل الطلب."
               : "Allergen details for items added from the photographed menu are estimates based on suggested recipes, not verified by the kitchen. Ask staff about ingredients and possible cross-contact before ordering."}
           </Alert>
         )}

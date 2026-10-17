@@ -121,7 +121,7 @@ function CartItemCard({ cartItemDetails }) {
                   ? `الإضافات الحالية تنطبق على كامل الكمية (${quantity}). استخدم «تخصيص إضافات كل قطعة» لاختيار إضافات مستقلة.`
                   : `Current add-ons apply to all ${quantity} units. Use “Customize each unit’s add-ons” to choose independently.`)
                 : (isArabic
-                  ? "إضافات هذه القطعة مستقلة. اضغط الإضافة المحددة لإزالتها."
+                  ? "إضافات هذه القطعة مستقلة. اضغط على إضافة محددة لإزالتها."
                   : "This unit’s add-ons are independent. Tap a selected add-on to remove it.")}
             </Typography>
           </Box>
@@ -134,8 +134,8 @@ function CartItemCard({ cartItemDetails }) {
             startIcon={<ControlPointDuplicateRoundedIcon fontSize="small" />}
             onClick={() => (quantity > 1 ? separateCartLineIntoUnits(lineId) : addSeparateCartItem(lineId))}
             aria-label={isArabic
-              ? (quantity > 1 ? `فصل ${quantity} وحدات من ${cartItemDetails.name} لتخصيص إضافات كل قطعة` : `إضافة وحدة أخرى من ${cartItemDetails.name} بإضافات مستقلة`)
-              : (quantity > 1 ? `Separate all ${quantity} ${cartItemDetails.name} units to customize each unit’s add-ons` : `Add another ${cartItemDetails.name} unit with independent add-ons`)}
+              ? (quantity > 1 ? `فصل ${quantity} وحدات من ${cartItemDetails.name} لتخصيص إضافات كل قطعة` : `طلب وحدة أخرى من ${cartItemDetails.name} بإضافات مستقلة`)
+              : (quantity > 1 ? `Separate all ${quantity} ${cartItemDetails.name} units to customize each unit’s add-ons` : `Order another ${cartItemDetails.name} unit with independent add-ons`)}
             sx={{
               alignSelf: "stretch",
               mt: 0.5,
@@ -154,8 +154,8 @@ function CartItemCard({ cartItemDetails }) {
             }}
           >
             {isArabic
-              ? (quantity > 1 ? "تخصيص إضافات كل قطعة" : "إضافة وحدة بإضافات مستقلة")
-              : (quantity > 1 ? "Customize each unit’s add-ons" : "Add a unit with independent add-ons")}
+              ? (quantity > 1 ? "تخصيص إضافات كل قطعة" : "اطلب وحدة بإضافات مستقلة")
+              : (quantity > 1 ? "Customize each unit’s add-ons" : "Order a unit with independent add-ons")}
           </Button>
         )}
 

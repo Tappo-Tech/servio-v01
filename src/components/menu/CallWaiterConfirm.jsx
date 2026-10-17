@@ -14,10 +14,10 @@ import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import { useWaiterCalls } from "../../context/WaiterCallsContext";
 
 const REASON_OPTIONS = [
-  "طلب الفاتورة ",
-  "مساعدة في الطلب ",
-  "أدوات إضافية ",
-  "تنظيف الطاولة ",
+  "طلب الحساب",
+  "مساعدة بخصوص الطلب",
+  "أدوات إضافية",
+  "تنظيف الطاولة",
 ];
 
 function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
@@ -91,7 +91,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
               }}
             >
               <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                استدعاء الجرسون
+                طلب مساعدة الموظف
               </Typography>
               <IconButton
                 onClick={close}
@@ -122,7 +122,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
                     طاولة رقم {tableNumber}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    اختر سبب الاستدعاء ليصل إشعار واضح للكاشير
+                    اختر ما تحتاجه، وسنبلّغ فريق الخدمة.
                   </Typography>
                 </Box>
               </Box>
@@ -162,7 +162,7 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
                 mt: 3,
               }}
             >
-              {loading ? "جاري الإرسال..." : "تأكيد النداء"}
+              {loading ? "جارٍ الإرسال..." : "إرسال طلب المساعدة"}
             </Button>
           </>
         ) : (
@@ -180,13 +180,13 @@ function CallWaiterConfirm({ open, close, tableNumber = "1" }) {
               sx={{ fontSize: "4rem", mb: 1.5 }}
             />
             <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
-              تم استدعاء الجرسون!
+              تم إرسال طلبك إلى فريق الخدمة
             </Typography>
             <Typography
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              الجرسون في طريقه لطاولتك الآن.
+              سيتابع فريق الخدمة طلبك قريبًا.
             </Typography>
           </Box>
         )}

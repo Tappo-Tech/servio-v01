@@ -32,7 +32,7 @@ function MenuHeader({ table }) {
             component="h1"
             sx={{ fontWeight: 900, letterSpacing: "-0.7px", mb: 0.5, fontSize: { xs: "1.65rem", sm: "2rem" } }}
           >
-            {storeInfo?.store_name || "اسم المتجر"}
+            {storeInfo?.store_name || "قائمة الطعام"}
           </Typography>
         </Box>
 

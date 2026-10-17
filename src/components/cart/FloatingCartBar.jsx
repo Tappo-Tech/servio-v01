@@ -48,7 +48,7 @@ function FloatingCartBar({ handleCartOpen }) {
             mb: 0.5,
           }}
         >
-          {itemCount} عناصر مختارة
+          عدد الأصناف: {itemCount}
         </Typography>
         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
           {totalPrice} ر.س

@@ -146,7 +146,7 @@ function CartDrawer({ open, close }) {
           fullWidth
           multiline
           rows={2}
-          placeholder="أي ملاحظات خاصة؟ (مثال: بدون سكر، زيادة ثلج...)"
+          placeholder="ملاحظات على الطلب (مثل: دون سكر، ثلج إضافي...)"
           variant="outlined"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -204,7 +204,7 @@ function CartDrawer({ open, close }) {
             fontSize: "1rem",
           }}
         >
-          {sending ? "جاري الإرسال..." : "تأكيد وإرسال الطلب"}
+          {sending ? "جارٍ الإرسال..." : "تأكيد وإرسال الطلب"}
         </Button>
       </Box>
     </SwipeableDrawer>
