@@ -70,7 +70,9 @@ function CartDrawer({ open, close }) {
       navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken, tableNumber: tableNumber || null } });
     } catch (error) {
       console.error("تعذر إرسال طلب الطاولة:", { code: error?.code, status: error?.status, message: error?.message });
-      setSendError("تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
+      setSendError(String(error?.message || "").includes("MENU_ITEM_UNAVAILABLE")
+        ? "تغير توفر صنف في المنيو؛ حدّث الصفحة وأزل الصنف غير المتاح قبل الإرسال. ستبقى أصنافك في السلة."
+        : "تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
     } finally {
       setSending(false);
     }

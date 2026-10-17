@@ -62,6 +62,14 @@ describe("menu item options", () => {
     expect(getCompatibleSuggestions([{ id: "drink" }], noExplicitCompatibility, [], 2)).toEqual([]);
   });
 
+  test("does not offer items disabled by an unavailable ingredient as add-ons or suggestions", () => {
+    const ingredientOutItem = { id: "ingredient-out", name: "Milk drink", available: true, isAvailableForSale: false };
+    const mainItem = { id: "coffee", addon_options: [], free_addon_item_ids: ["ingredient-out"], max_addons: 1, recommendation_item_ids: ["ingredient-out"] };
+
+    expect(buildAddonChoices(mainItem, [ingredientOutItem])).toEqual([]);
+    expect(getCompatibleSuggestions([{ id: "coffee" }], [mainItem, ingredientOutItem])).toEqual([]);
+  });
+
   test("uses the latest compatibility field and excludes dismissed or cart items", () => {
     const cart = [{ id: "drink", recommendation_item_ids: ["old-item"] }, { id: "cookie" }];
     const menu = [

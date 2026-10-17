@@ -12,6 +12,7 @@ import OrdersHistory from "../components/manager-dashboard/orders/OrdersHistory"
 import SettingsLayout from "../components/manager-dashboard/settings/SettingsLayout";
 import Feedbacks from "../components/manager-dashboard/Feedbacks";
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
+import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -79,6 +80,7 @@ function ManagerDashboard() {
           {activeTab === "reports" && <Reports />}
           {activeTab === "shifts" && <ShiftReports />}
           {activeTab === "menu" && <MenuControl />}
+          {activeTab === "inventory" && <IngredientInventory canManage />}
           {activeTab === "settings" && <SettingsLayout />}
           {activeTab === "qrGen" && <QRCodeGenerate />}
           {activeTab === "feedbacks" && <Feedbacks />}

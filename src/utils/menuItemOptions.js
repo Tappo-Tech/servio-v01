@@ -38,7 +38,7 @@ export function buildAddonChoices(item, menuItems = []) {
     name,
   }));
   const menuById = new Map((menuItems || [])
-    .filter((menuItem) => menuItem?.id && menuItem.id !== item?.id && menuItem.available !== false)
+    .filter((menuItem) => menuItem?.id && menuItem.id !== item?.id && menuItem.available !== false && menuItem.isAvailableForSale !== false)
     .map((menuItem) => [String(menuItem.id), menuItem]));
   const menuChoices = normalizeAddonItemIds(item?.free_addon_item_ids)
     .map((id) => menuById.get(id))
@@ -136,7 +136,7 @@ export function normalizeOrderAddons(selected, addonOptions, freeAddonItemIds, m
 export function getCompatibleSuggestions(cartItems, menuItems, dismissedIds = [], limit = 2) {
   if (!Array.isArray(cartItems) || cartItems.length === 0 || !Array.isArray(menuItems) || menuItems.length === 0) return [];
 
-  const availableItems = menuItems.filter((item) => item?.id && item.available !== false);
+  const availableItems = menuItems.filter((item) => item?.id && item.available !== false && item.isAvailableForSale !== false);
   const menuById = new Map(availableItems.map((item) => [String(item.id), item]));
   const inCart = new Set(cartItems.map((item) => String(item?.id || "")));
   const dismissed = new Set((dismissedIds || []).map(String));

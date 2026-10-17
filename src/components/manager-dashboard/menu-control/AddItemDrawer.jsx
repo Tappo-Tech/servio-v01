@@ -66,6 +66,7 @@ const INITIAL_FORM_STATE = {
   allergens: [],
   tags: [],
   recommendation_item_ids: [],
+  ingredient_ids: [],
   addon_options: [],
   free_addon_item_ids: [],
   max_addons: 0,
@@ -73,7 +74,7 @@ const INITIAL_FORM_STATE = {
 };
 
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
-  const { addNewItem, updateItem, categoriesList = [], items = [], addonComplements = [] } = useMenu();
+  const { addNewItem, updateItem, categoriesList = [], items = [], ingredients = [], addonComplements = [] } = useMenu();
   const { language, t } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [freeAddonDrawerOpen, setFreeAddonDrawerOpen] = useState(false);
@@ -93,6 +94,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
         allergens: itemToEdit.allergens || [],
         tags: itemToEdit.tags || [],
         recommendation_item_ids: itemToEdit.recommendation_item_ids || [],
+        ingredient_ids: itemToEdit.ingredient_ids || [],
         addon_options: normalizeAddonOptions(itemToEdit.addon_options),
         free_addon_item_ids: normalizeAddonItemIds(itemToEdit.free_addon_item_ids),
         max_addons: normalizeAddonLimit(itemToEdit.max_addons, normalizeAddonOptions(itemToEdit.addon_options).length + normalizeAddonItemIds(itemToEdit.free_addon_item_ids).length),
@@ -166,6 +168,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
       allergens: formData.allergens,
       tags: formData.tags,
       recommendation_item_ids: formData.recommendation_item_ids,
+      ingredient_ids: formData.ingredient_ids,
       addon_options: normalizeAddonOptions(formData.addon_options),
       free_addon_item_ids: normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id),
       max_addons: normalizeAddonLimit(
@@ -267,6 +270,33 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           ))}
         </TextField>
 
+        <Autocomplete
+          multiple
+          options={ingredients}
+          getOptionLabel={(option) => option?.name || ""}
+          isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+          value={ingredients.filter((ingredient) => formData.ingredient_ids.includes(ingredient.id))}
+          onChange={(_, selectedIngredients) => {
+            setFormData((prev) => ({ ...prev, ingredient_ids: selectedIngredients.map((ingredient) => ingredient.id) }));
+          }}
+          renderTags={(value, getTagProps) => value.map((option, index) => {
+            const { key, ...tagProps } = getTagProps({ index });
+            return <Chip key={key} label={option.name} size="small" color="primary" variant="outlined" {...tagProps} />;
+          })}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              size="small"
+              label={language === "ar" ? "المكونات المستهلكة" : "Ingredients used"}
+              placeholder={language === "ar" ? "اختر المواد المستخدمة في الصنف" : "Select ingredients used in this item"}
+              helperText={language === "ar"
+                ? (ingredients.length ? "عند تسجيل نفاد أي مادة مختارة، يتوقف الصنف تلقائيًا عن الطلب والبيع." : "أضف المواد أولًا من تبويب إدارة المخزون، ثم اربطها بهذا الصنف.")
+                : (ingredients.length ? "Marking any selected ingredient out of stock automatically stops this item from being ordered or sold." : "Add ingredients from the Inventory tab first, then link them to this item.")}
+            />
+          )}
+          fullWidth
+        />
+
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <Button
             component="label"
@@ -335,7 +365,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
 
         <Autocomplete
           multiple
-          options={items.filter((item) => item.id !== itemToEdit?.id && item.available)}
+          options={items.filter((item) => item.id !== itemToEdit?.id && (item.isAvailableForSale !== false || formData.recommendation_item_ids.includes(item.id)))}
           getOptionLabel={(option) => option?.name || ""}
           value={items.filter((item) => formData.recommendation_item_ids.includes(item.id))}
           onChange={(_, newValue) => {
