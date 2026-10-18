@@ -1,3 +1,4 @@
+// مكوّن واجهة `PaymentStatusControl` ضمن مجموعة `orders`.
 import {
   Chip,
   FormControl,

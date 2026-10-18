@@ -1,3 +1,4 @@
+// مكوّن واجهة `CallWaiterConfirm` ضمن مجموعة `menu`.
 import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 // HOOKS
 import { useState } from "react";

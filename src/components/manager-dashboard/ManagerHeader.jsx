@@ -1,3 +1,4 @@
+// مكوّن واجهة `ManagerHeader` ضمن مجموعة `manager-dashboard`.
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";

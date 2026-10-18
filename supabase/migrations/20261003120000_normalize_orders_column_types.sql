@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `normalize orders column types`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Keep the order payload as one JSON document (an array), matching the app payload.
 alter table public.orders
   alter column items type jsonb

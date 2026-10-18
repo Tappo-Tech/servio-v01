@@ -1,3 +1,4 @@
+// دوال مساعدة `logout` لمنطق التطبيق واختباراته.
 import supabase from "../supabase";
 
 export async function logout(navigate) {

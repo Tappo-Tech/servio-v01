@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `compact order items payload`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Order cards only need identity, name, quantity and price.
 -- Removing embedded menu images makes Realtime INSERT/UPDATE payloads small and fast.
 update public.orders

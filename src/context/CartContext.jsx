@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `CartContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { v4 as uuidV4 } from "uuid";
 import { toggleSelectedAddon } from "../utils/menuItemOptions";

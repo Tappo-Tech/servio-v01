@@ -1,3 +1,4 @@
+// مكوّن واجهة `MenuItemCard` ضمن مجموعة `menu`.
 // HOOKS
 import { useState } from "react";
 

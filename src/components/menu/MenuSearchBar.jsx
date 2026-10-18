@@ -1,3 +1,4 @@
+// مكوّن واجهة `MenuSearchBar` ضمن مجموعة `menu`.
 // MUI COMPONENTS
 import { TextField } from "@mui/material";
 

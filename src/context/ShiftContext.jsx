@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `ShiftContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";

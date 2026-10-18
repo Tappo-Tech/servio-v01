@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `auth profile registration repairs`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 create or replace function public.create_tenant_for_registration(
   p_name text,
   p_slug text,

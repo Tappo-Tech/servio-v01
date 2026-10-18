@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `WaiterCallsContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import supabase from "../supabase";

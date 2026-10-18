@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `taxUtils` وسلوكها المتوقع.
 import { calculateInclusiveVat, KSA_STANDARD_VAT_PERCENT, toMinorUnits } from "./taxUtils";
 
 describe("calculateInclusiveVat", () => {

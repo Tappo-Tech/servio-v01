@@ -1,3 +1,4 @@
+// صفحة التطبيق `AuthCallback` التي تجمع واجهة المسار وسلوكه.
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Paper, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";

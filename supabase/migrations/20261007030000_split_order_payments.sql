@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `split order payments`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Split tender support: one order may be settled by cash and card/network together.
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS cash_amount numeric(12,2),

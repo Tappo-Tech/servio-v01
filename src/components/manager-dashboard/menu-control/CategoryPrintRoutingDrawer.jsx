@@ -1,3 +1,4 @@
+// مكوّن واجهة `CategoryPrintRoutingDrawer` ضمن مجموعة `menu-control`.
 import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormControlLabel, IconButton, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";

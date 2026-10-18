@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `order payment status`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Orders that predate this migration remain NULL (unknown) so existing financial
 -- history is not reclassified. New orders default to unpaid until staff confirms payment.
 ALTER TABLE public.orders

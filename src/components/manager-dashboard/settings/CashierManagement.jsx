@@ -1,3 +1,4 @@
+// مكوّن واجهة `CashierManagement` ضمن مجموعة `settings`.
 import { useEffect, useState } from "react";
 import { Alert, Avatar, Box, Button, Chip, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";

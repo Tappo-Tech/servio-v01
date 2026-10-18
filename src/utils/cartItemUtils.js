@@ -1,3 +1,4 @@
+// دوال مساعدة `cartItemUtils` لمنطق التطبيق واختباراته.
 export function getCartLineKey(item) {
   return String(item?.cartItemId || item?.id || "");
 }

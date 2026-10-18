@@ -1,3 +1,4 @@
+// مكوّن واجهة `CashierShiftGate` ضمن مجموعة `cashier-dashboard`.
 import { FullscreenDialog as Dialog } from "../common/FullscreenOverlays";
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, DialogActions, DialogContent, IconButton, InputAdornment, Paper, Skeleton, Stack, TextField, Typography, useMediaQuery } from "@mui/material";

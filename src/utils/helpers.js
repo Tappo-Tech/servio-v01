@@ -1,3 +1,4 @@
+// دوال مساعدة `helpers` لمنطق التطبيق واختباراته.
 export function formatTimeAgo(date, language = "ar", t) {
   const text = (key, fallback) => (typeof t === "function" ? t(key) : fallback);
   if (!date) return "";

@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `orderKitchenDelta` وسلوكها المتوقع.
 import { buildKitchenOrderDelta } from "./orderKitchenDelta";
 
 describe("buildKitchenOrderDelta", () => {

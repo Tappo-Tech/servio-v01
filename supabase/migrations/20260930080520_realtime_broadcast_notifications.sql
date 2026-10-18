@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `realtime broadcast notifications`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 create or replace function public.broadcast_tenant_changes()
 returns trigger
 language plpgsql

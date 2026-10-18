@@ -1,3 +1,4 @@
+// مكوّن واجهة `SalesTrendChart` ضمن مجموعة `Analytics`.
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";

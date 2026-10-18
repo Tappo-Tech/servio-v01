@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `harden repair rpc privileges`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 revoke all on function public.create_tenant_for_registration(text, text) from public, anon, authenticated;
 drop function if exists public.create_tenant_for_registration(text, text);
 revoke all on function public.create_tenant_for_registration(text, text, text, text, text, text) from public, anon, authenticated;

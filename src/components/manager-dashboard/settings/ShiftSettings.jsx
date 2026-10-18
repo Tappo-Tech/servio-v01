@@ -1,3 +1,4 @@
+// مكوّن واجهة `ShiftSettings` ضمن مجموعة `settings`.
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Paper, Stack, TextField, Typography } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";

@@ -1,3 +1,4 @@
+// مكوّن واجهة `AddonComplementDrawer` ضمن مجموعة `menu-control`.
 import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Divider, IconButton, List, ListItem, ListItemText, Stack, TextField, Typography } from "@mui/material";

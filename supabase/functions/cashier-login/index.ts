@@ -1,3 +1,4 @@
+// وظيفة Supabase Edge ضمن المسار `supabase/functions/cashier-login/index.ts`، وتنفذ منطق الخدمة المرتبط بها.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

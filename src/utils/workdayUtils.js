@@ -1,3 +1,4 @@
+// دوال مساعدة `workdayUtils` لمنطق التطبيق واختباراته.
 const DAY_MINUTES = 24 * 60;
 
 export function parseClockMinutes(value, fallback = 0) {

@@ -1,3 +1,4 @@
+// مكوّن واجهة `FullscreenOverlays` ضمن مجموعة `common`.
 import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import Drawer from "@mui/material/Drawer";

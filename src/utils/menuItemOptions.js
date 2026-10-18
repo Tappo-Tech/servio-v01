@@ -1,3 +1,4 @@
+// دوال مساعدة `menuItemOptions` لمنطق التطبيق واختباراته.
 export const MAX_ADDON_OPTIONS = 50;
 export const MAX_ADDONS_PER_ITEM = 20;
 

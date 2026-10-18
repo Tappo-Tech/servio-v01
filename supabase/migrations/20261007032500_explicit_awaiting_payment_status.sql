@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `explicit awaiting payment status`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Make awaiting payment a real order workflow state.
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_status_check;
 ALTER TABLE public.orders

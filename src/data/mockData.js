@@ -1,3 +1,4 @@
+// بيانات `mockData` التي يستهلكها التطبيق.
 export const categories = [
   { id: "hot-drinks", title: "مشروبات ساخنة", icon: "☕" },
   { id: "cold-drinks", title: "مشروبات باردة", icon: "🧊" },

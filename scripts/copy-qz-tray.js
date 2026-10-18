@@ -1,3 +1,4 @@
+// أداة بناء/صيانة `copy-qz-tray` للمشروع؛ تُشغّل ضمن أوامر package.json.
 const fs = require("node:fs");
 const path = require("node:path");
 const packageInfo = require("qz-tray/package.json");

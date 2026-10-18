@@ -1,3 +1,4 @@
+// صفحة التطبيق `AdminRegister` التي تجمع واجهة المسار وسلوكه.
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Box, Card, CardContent, Typography, TextField, Button, Grid, InputAdornment, IconButton, MenuItem, Alert, Divider, Link, Avatar } from "@mui/material";

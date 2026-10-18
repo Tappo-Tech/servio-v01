@@ -1,3 +1,4 @@
+// معالج API ضمن `api/qz/signature.js` لمسار QZ وتحقق التوقيع/الشهادة.
 const { createSign } = require("node:crypto");
 const { createClient } = require("@supabase/supabase-js");
 const { matchesServioCertificate } = require("./certificateFingerprint");

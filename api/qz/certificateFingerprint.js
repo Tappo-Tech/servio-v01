@@ -1,3 +1,4 @@
+// معالج API ضمن `api/qz/certificateFingerprint.js` لمسار QZ وتحقق التوقيع/الشهادة.
 const { createHash, createPublicKey } = require("node:crypto");
 
 // SHA-256 of the SERVIO certificate's SubjectPublicKeyInfo (public data).

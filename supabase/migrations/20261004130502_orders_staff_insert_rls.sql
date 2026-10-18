@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `orders staff insert rls`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Allow authenticated staff to create orders only for their own tenant.
 -- This matches the existing SELECT/UPDATE tenant scope and does not grant anon inserts.
 GRANT INSERT ON TABLE public.orders TO authenticated;

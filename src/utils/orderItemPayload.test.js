@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `orderItemPayload` وسلوكها المتوقع.
 import { compactOrderItems, parseOrderItems } from "./orderItemPayload";
 
 describe("order item payload", () => {

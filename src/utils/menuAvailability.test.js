@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `menuAvailability` وسلوكها المتوقع.
 import { withIngredientAvailability } from "./menuAvailability";
 
 describe("withIngredientAvailability", () => {

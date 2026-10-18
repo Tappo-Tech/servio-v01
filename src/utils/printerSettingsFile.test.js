@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `printerSettingsFile` وسلوكها المتوقع.
 jest.mock("../supabase", () => ({
   __esModule: true,
   default: { auth: { getSession: jest.fn() } },

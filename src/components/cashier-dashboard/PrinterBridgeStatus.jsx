@@ -1,3 +1,4 @@
+// مكوّن واجهة `PrinterBridgeStatus` ضمن مجموعة `cashier-dashboard`.
 import { useCallback, useEffect, useState } from "react";
 import { Button, Chip, CircularProgress, Stack } from "@mui/material";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";

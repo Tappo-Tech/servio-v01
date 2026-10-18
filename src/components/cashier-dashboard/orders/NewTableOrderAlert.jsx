@@ -1,3 +1,4 @@
+// مكوّن واجهة `NewTableOrderAlert` ضمن مجموعة `orders`.
 import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";

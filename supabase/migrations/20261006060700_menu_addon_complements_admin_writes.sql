@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `menu addon complements admin writes`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Keep complement names readable by staff in the same tenant, but editable only by its admin.
 -- The table already has tenant isolation; replace its original broad FOR ALL policy.
 CREATE OR REPLACE FUNCTION public.is_current_tenant_admin()

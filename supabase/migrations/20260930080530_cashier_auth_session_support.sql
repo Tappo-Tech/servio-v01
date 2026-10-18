@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `cashier auth session support`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 alter table public.cashiers add column if not exists auth_user_id uuid unique;
 
 create or replace function public.handle_new_user()

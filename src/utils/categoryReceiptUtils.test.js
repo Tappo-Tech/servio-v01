@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `categoryReceiptUtils` وسلوكها المتوقع.
 import { buildOrderReceiptGroups } from "./categoryReceiptUtils";
 import { calculateInclusiveVat } from "./taxUtils";
 

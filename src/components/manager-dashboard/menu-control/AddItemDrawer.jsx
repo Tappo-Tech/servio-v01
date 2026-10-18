@@ -1,3 +1,4 @@
+// مكوّن واجهة `AddItemDrawer` ضمن مجموعة `menu-control`.
 import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../../common/FullscreenOverlays";
 import { useState, useEffect } from "react";
 import { useMenu } from "../../../context/MenuContext";

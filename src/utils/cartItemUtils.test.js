@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `cartItemUtils` وسلوكها المتوقع.
 import { getAddonSelectionSignature, getCartLineKey, splitCartLine, splitCartLineIntoUnits } from "./cartItemUtils";
 
 describe("cart line identity", () => {

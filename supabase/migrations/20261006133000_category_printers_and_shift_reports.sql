@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `category printers and shift reports`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Persist each category's printer queue at tenant scope so cashier devices reuse the assignment.
 ALTER TABLE public.categories
   ADD COLUMN IF NOT EXISTS printer_name text;

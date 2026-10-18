@@ -1,3 +1,4 @@
+// دوال مساعدة `receiptImageRenderer` لمنطق التطبيق واختباراته.
 const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
 const A4_PAGE_HEIGHT_MM = 297;
 const CSS_PX_PER_MM = 96 / 25.4;

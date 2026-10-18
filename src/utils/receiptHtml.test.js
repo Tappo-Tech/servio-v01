@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `receiptHtml` وسلوكها المتوقع.
 import { buildReceiptHtml, escapeReceiptHtml } from "./receiptHtml";
 
 describe("receipt HTML", () => {

@@ -1,3 +1,4 @@
+// مكوّن واجهة `ErrorBoundary` ضمن مجموعة `components`.
 import { Component } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { Box, Button, Typography } from "@mui/material";

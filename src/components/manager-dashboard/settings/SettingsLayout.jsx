@@ -1,3 +1,4 @@
+// مكوّن واجهة `SettingsLayout` ضمن مجموعة `settings`.
 import { useState } from "react";
 import { useLanguage } from "../../../context/LanguageContext";
 import Box from "@mui/material/Box";
