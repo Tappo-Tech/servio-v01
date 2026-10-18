@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `workdayUtils` وسلوكها المتوقع.
 import { createWorkdayHourBuckets, getWorkdaySchedule, getWorkdayOffsetMinutes, shiftBusinessDate } from "./workdayUtils";
 
 describe("workday schedule helpers", () => {

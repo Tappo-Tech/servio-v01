@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `harden rpc privileges and indexes`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 revoke all on function public.broadcast_tenant_changes() from public, anon, authenticated;
 revoke all on function public.create_cashier(text, text, text) from public, anon, authenticated;
 grant execute on function public.create_cashier(text, text, text) to authenticated;

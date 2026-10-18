@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `FullscreenOverlays` وسلوكها المتوقع.
 import { fireEvent, render, screen } from "@testing-library/react";
 import DialogTitle from "@mui/material/DialogTitle";
 import {

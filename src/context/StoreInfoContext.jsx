@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `StoreInfoContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";

@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `cashier login auth mapping`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 drop function if exists public.verify_cashier_login(text, text, text);
 
 create or replace function public.verify_cashier_login(

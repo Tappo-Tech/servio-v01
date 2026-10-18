@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `compact existing order items payload`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Compact orders created after the first payload cleanup migration.
 update public.orders
 set items = (

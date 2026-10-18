@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `FeedbackContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";

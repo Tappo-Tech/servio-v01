@@ -1,3 +1,4 @@
+// دوال مساعدة `orderKitchenDelta` لمنطق التطبيق واختباراته.
 const getAddonKey = (addons) => (Array.isArray(addons) ? addons : [])
   .map((addon) => String(typeof addon === "string" ? addon : addon?.id ?? addon?.name ?? "").trim().toLocaleLowerCase())
   .filter(Boolean)

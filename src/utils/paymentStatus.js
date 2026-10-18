@@ -1,3 +1,4 @@
+// دوال مساعدة `paymentStatus` لمنطق التطبيق واختباراته.
 const PAYMENT_STATUS_VALUES = new Set(["paid", "unpaid"]);
 export const PAYMENT_METHOD_VALUES = ["cash", "card", "split", "wallet", "transfer", "other"];
 const PAYMENT_METHOD_SET = new Set(PAYMENT_METHOD_VALUES);

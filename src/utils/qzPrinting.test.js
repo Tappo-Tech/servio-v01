@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `qzPrinting` وسلوكها المتوقع.
 jest.mock("../supabase", () => ({
   __esModule: true,
   default: { auth: { getSession: jest.fn() } },

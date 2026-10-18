@@ -1,3 +1,4 @@
+// إنشاء عميل Supabase للمتصفح باستخدام متغيرات البيئة العامة فقط.
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;

@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `AnalyticsContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useContext, useMemo, useState } from "react";
 import { useHistory } from "./HistoryContext";
 import { useLanguage } from "./LanguageContext";

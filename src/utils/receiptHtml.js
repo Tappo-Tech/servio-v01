@@ -1,3 +1,4 @@
+// دوال مساعدة `receiptHtml` لمنطق التطبيق واختباراته.
 import dayjs from "dayjs";
 import { roundMoney } from "./taxUtils";
 

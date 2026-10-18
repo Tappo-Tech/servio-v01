@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `PrinterSetupDialog` وسلوكها المتوقع.
 jest.mock("../../utils/qzPrinting", () => ({
   createPrinterSettingsFile: jest.fn(),
   discoverPrinters: jest.fn().mockResolvedValue([]),

@@ -1,3 +1,4 @@
+// دوال مساعدة `compressImage` لمنطق التطبيق واختباراته.
 const DEFAULT_MAX_BYTES = 450 * 1024;
 
 export function compressImage(file, { maxWidth = 1024, maxHeight = 1024, quality = 0.74, maxBytes = DEFAULT_MAX_BYTES } = {}) {

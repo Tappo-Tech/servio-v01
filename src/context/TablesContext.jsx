@@ -1,3 +1,4 @@
+// سياق React لإدارة حالة `TablesContext` ومشاركتها بين أجزاء التطبيق.
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";

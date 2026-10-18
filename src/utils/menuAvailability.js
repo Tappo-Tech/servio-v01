@@ -1,3 +1,4 @@
+// دوال مساعدة `menuAvailability` لمنطق التطبيق واختباراته.
 export const withIngredientAvailability = (items = [], ingredients = [], ingredientLinks = []) => {
   const ingredientById = new Map((ingredients || []).map((ingredient) => [String(ingredient.id), ingredient]));
   const ingredientIdsByItem = new Map();

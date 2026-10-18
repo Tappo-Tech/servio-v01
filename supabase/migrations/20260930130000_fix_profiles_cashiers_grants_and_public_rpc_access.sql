@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `fix profiles cashiers grants and public rpc access`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- 1) profiles: authenticated users must be able to read their own profile (RLS limits rows to id = auth.uid()).
 --    Column-level grant only; role/tenant_id can never be updated directly by clients.
 grant select (id, tenant_id, full_name, role, created_at) on public.profiles to authenticated;

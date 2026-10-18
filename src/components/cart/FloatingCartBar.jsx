@@ -1,3 +1,4 @@
+// مكوّن واجهة `FloatingCartBar` ضمن مجموعة `cart`.
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";

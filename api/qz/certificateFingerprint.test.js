@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `certificateFingerprint` وسلوكها المتوقع.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, generateKeyPairSync, X509Certificate } = require("node:crypto");

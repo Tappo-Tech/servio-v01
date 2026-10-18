@@ -1,3 +1,4 @@
+// إعداد مظهر الواجهة واتجاهاتها عبر `Theme`.
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({

@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `salesReportUtils` وسلوكها المتوقع.
 import {
   aggregateSalesReport,
   createCsvText,

@@ -1,3 +1,4 @@
+// مكوّن واجهة `FreeAddonItemsDrawer` ضمن مجموعة `menu-control`.
 import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Checkbox, Divider, IconButton, List, ListItemButton, Stack, Typography } from "@mui/material";

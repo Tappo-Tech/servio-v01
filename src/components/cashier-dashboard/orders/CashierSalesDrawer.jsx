@@ -1,3 +1,4 @@
+// مكوّن واجهة `CashierSalesDrawer` ضمن مجموعة `orders`.
 import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useMemo, useState } from "react";
 import { Box, IconButton, Stack, Typography, Divider, Button, Chip, TextField, MenuItem } from "@mui/material";

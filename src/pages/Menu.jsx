@@ -1,3 +1,4 @@
+// صفحة التطبيق `Menu` التي تجمع واجهة المسار وسلوكه.
 import MenuHeader from "../components/menu/MenuHeader";
 import MenuFilterTabs from "../components/menu/MenuFilterTabs";
 import MenuItemsList from "../components/menu/MenuItemsList";

@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `analyticsUtils` وسلوكها المتوقع.
 import { aggregateHourlySales, createHourlyLabels } from "./analyticsUtils";
 
 describe("24-hour sales trend", () => {

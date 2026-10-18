@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `orders payment status consistency`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Historical rows stay unknown only when both new fields are NULL. New paid/unpaid
 -- records must keep paid_at consistent with payment_status.
 DO $$

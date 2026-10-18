@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `role aware dashboard policies`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 create or replace function public.is_current_tenant_admin()
 returns boolean
 language sql

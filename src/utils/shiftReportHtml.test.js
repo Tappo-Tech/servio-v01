@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `shiftReportHtml` وسلوكها المتوقع.
 import { buildShiftReportHtml } from "./shiftReportHtml";
 
 describe("printable shift reports", () => {

@@ -1,3 +1,4 @@
+// مكوّن واجهة `StoreInfoSettings` ضمن مجموعة `settings`.
 import { useState, useEffect } from "react";
 
 // MUI COMPONENTS

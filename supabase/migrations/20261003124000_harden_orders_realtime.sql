@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `harden orders realtime`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Keep complete UPDATE/DELETE records available to the cashier Realtime channel.
 alter table public.orders replica identity full;
 do $$

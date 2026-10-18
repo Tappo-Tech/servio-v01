@@ -1,3 +1,4 @@
+// مكوّن واجهة `RequireSession` ضمن مجموعة `components`.
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { Box, CircularProgress, Typography } from "@mui/material";

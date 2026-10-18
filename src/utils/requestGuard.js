@@ -1,3 +1,4 @@
+// دوال مساعدة `requestGuard` لمنطق التطبيق واختباراته.
 export function createRequestGuard() {
   const pending = new Set();
 

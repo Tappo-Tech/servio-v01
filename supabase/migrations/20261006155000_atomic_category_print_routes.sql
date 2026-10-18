@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `atomic category print routes`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 -- Save category printer routes atomically so a failed category cannot leave the store
 -- with an unreported partial set of printer assignments.
 CREATE OR REPLACE FUNCTION public.save_category_print_routes(p_routes jsonb)

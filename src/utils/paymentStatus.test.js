@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `paymentStatus` وسلوكها المتوقع.
 import {
   createPaymentMethodUpdate,
   createPaymentStatusUpdate,

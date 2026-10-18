@@ -1,3 +1,4 @@
+// اختبارات الوحدة والانحدار الخاصة بالوحدة `menuItemOptions` وسلوكها المتوقع.
 import {
   buildAddonChoices,
   getCompatibleSuggestions,

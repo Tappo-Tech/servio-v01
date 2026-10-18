@@ -1,3 +1,4 @@
+// مكوّن واجهة `ShiftReports` ضمن مجموعة `manager-dashboard`.
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, ButtonGroup, Card, CardContent, Chip, CircularProgress, Divider, Paper, Stack, Typography } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";

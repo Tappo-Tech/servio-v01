@@ -1,3 +1,4 @@
+// مكوّن واجهة `ItemDetailsDrawer` ضمن مجموعة `menu`.
 import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 import { useState } from "react";
 

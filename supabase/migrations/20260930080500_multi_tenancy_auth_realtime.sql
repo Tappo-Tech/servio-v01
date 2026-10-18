@@ -1,3 +1,4 @@
+-- ترحيل قاعدة البيانات `multi tenancy auth realtime`؛ راجع أوامر SQL أدناه لمعرفة التغيير الدقيق.
 create extension if not exists pgcrypto;
 
 create table if not exists public.tenants (

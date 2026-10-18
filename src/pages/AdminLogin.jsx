@@ -1,3 +1,4 @@
+// صفحة التطبيق `AdminLogin` التي تجمع واجهة المسار وسلوكه.
 import { useState } from "react";
 import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import { Box, Card, CardContent, Typography, TextField, Button, Grid, Tabs, Tab, InputAdornment, IconButton, Paper, Alert, Link, Avatar } from "@mui/material";

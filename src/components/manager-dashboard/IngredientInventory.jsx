@@ -1,3 +1,4 @@
+// مكوّن واجهة `IngredientInventory` ضمن مجموعة `manager-dashboard`.
 import { useMemo, useState } from "react";
 import { useMenu } from "../../context/MenuContext";
 import { useLanguage } from "../../context/LanguageContext";

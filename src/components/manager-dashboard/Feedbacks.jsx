@@ -1,3 +1,4 @@
+// مكوّن واجهة `Feedbacks` ضمن مجموعة `manager-dashboard`.
 // MUI COMPONENTS
 import {
   Box,

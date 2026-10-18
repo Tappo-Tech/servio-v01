@@ -1,3 +1,4 @@
+// مكوّن واجهة `NotFound` ضمن مجموعة `components`.
 // MUI COMPONENTS
 import { Box, Typography } from '@mui/material';
 
