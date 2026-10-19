@@ -1,65 +1,58 @@
-# SERVIO
+<div align="center">
+  <img src="public/logo-icon.webp" alt="SERVIO logo" width="88" />
+  <h1>SERVIO</h1>
+  <p><strong>Serve faster. Operate smarter. Grow with every table.</strong></p>
+  <p>An Arabic-first hospitality platform for smoother ordering and daily operations.</p>
+  <p>
+    <a href="https://servio-mvp.vercel.app/">Explore SERVIO</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:serviotech.sa@gmail.com">Contact us</a>
+  </p>
+</div>
 
-> **Serve faster. Operate smarter. Grow with every table.**
+<p align="center">
+  <img src="https://img.shields.io/badge/stage-MVP%20validation-f59e0b?style=flat-square" alt="MVP validation" />
+  <img src="https://img.shields.io/badge/market-Saudi%20Arabia-0b6e4f?style=flat-square" alt="Saudi Arabia" />
+  <img src="https://img.shields.io/badge/category-Hospitality%20Tech-2563eb?style=flat-square" alt="Hospitality technology" />
+  <img src="https://img.shields.io/badge/license-Proprietary-111827?style=flat-square" alt="Proprietary software" />
+</p>
 
-SERVIO is an Arabic-first hospitality platform built to make table ordering and day-to-day service easier for cafés and restaurants. Guests open a digital menu from a QR code, place an order, and contact the service team without installing an app. Teams manage orders and core operations from a responsive workspace.
+## About SERVIO
 
-![Product stage](https://img.shields.io/badge/stage-MVP%20validation-f59e0b?style=flat-square)
-![Market](https://img.shields.io/badge/market-Saudi%20Arabia-0b6e4f?style=flat-square)
-![Category](https://img.shields.io/badge/category-Hospitality%20Tech-2563eb?style=flat-square)
-![License](https://img.shields.io/badge/license-Proprietary-111827?style=flat-square)
+SERVIO helps cafés and restaurants bring the guest experience and daily service operations together. Guests open a digital menu from a table QR code, browse and place an order, and connect with the service team in their browser—without installing an app. Staff manage requests from a responsive workspace built with an Arabic-first, right-to-left experience.
 
-## Overview
+SERVIO is an MVP focused on validating practical hospitality workflows in Saudi Arabia.
 
-SERVIO connects the guest experience with the work happening behind the counter. It is designed around a simple journey: guests browse and order from their table, staff receive and manage requests, and managers get a clearer view of daily operations.
+## What SERVIO offers
 
-The product is currently an MVP in market-validation. Its focus is on practical workflows for hospitality businesses in Saudi Arabia, with an Arabic-first interface and support for right-to-left layouts.
-
-## Product capabilities
-
-### For guests
-
-- Open a table-specific digital menu from a QR code.
-- Browse categories, search items, and view item details and recommendations.
-- Place an order and follow its progress.
-- Request service and share feedback.
-- Use the experience in a browser without downloading an app.
-
-### For teams
-
-- Give managers and cashiers role-appropriate workspaces.
-- Receive and progress orders through the service workflow.
-- Use a cashier point of sale and record payment details.
-- Manage menu items, prices, recommendations, and ingredient availability.
-- Review shifts, sales summaries, reports, and customer feedback.
-- Prepare customer receipts and kitchen tickets.
+| Guest experience | Team operations |
+|---|---|
+| Table-specific digital menus | Role-appropriate manager and cashier workspaces |
+| Menu browsing, search, and recommendations | Live order handling and cashier point of sale |
+| Order placement and progress updates | Menu, pricing, and ingredient availability management |
+| Service requests and customer feedback | Shift, sales, and operational summaries |
+| Responsive browser access with no app download | Customer receipts and kitchen tickets |
 
 ## How it works
 
 ```text
-Guest scans a table QR
-        ↓
-Browses the menu and places an order
-        ↓
-The team receives and manages the request
-        ↓
-Managers review operations and feedback
+Scan a table QR → Browse the menu → Place an order → Team manages the request
 ```
 
 ## Technology
 
-- **Web application:** React, React Router, and Material UI.
+- **Frontend:** React, React Router, and Material UI.
 - **Backend services:** Supabase.
 - **Hosting:** Vercel.
-- **Experience:** responsive layouts, Arabic-first copy, and right-to-left support.
+- **Interface:** responsive layouts, Arabic-first copy, and right-to-left support.
 
 ## Run locally
 
 ### Requirements
 
-- Node.js 18 or newer.
-- npm.
-- Access to a Supabase development project for features that need backend data.
+- Node.js 18 or newer
+- npm
+- A Supabase development project for features that require backend data
 
 ### Setup
 
@@ -71,38 +64,39 @@ cp .env.example .env
 npm start
 ```
 
-Add your own local development configuration using the guidance in `.env.example`. Keep credentials and customer information out of source control. The development server runs at `http://localhost:3000`.
+Configure local values using `.env.example` as a guide. Do not commit credentials or customer data. The development server runs at `http://localhost:3000`.
 
-### Useful commands
+### Common commands
 
 ```bash
-npm start       # Start the local development server
-npm test        # Run the test suite
-npm run build   # Create an optimized production build
+npm start       # Start the development server
+npm test        # Run tests
+npm run build   # Build the production bundle
 ```
 
-## Project layout
+## Project structure
 
 ```text
-src/                  Application pages, reusable UI, state, and helpers
+src/                  Web application: pages, components, state, and utilities
 supabase/             Database migrations and backend functions
-public/               Static assets used by the web application
+public/               Static assets and brand resources
 ```
 
 ## Contributing
 
-1. Create a focused branch for your change.
+1. Create a focused branch for each change.
 2. Keep the guest and staff experiences responsive and accessible.
-3. Add or update tests for behavior that changes.
-4. Run the test suite and production build before opening a pull request.
-5. Do not commit credentials, private keys, or customer data.
+3. Add or update tests when behavior changes.
+4. Run tests and a production build before opening a pull request.
+5. Never commit credentials, private keys, or real customer information.
 
 ## License
 
-SERVIO is proprietary software. All rights are reserved. No license to copy, modify, distribute, or use the software is granted without written permission from its authorized owners.
+SERVIO is proprietary software. All rights are reserved. No permission to copy, modify, distribute, or use the software is granted without written authorization.
 
-## Contact
+## Connect
 
-- Product: [servio-mvp.vercel.app](https://servio-mvp.vercel.app/)
-- Company: [LinkedIn](https://www.linkedin.com/company/servio-tech) · [X](https://x.com/Servio_Tech)
-- General enquiries: [servio.app.sa@gmail.com](mailto:serviotech.sa@gmail.com)
+- **Email:** [serviotech.sa@gmail.com](mailto:serviotech.sa@gmail.com)
+- **X:** [@Servio_Tech](https://x.com/Servio_Tech)
+- **LinkedIn:** [SERVIO Tech](https://www.linkedin.com/company/servio-tech)
+- **Product:** [servio-mvp.vercel.app](https://servio-mvp.vercel.app/)
