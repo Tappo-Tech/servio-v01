@@ -104,5 +104,5 @@ SERVIO is proprietary software. All rights are reserved. No license to copy, mod
 ## Contact
 
 - Product: [servio-mvp.vercel.app](https://servio-mvp.vercel.app/)
-- Company: [LinkedIn](https://www.linkedin.com/company/servio-tech) · [X](https://x.com/servioApp)
-- General enquiries: [servio.app.sa@gmail.com](mailto:servio.app.sa@gmail.com)
+- Company: [LinkedIn](https://www.linkedin.com/company/servio-tech) · [X](https://x.com/Servio_Tech)
+- General enquiries: [servio.app.sa@gmail.com](mailto:serviotech.sa@gmail.com)
