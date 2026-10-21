@@ -36,7 +36,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 import PaymentStatusControl from "./PaymentStatusControl";
 
-function OrderItemCard({ order, onEdit }) {
+function OrderItemCard({ order }) {
   const { updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
@@ -379,7 +379,6 @@ function OrderItemCard({ order, onEdit }) {
               <Button color="success" variant="contained" onClick={!isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
                 {!isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
               </Button>
-              {onEdit && <Button variant="outlined" onClick={() => onEdit(order)} disabled={sending}>{language === "ar" ? "تعديل الطلب" : "Edit order"}</Button>}
               {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>
                 {t("printInvoice")}
               </Button>}

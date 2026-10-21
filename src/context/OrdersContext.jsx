@@ -80,7 +80,7 @@ const attachSequentialOrderNumbers = (orderList) => {
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
   const { pathname } = useLocation();
-  const isCashierSurface = pathname === "/dashboard" || pathname === "/dashboard/pos" || pathname.startsWith("/cashier/");
+  const isCashierSurface = pathname === "/dashboard" || pathname.startsWith("/cashier/");
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersLoadError, setOrdersLoadError] = useState(null);
@@ -273,7 +273,7 @@ export const OrdersProvider = ({ children }) => {
     const items = compactOrderItems(newOrder.items);
     if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
 
-    // الإكمال الفوري خيار داخلي لشاشة POS فقط؛ لا نسمح بتحويل طلب ضيف الطاولة إلى بيع مكتمل.
+    // الإكمال الفوري للبيع المباشر متاح للعامل المسجل فقط؛ لا نسمح لضيف الطاولة بإكمال الطلب.
     if (isPublic && newOrder.completeImmediately) return { error: new Error("غير مصرح") };
 
     // للضيف ننشئ الطلب عبر RPC محدود بالـ slug، ويعيد رمزًا عشوائيًا لهذا الطلب وحده للتتبع.

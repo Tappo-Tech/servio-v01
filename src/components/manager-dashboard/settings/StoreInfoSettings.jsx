@@ -89,22 +89,22 @@ function StoreInfoSettings() {
     e.preventDefault();
     if (saving) return;
     setSaving(true);
-    const result = await updateStoreInfo(formData);
-    if (result?.error) {
-      setToast({
-        open: true,
-        message: result.error.message?.includes("duplicate") ? t("slugName") : result.error.message || t("genericLoginError"),
-        severity: "error",
-      });
+    try {
+      const result = await updateStoreInfo(formData);
+      if (result?.error) {
+        setToast({
+          open: true,
+          message: result.error.code === "23505" || result.error.message?.includes("duplicate") ? t("slugName") : result.error.message || t("genericLoginError"),
+          severity: "error",
+        });
+        return;
+      }
+      setToast({ open: true, message: t("managerSaved"), severity: "success" });
+    } catch (error) {
+      setToast({ open: true, message: error?.message || t("genericLoginError"), severity: "error" });
+    } finally {
       setSaving(false);
-      return;
     }
-    setSaving(false);
-    setToast({
-      open: true,
-      message: t("managerSaved"),
-      severity: "success",
-    });
   };
 
   return (
