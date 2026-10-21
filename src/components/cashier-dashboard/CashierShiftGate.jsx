@@ -70,6 +70,7 @@ function ShiftDialog({
   error,
   schedule,
   mobile,
+  lockClose = false,
   onClose,
   onConfirm,
 }) {
@@ -81,7 +82,7 @@ function ShiftDialog({
   return (
     <Dialog
       open={open}
-      onClose={() => !busy && onClose()}
+      onClose={() => !busy && !lockClose && onClose()}
       fullScreen={mobile}
       fullWidth
       maxWidth="sm"
@@ -111,14 +112,14 @@ function ShiftDialog({
               {title}
             </Typography>
           </Box>
-          <IconButton
+          {!lockClose && <IconButton
             aria-label={ar ? "إغلاق النافذة" : "Close dialog"}
             onClick={onClose}
             disabled={busy}
             sx={{ color: "common.white", flex: "0 0 auto" }}
           >
             <CloseRoundedIcon />
-          </IconButton>
+          </IconButton>}
         </Stack>
       </Box>
 
@@ -188,9 +189,9 @@ function ShiftDialog({
           "& .MuiButton-root": { minHeight: 46, borderRadius: 2.2, fontWeight: 850 },
         }}
       >
-        <Button onClick={onClose} disabled={busy} color="inherit" fullWidth={mobile}>
+        {!lockClose && <Button onClick={onClose} disabled={busy} color="inherit" fullWidth={mobile}>
           {ar ? "إلغاء" : "Cancel"}
-        </Button>
+        </Button>}
         <Button
           variant="contained"
           color={starting ? "primary" : "error"}
@@ -229,6 +230,7 @@ export default function CashierShiftGate() {
     ? `${String(storeInfo.workday_start).slice(0, 5)} – ${String(storeInfo.workday_end).slice(0, 5)}`
     : null;
   const openedAt = currentShift?.opened_at;
+  const mandatoryStart = user?.role === "cashier" && !loading && !currentShift?.id;
 
   useEffect(() => {
     if (!openedAt) return undefined;
@@ -427,20 +429,21 @@ export default function CashierShiftGate() {
       )}
 
       <ShiftDialog
-        open={dialog === "start" || dialog === "close"}
-        kind={dialog}
+        open={mandatoryStart || dialog === "start" || dialog === "close"}
+        kind={mandatoryStart ? "start" : dialog}
         ar={ar}
         currency={currency}
-        amount={dialog === "start" ? openCash : closeCash}
-        setAmount={dialog === "start" ? setOpenCash : setCloseCash}
+        amount={mandatoryStart || dialog === "start" ? openCash : closeCash}
+        setAmount={mandatoryStart || dialog === "start" ? setOpenCash : setCloseCash}
         notes={notes}
         setNotes={setNotes}
         busy={busy}
         error={actionError}
         schedule={schedule}
         mobile={mobile}
-        onClose={closeDialog}
-        onConfirm={dialog === "start" ? start : finish}
+        lockClose={mandatoryStart}
+        onClose={mandatoryStart ? () => {} : closeDialog}
+        onConfirm={mandatoryStart || dialog === "start" ? start : finish}
       />
     </>
   );

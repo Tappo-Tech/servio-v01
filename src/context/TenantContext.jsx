@@ -58,12 +58,12 @@ export function TenantProvider({ children }) {
           // RPC يهيئ/يعيد ملف المستخدم بصلاحيات محكومة؛ واستعلام profiles أدناه مسار احتياطي عند تعذر RPC.
           let { data: profileData, error: profileError } = await supabase.rpc("ensure_profile_for_current_user");
           if (profileError || !profileData?.id) {
-            const fallback = await supabase.from("profiles").select("id, tenant_id, full_name, role").eq("id", sessionData.session.user.id).maybeSingle();
+            const fallback = await supabase.from("profiles").select("id, tenant_id, full_name, phone, role").eq("id", sessionData.session.user.id).maybeSingle();
             profileData = fallback.data;
           }
           if (cancelled) return;
           if (!profileData) { setProfile(null); return; }
-          setProfile((prev) => (prev && prev.id === profileData.id && prev.role === profileData.role && prev.tenant_id === profileData.tenant_id && prev.full_name === profileData.full_name ? prev : profileData));
+          setProfile((prev) => (prev && prev.id === profileData.id && prev.role === profileData.role && prev.tenant_id === profileData.tenant_id && prev.full_name === profileData.full_name && prev.phone === profileData.phone ? prev : profileData));
           const [{ data: tenantData }, { data: storeData }] = await Promise.all([
             supabase.from("tenants").select("*").eq("id", profileData.tenant_id).maybeSingle(),
             supabase.from("store").select("*").eq("tenant_id", profileData.tenant_id).maybeSingle(),

@@ -4,9 +4,7 @@ import LiveOrders from "../components/cashier-dashboard/orders/LiveOrders";
 import WaiterCallNotification from "../components/cashier-dashboard/orders/WaiterCallNotification";
 import CashierSalesDrawer from "../components/cashier-dashboard/orders/CashierSalesDrawer";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
-import PointOfSaleRoundedIcon from "@mui/icons-material/PointOfSaleRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
-import { Link } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -103,9 +101,6 @@ function Dashboard() {
                 </Stack>
               </Box>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
-                <Button component={Link} to="/dashboard/pos" variant="contained" startIcon={<PointOfSaleRoundedIcon />} sx={{ borderRadius: 2.5, fontWeight: 850, whiteSpace: "nowrap" }}>
-                  {language === "ar" ? "واجهة الكاشير" : "Cashier menu"}
-                </Button>
                 <Button variant="outlined" startIcon={<ReceiptLongRoundedIcon />} onClick={() => setIsSalesHistoryOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
                   {t("orderHistory")}
                 </Button>
