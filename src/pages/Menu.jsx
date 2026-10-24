@@ -28,16 +28,18 @@ function Menu() {
   const { setTable } = useCart();
   const { tableNumber, tenant, slug, loading: tenantLoading } = useTenant();
   const { language } = useLanguage();
-  const isValidTable = tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true;
+  const isCashierQr = new URLSearchParams(window.location.search).get("cashier") === "1";
+  const orderLocation = isCashierQr ? "كاشير" : tableNumber;
+  const isValidTable = isCashierQr || (tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true);
   useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
-  if (tenantLoading || (tenant && tableNumber && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
+  if (tenantLoading || (tenant && tableNumber && !isCashierQr && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
   if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="تعذّر العثور على الكافيه من خلال هذا الرابط." /></Container>;
   if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="رقم الطاولة غير صالح" message="تحقّق من رابط المنيو أو اطلب المساعدة من الموظف." /></Container>;
   return (
     <Box sx={{ minHeight: "100vh", background: "radial-gradient(circle at 100% 0%, rgba(244,121,32,.08), transparent 28%), linear-gradient(180deg, #fafbfc 0%, #f6f7f9 100%)", pb: 3 }}>
       <Box sx={{ px: { xs: 1.2, sm: 2 }, pt: { xs: 1, sm: 1.5 } }}>
         <Box sx={{ maxWidth: 760, mx: "auto", background: "rgba(255,255,255,.78)", border: "1px solid rgba(255,255,255,.75)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderRadius: { xs: 3.5, sm: 4 }, boxShadow: "0 16px 45px rgba(23,26,47,.07)", px: { xs: 1.2, sm: 2 }, pt: 1.3, pb: 0.3 }}>
-          <MenuHeader table={tableNumber} />
+          <MenuHeader table={orderLocation} />
           <MenuFilterTabs />
         </Box>
       </Box>
@@ -53,9 +55,9 @@ function Menu() {
       </Container>
     <FloatingActions handleReview={() => setReviewOpen(true)} handleCallWaiter={() => setCallingWaiterConfirmation(true)} />
     <SuggestionBanner /><FloatingCartBar handleCartOpen={() => setCartOpen(true)} />
-    <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} />
-    <ReviewSection open={reviewOpen} close={() => setReviewOpen(false)} tableNumber={tableNumber} />
-    <CallWaiterConfirm open={callingWaiterConfirmation} close={() => setCallingWaiterConfirmation(false)} tableNumber={tableNumber} />
+    <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} cashierMode={isCashierQr} />
+    <ReviewSection open={reviewOpen} close={() => setReviewOpen(false)} tableNumber={orderLocation} />
+    <CallWaiterConfirm open={callingWaiterConfirmation} close={() => setCallingWaiterConfirmation(false)} tableNumber={orderLocation} />
     <TrialNotice />
     </Box>
   );

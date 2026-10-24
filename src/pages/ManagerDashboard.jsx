@@ -13,6 +13,7 @@ import SettingsLayout from "../components/manager-dashboard/settings/SettingsLay
 import Feedbacks from "../components/manager-dashboard/Feedbacks";
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
+import BranchTabs from "../components/manager-dashboard/BranchTabs";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -75,6 +76,7 @@ function ManagerDashboard() {
 
         {/* عرض الصفحة بناءً على التبويب المحدد */}
         <Box sx={{ flexGrow: 1, minWidth: 0, width: "100%", p: { xs: 1.25, sm: 2.5, lg: 3 }, pt: { xs: 2, md: 2.5 } }}>
+          <BranchTabs />
           {activeTab === "manager" && <Analytics />}
           {activeTab === "history" && <OrdersHistory />}
           {activeTab === "reports" && <Reports />}

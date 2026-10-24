@@ -5,6 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useTables } from "../../../context/TablesContext";
 import { useTenant } from "../../../context/TenantContext";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useBranch } from "../../../context/BranchContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -28,12 +29,16 @@ import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 function QRCodeGenerate() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { tables, error: tablesError, generateTables, deleteTable, clearTables } = useTables();
   const [sending, setSending] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const { slug: routeSlug, tenant } = useTenant();
   const resolvedSlug = tenant?.slug || routeSlug;
+  const { branchSlug } = useBranch();
+  const cashierQrValue = resolvedSlug
+    ? `${window.location.origin}/menu/${resolvedSlug}?branch=${encodeURIComponent(branchSlug || "main")}&cashier=1`
+    : "";
   const [tablesCount, setTablesCount] = useState(tables.length || 5);
 
   const handleGenerate = (e) => {
@@ -197,6 +202,20 @@ function QRCodeGenerate() {
 
       {tablesError && <Typography className="no-print" color="error" sx={{ mb: 2 }}>{tablesError}</Typography>}
 
+      {cashierQrValue && (
+        <Card id="cashier-qr-card" className="qr-card" variant="outlined" sx={{ mb: 3, borderRadius: "16px", textAlign: "center", borderColor: "primary.main", background: "linear-gradient(135deg, rgba(244,121,32,.08), rgba(255,255,255,.96))" }}>
+          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+            <Chip label={language === "en" ? "Cashier QR" : "QR الكاشير"} color="secondary" sx={{ fontWeight: 800 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
+              {language === "en" ? "One code for customers ordering directly in front of the cashier. Orders are recorded as cashier sales." : "كود واحد للزبون الذي يطلب أمام الكاشير؛ ستُسجّل الطلبات تلقائيًا كمبيعات كاشير."}
+            </Typography>
+            <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}><QRCodeSVG value={cashierQrValue} size={190} level="H" includeMargin /></Box>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>كاشير</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>{cashierQrValue}</Typography>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Generated Tables List */}
       {tables.length > 0 && (
         <Box id="printable-area">
@@ -225,7 +244,7 @@ function QRCodeGenerate() {
           <Grid container spacing={2.5}>
             {tables.map((table) => {
               const qrValue = resolvedSlug
-                ? `${window.location.origin}/menu/${resolvedSlug}/${table.table_number}`
+                ? `${window.location.origin}/menu/${resolvedSlug}/${table.table_number}?branch=${encodeURIComponent(branchSlug || "main")}`
                 : "";
               return (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={table.id}>

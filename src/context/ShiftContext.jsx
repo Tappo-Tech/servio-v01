@@ -2,12 +2,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
+import { useBranch } from "./BranchContext";
 import { useUser } from "./UserContext";
 
 const ShiftContext = createContext(null);
 
 export function ShiftProvider({ children }) {
   const { tenantId, isPublic, loading: tenantLoading } = useTenant();
+  const { selectedBranchId: branchId } = useBranch();
   const { user } = useUser();
   const [currentShift, setCurrentShift] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -31,13 +33,13 @@ export function ShiftProvider({ children }) {
       .from("cashier_sessions")
       .select("*")
       .eq("tenant_id", tenantId)
-      .eq("auth_user_id", user?.id)
+      .eq("auth_user_id", user?.id).eq("branch_id", branchId)
       .eq("status", "open")
       .maybeSingle();
     setCurrentShift(loadError ? null : data);
     setError(loadError?.message || "");
     setLoading(false);
-  }, [isPublic, tenantId, tenantLoading, user?.role, user?.id]);
+  }, [isPublic, tenantId, branchId, tenantLoading, user?.role, user?.id]);
 
   useEffect(() => { void loadCurrentShift(); }, [loadCurrentShift]);
 
@@ -65,10 +67,10 @@ export function ShiftProvider({ children }) {
   const loadSessions = useCallback(async (limit = 100) => {
     if (isPublic || !tenantId || !["admin", "cashier"].includes(user?.role)) return { data: [], error: null };
     const { data, error: loadError } = await supabase.rpc("list_cashier_sessions", { p_limit: limit });
-    if (!loadError) setSessions(data || []);
+    if (!loadError) setSessions((data || []).filter((session) => !branchId || session.branch_id === branchId));
     else setError(loadError.message || "تعذر تحميل الورديات");
     return { data: data || [], error: loadError };
-  }, [isPublic, tenantId, user?.role]);
+  }, [isPublic, tenantId, branchId, user?.role]);
 
   const value = useMemo(() => ({ currentShift, sessions, loading, error, openShift, closeShift, loadCurrentShift, loadSessions }), [currentShift, sessions, loading, error, openShift, closeShift, loadCurrentShift, loadSessions]);
   return <ShiftContext.Provider value={value}>{children}</ShiftContext.Provider>;

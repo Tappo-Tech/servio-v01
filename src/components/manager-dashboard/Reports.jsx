@@ -27,6 +27,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import supabase from "../../supabase";
 import { useTenant } from "../../context/TenantContext";
+import { useBranch } from "../../context/BranchContext";
 import { useStore } from "../../context/StoreInfoContext";
 import { useLanguage } from "../../context/LanguageContext";
 import {
@@ -148,6 +149,7 @@ function MetricCard({ title, value, detail }) {
 function Reports() {
   const theme = useTheme();
   const { tenantId, loading: tenantLoading } = useTenant();
+  const { selectedBranchId: branchId } = useBranch();
   const { storeInfo = {} } = useStore();
   const { language, t } = useLanguage();
   const text = COPY[language] || COPY.ar;
@@ -188,7 +190,7 @@ function Reports() {
           const { data, error: queryError } = await supabase
             .from("orders")
             .select("id,created_at,completed_at,status,total_price,items")
-            .eq("tenant_id", tenantId)
+            .eq("tenant_id", tenantId).eq("branch_id", branchId)
             .in("status", ["served", "unclaimed"])
             .or(saleDateFilter)
             .order("created_at", { ascending: true })
@@ -212,7 +214,7 @@ function Reports() {
     };
     void loadReportOrders();
     return () => { active = false; };
-  }, [tenantId, tenantLoading, range.from, range.to, refreshKey, text.error, schedule.startMinutes]);
+  }, [tenantId, branchId, tenantLoading, range.from, range.to, refreshKey, text.error, schedule.startMinutes]);
 
   const report = useMemo(() => aggregateSalesReport(orders, schedule), [orders, schedule]);
   const series = useMemo(() => createSalesSeries(orders, range.from, range.to, period, locale, schedule), [orders, range.from, range.to, period, locale, schedule]);

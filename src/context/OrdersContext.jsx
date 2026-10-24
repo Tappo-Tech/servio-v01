@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useLocation } from "react-router-dom";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
+import { useBranch } from "./BranchContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
@@ -10,7 +11,7 @@ import { createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/p
 const OrdersContext = createContext();
 
 // نطلب الأعمدة التي تحتاجها البطاقات والفواتير والتحليلات فقط، بدل جلب كل أعمدة الجدول.
-const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id,payment_status,paid_at,payment_method,cash_amount,card_amount";
+const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_completed,created_at,completed_at,tenant_id,branch_id,cashier_id,cashier_session_id,payment_status,paid_at,payment_method,cash_amount,card_amount";
 const UPDATE_COLUMNS = "id,status,is_completed,completed_at,payment_status,paid_at,payment_method,cash_amount,card_amount";
 const RETRY_DELAYS_MS = [250, 650];
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
@@ -79,6 +80,7 @@ const attachSequentialOrderNumbers = (orderList) => {
 
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
+  const { selectedBranchId: branchId, branchSlug } = useBranch();
   const { pathname } = useLocation();
   const isCashierSurface = pathname === "/dashboard" || pathname.startsWith("/cashier/");
   const [orders, setOrders] = useState([]);
@@ -138,7 +140,7 @@ export const OrdersProvider = ({ children }) => {
             const { data, error } = await supabase
               .from("orders")
               .select(ORDER_COLUMNS)
-              .eq("tenant_id", tenantId)
+              .eq("tenant_id", tenantId).eq("branch_id", branchId)
               .order("created_at", { ascending: true });
 
             if (!active) return;
@@ -267,7 +269,7 @@ export const OrdersProvider = ({ children }) => {
       if (reloadOrdersRef.current === loadInitialOrders) reloadOrdersRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [tenantId, isPublic, tenantLoading, isCashierSurface]);
+  }, [tenantId, branchId, branchSlug, isPublic, tenantLoading, isCashierSurface]);
 
   const addOrder = (newOrder) => guard("orders:add", async () => {
     const items = compactOrderItems(newOrder.items);
@@ -284,6 +286,7 @@ export const OrdersProvider = ({ children }) => {
         p_total_price: Number(newOrder.total_price) || 0,
         p_table_number: String(newOrder.table_number || "غير محدد"),
         p_notes: newOrder.notes ? String(newOrder.notes) : null,
+        p_branch_slug: branchSlug,
       });
       return { data, error };
     }
@@ -304,6 +307,8 @@ export const OrdersProvider = ({ children }) => {
         table_number: String(newOrder.table_number || "غير محدد"),
         notes: newOrder.notes ? String(newOrder.notes) : null,
         tenant_id: tenantId,
+        branch_id: branchId,
+        cashier_session_id: newOrder.cashier_session_id || null,
         status: completedAt ? "served" : "pending",
         is_completed: Boolean(completedAt),
         completed_at: completedAt,
@@ -350,7 +355,7 @@ export const OrdersProvider = ({ children }) => {
     const optimistic = formatOrder({ ...target, ...payload });
     setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
     const { data, error } = await supabase.from("orders").update(payload)
-      .eq("id", orderId).eq("tenant_id", tenantId).select(ORDER_COLUMNS).maybeSingle();
+      .eq("id", orderId).eq("tenant_id", tenantId).eq("branch_id", branchId).select(ORDER_COLUMNS).maybeSingle();
     if (error || !data) {
       setOrders((current) => current.map((order) => order.id === orderId ? target : order));
       return { error: error || new Error("تعذر تحديث الطلب") };
@@ -383,7 +388,7 @@ export const OrdersProvider = ({ children }) => {
             completed_at: completedAt?.toISOString() || null,
           })
           .eq("id", orderId)
-          .eq("tenant_id", tenantId)
+          .eq("tenant_id", tenantId).eq("branch_id", branchId)
           .select(UPDATE_COLUMNS)
           .maybeSingle();
       } catch (networkError) {
@@ -437,7 +442,7 @@ export const OrdersProvider = ({ children }) => {
           .from("orders")
           .update(paymentUpdate)
           .eq("id", orderId)
-          .eq("tenant_id", tenantId)
+          .eq("tenant_id", tenantId).eq("branch_id", branchId)
           .select("id,payment_status,paid_at,payment_method,cash_amount,card_amount")
           .maybeSingle();
       } catch (networkError) {
@@ -477,7 +482,7 @@ export const OrdersProvider = ({ children }) => {
           .from("orders")
           .update(paymentUpdate)
           .eq("id", orderId)
-          .eq("tenant_id", tenantId)
+          .eq("tenant_id", tenantId).eq("branch_id", branchId)
           .select("id,payment_method")
           .maybeSingle();
       } catch (networkError) {
@@ -500,7 +505,7 @@ export const OrdersProvider = ({ children }) => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const target = orders.find((order) => order.id === orderId);
     if (!target) return { error: new Error("الطلب غير موجود") };
-    const { error } = await supabase.from("orders").delete().eq("id", orderId).eq("tenant_id", tenantId);
+    const { error } = await supabase.from("orders").delete().eq("id", orderId).eq("tenant_id", tenantId).eq("branch_id", branchId);
     if (error) return { error };
     setOrders((current) => current.filter((order) => order.id !== orderId));
     return { data: target, error: null };

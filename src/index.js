@@ -18,6 +18,7 @@ import { TablesProvider } from "./context/TablesContext";
 import { FeedbacksProvider } from "./context/FeedbackContext";
 import { WaiterCallsProvider } from "./context/WaiterCallsContext";
 import { SuggestionsProvider } from "./context/SuggestionsContext";
+import { BranchProvider } from "./context/BranchContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -32,6 +33,7 @@ function autoRoot() {
       <LanguageProvider>
         {/* يبدأ السياق من اللغة ثم المستأجر؛ Orders يحتاج tenantId، وHistory/Analytics يعتمدان على Orders. */}
         <TenantProvider>
+          <BranchProvider>
           <MenuProvider>
             <CartProvider>
               <OrdersProvider>
@@ -60,6 +62,7 @@ function autoRoot() {
               </OrdersProvider>
             </CartProvider>
           </MenuProvider>
+          </BranchProvider>
         </TenantProvider>
       </LanguageProvider>
       </BrowserRouter>

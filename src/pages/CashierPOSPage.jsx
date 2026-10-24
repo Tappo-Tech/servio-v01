@@ -494,6 +494,7 @@ function CashierPOSPage() {
         items: cart,
         // يحفظ الإجمالي كما هو من أسعار أصناف المنيو الحالية.
         total_price: grossAmount,
+        cashier_session_id: currentShift?.id || null,
         table_number: orderType === "takeaway"
           ? text.takeaway
           : tableNumber.trim() ? `${text.dineIn} - ${tableNumber.trim()}` : text.dineIn,

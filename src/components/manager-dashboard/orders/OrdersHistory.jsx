@@ -63,7 +63,7 @@ const renderStatusChip = (status, t) => {
 const orderLocation = (order) => {
   const value = String(order.table_number || "").toLowerCase();
   if (/سفري|takeaway/.test(value)) return "takeaway";
-  if (/محلي|cashier|pos|محل/.test(value)) return "cashier";
+  if (/محلي|كاشير|cashier|pos|محل/.test(value)) return "cashier";
   return "table";
 };
 

@@ -1,15 +1,17 @@
 import { useCallback, useState, useContext, useMemo, createContext, useEffect, useRef } from "react";
 import supabase from "../supabase";
 import { useTenant } from "./TenantContext";
+import { useBranch } from "./BranchContext";
 import { createRequestGuard } from "../utils/requestGuard";
 import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../utils/menuItemOptions";
 import { withIngredientAvailability } from "../utils/menuAvailability";
 
 const MenuContext = createContext();
-const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
+const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,branch_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
 
 export const MenuProvider = ({ children }) => {
   const { slug, tenantId, isPublic, isTracking, loading: tenantLoading } = useTenant();
+  const { selectedBranchId: branchId, branchSlug } = useBranch();
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [addonComplements, setAddonComplements] = useState([]);
@@ -111,15 +113,15 @@ export const MenuProvider = ({ children }) => {
         let ingredientLinksResult = null;
         if (isPublic) {
           [itemsResult, categoriesResult] = await Promise.all([
-            supabase.rpc("get_public_menu_items", { p_slug: slug }),
-            supabase.rpc("get_public_categories", { p_slug: slug }),
+            supabase.rpc("get_public_menu_items", { p_slug: slug, p_branch_slug: branchSlug }),
+            supabase.rpc("get_public_categories", { p_slug: slug, p_branch_slug: branchSlug }),
           ]);
         } else {
           [itemsResult, categoriesResult, ingredientsResult, ingredientLinksResult] = await Promise.all([
-            supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).order("created_at", { ascending: true }),
-            supabase.from("categories").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: true }),
-            supabase.from("menu_ingredients").select("id,name,available,tenant_id,created_at").eq("tenant_id", tenantId).order("name", { ascending: true }),
-            supabase.from("menu_item_ingredients").select("menu_item_id,ingredient_id,is_primary,tenant_id").eq("tenant_id", tenantId),
+            supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).eq("branch_id", branchId).order("created_at", { ascending: true }),
+            supabase.from("categories").select("*").eq("tenant_id", tenantId).eq("branch_id", branchId).order("created_at", { ascending: true }),
+            supabase.from("menu_ingredients").select("id,name,available,tenant_id,branch_id,created_at").eq("tenant_id", tenantId).eq("branch_id", branchId).order("name", { ascending: true }),
+            supabase.from("menu_item_ingredients").select("menu_item_id,ingredient_id,is_primary,tenant_id,branch_id").eq("tenant_id", tenantId).eq("branch_id", branchId),
           ]);
         }
 
@@ -148,7 +150,7 @@ export const MenuProvider = ({ children }) => {
           const currentItemIds = new Set(nextItems.map((item) => item.id));
 
           // طلب الصور منفصل وغير حاجب؛ حتى لو كان بعضها data URL بمئات الكيلوبايت.
-          void supabase.from("menu_items").select("id,image").eq("tenant_id", tenantId).then(({ data: imageRows, error: imageError }) => {
+          void supabase.from("menu_items").select("id,image").eq("tenant_id", tenantId).eq("branch_id", branchId).then(({ data: imageRows, error: imageError }) => {
             if (!active) return;
             if (imageError) {
               console.warn("تعذر تحميل صور أصناف المنيو:", imageError.message);
@@ -165,7 +167,7 @@ export const MenuProvider = ({ children }) => {
           setAddonComplements([]);
         } else {
           // المكتبة اختيارية ولا ينبغي أن تعطل عرض/بيع المنيو عند تعذر جدول المكملات.
-          void supabase.from("menu_addon_complements").select("id,name,created_at").eq("tenant_id", tenantId).order("name", { ascending: true }).then(({ data, error }) => {
+          void supabase.from("menu_addon_complements").select("id,name,branch_id,created_at").eq("tenant_id", tenantId).eq("branch_id", branchId).order("name", { ascending: true }).then(({ data, error }) => {
             if (!active) return;
             if (error) {
               console.warn("تعذر تحميل مكتبة المكملات:", error.message);
@@ -238,7 +240,7 @@ export const MenuProvider = ({ children }) => {
       if (reloadRef.current === fetchMenu) reloadRef.current = null;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [slug, tenantId, isPublic, isTracking, tenantLoading]);
+  }, [slug, tenantId, branchId, branchSlug, isPublic, isTracking, tenantLoading]);
 
   // تستدعيها شاشة إدارة المنيو عند فتح تبويبها؛ مزود المنيو يبقى مركبًا في الخلفية.
   const refreshMenu = useCallback(() => {
@@ -250,6 +252,7 @@ export const MenuProvider = ({ children }) => {
     ...menuItemIngredients.filter((link) => String(link.menu_item_id) !== String(itemId)),
     ...ingredientIds.map((ingredientId) => ({
       tenant_id: tenantId,
+      branch_id: branchId,
       menu_item_id: itemId,
       ingredient_id: ingredientId,
       is_primary: false,
@@ -276,12 +279,14 @@ export const MenuProvider = ({ children }) => {
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,
       max_addons: maxAddons,
+      branch_id: branchId,
     };
     const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
       p_item: row,
       p_ingredient_ids: ingredientIds,
     });
-    const savedItem = { ...row, tenant_id: tenantId, created_at: new Date().toISOString(), image: newItem.image || null };
+    const savedItem = { ...row, tenant_id: tenantId,
+      branch_id: branchId, created_at: new Date().toISOString(), image: newItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);
       setMenuItemIngredients(nextLinks);
@@ -311,12 +316,14 @@ export const MenuProvider = ({ children }) => {
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,
       max_addons: maxAddons,
+      branch_id: branchId,
     };
     const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
       p_item: row,
       p_ingredient_ids: ingredientIds,
     });
-    const savedItem = { ...updatedItem, ...row, tenant_id: tenantId, image: updatedItem.image || null };
+    const savedItem = { ...updatedItem, ...row, tenant_id: tenantId,
+      branch_id: branchId, image: updatedItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);
       setMenuItemIngredients(nextLinks);
@@ -331,8 +338,8 @@ export const MenuProvider = ({ children }) => {
     if (!name || name.length > 120) return { error: new Error("أدخل اسم مادة بين 1 و120 حرفًا") };
     const { data, error } = await supabase
       .from("menu_ingredients")
-      .insert([{ name, available: true, tenant_id: tenantId }])
-      .select("id,name,available,tenant_id,created_at")
+      .insert([{ name, available: true, tenant_id: tenantId, branch_id: branchId }])
+      .select("id,name,available,tenant_id,branch_id,created_at")
       .single();
     if (!error && data) setIngredients((current) => [...current, data].sort((a, b) => a.name.localeCompare(b.name)));
     return { data, error };
@@ -346,8 +353,8 @@ export const MenuProvider = ({ children }) => {
       .from("menu_ingredients")
       .update({ name })
       .eq("id", ingredient.id)
-      .eq("tenant_id", tenantId)
-      .select("id,name,available,tenant_id,created_at")
+      .eq("tenant_id", tenantId).eq("branch_id", branchId)
+      .select("id,name,available,tenant_id,branch_id,created_at")
       .maybeSingle();
     if (!error && data) {
       const nextIngredients = ingredients.map((entry) => entry.id === data.id ? data : entry).sort((a, b) => a.name.localeCompare(b.name));
@@ -375,21 +382,21 @@ export const MenuProvider = ({ children }) => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const name = String(rawName || "").trim().replace(/\s+/g, " ").slice(0, 100);
     if (!name) return { error: new Error("أدخل اسم المكمل") };
-    const { data, error } = await supabase.from("menu_addon_complements").insert([{ name, tenant_id: tenantId }]).select("id,name,created_at").single();
+    const { data, error } = await supabase.from("menu_addon_complements").insert([{ name, tenant_id: tenantId, branch_id: branchId }]).select("id,name,branch_id,created_at").single();
     if (!error && data) setAddonComplements((current) => [...current.filter((entry) => entry.id !== data.id), data].sort((a, b) => a.name.localeCompare(b.name)));
     return { data, error };
   });
 
   const deleteAddonComplement = (id) => guard(`menu:delete-complement:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { error } = await supabase.from("menu_addon_complements").delete().eq("id", id).eq("tenant_id", tenantId);
+    const { error } = await supabase.from("menu_addon_complements").delete().eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
     if (!error) setAddonComplements((current) => current.filter((entry) => entry.id !== id));
     return { error };
   });
 
   const deleteItem = (id) => guard(`menu:delete-item:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { error } = await supabase.from("menu_items").delete().eq("id", id).eq("tenant_id", tenantId);
+    const { error } = await supabase.from("menu_items").delete().eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
     if (!error) {
       setItems((prev) => prev.filter((item) => item.id !== id));
       setMenuItemIngredients((prev) => prev.filter((link) => String(link.menu_item_id) !== String(id)));
@@ -401,21 +408,21 @@ export const MenuProvider = ({ children }) => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const item = items.find((entry) => entry.id === id);
     if (!item) return { error: new Error("الصنف غير موجود") };
-    const { error } = await supabase.from("menu_items").update({ available: !item.available }).eq("id", id).eq("tenant_id", tenantId);
+    const { error } = await supabase.from("menu_items").update({ available: !item.available }).eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
     if (!error) setItems((prev) => withIngredientAvailability(prev.map((entry) => entry.id === id ? { ...entry, available: !item.available } : entry), ingredients, menuItemIngredients));
     return { error };
   });
 
   const addCategory = (newCategory) => guard("menu:add-category", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, separate_print: Boolean(newCategory.separate_print), tenant_id: tenantId }]).select("*").single();
+    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, separate_print: Boolean(newCategory.separate_print), tenant_id: tenantId, branch_id: branchId }]).select("*").single();
     if (!error && data) setCategoriesList((prev) => [data, ...prev.filter((entry) => entry.id !== data.id)]);
     return { data, error };
   });
 
   const updateCategory = (cat) => guard(`menu:update-category:${cat.id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").update({ name: cat.name, separate_print: Boolean(cat.separate_print) }).eq("id", cat.id).eq("tenant_id", tenantId).select("*").maybeSingle();
+    const { data, error } = await supabase.from("categories").update({ name: cat.name, separate_print: Boolean(cat.separate_print) }).eq("id", cat.id).eq("tenant_id", tenantId).eq("branch_id", branchId).select("*").maybeSingle();
     if (!error && data) setCategoriesList((prev) => prev.map((entry) => entry.id === cat.id ? data : entry));
     return { data, error: error || (!data ? new Error("التصنيف غير موجود") : null) };
   });
@@ -451,7 +458,7 @@ export const MenuProvider = ({ children }) => {
 
   const deleteCategory = (id) => guard(`menu:delete-category:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { error } = await supabase.from("categories").delete().eq("id", id).eq("tenant_id", tenantId);
+    const { error } = await supabase.from("categories").delete().eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
     if (!error) setCategoriesList((prev) => prev.filter((entry) => entry.id !== id));
     return { error };
   });

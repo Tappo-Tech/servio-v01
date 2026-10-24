@@ -25,7 +25,7 @@ import { useTenant } from "../../context/TenantContext";
 import { toMinorUnits } from "../../utils/taxUtils";
 import { getCartLineKey } from "../../utils/cartItemUtils";
 
-function CartDrawer({ open, close }) {
+function CartDrawer({ open, close, cashierMode = false }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
   const { slug } = useTenant();
@@ -49,7 +49,7 @@ function CartDrawer({ open, close }) {
     const newOrder = {
       items: cartItems,
       total_price: totalPrice,
-      table_number: tableNumber || "غير محدد",
+      table_number: cashierMode ? "كاشير" : (tableNumber || "غير محدد"),
       notes: notes,
     };
 
@@ -69,7 +69,7 @@ function CartDrawer({ open, close }) {
       // تمرير رقم الطاولة يتيح زر الرجوع إعادة فتح المنيو من نفس الطاولة فورًا.
       navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken, tableNumber: tableNumber || null } });
     } catch (error) {
-      console.error("تعذر إرسال طلب الطاولة:", { code: error?.code, status: error?.status, message: error?.message });
+      console.error("تعذر إرسال الطلب العام:", { code: error?.code, status: error?.status, message: error?.message });
       setSendError(String(error?.message || "").includes("MENU_ITEM_UNAVAILABLE")
         ? "تغير توفر صنف في المنيو؛ حدّث الصفحة وأزل الصنف غير المتاح قبل الإرسال. ستبقى أصنافك في السلة."
         : "تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");

@@ -10,6 +10,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import supabase from "../../../supabase";
 import { useStore } from "../../../context/StoreInfoContext";
 import { useTenant } from "../../../context/TenantContext";
+import { useBranch } from "../../../context/BranchContext";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const emptyForm = { full_name: "", username: "", pin: "" };
@@ -18,6 +19,7 @@ function CashierManagement() {
   const { t } = useLanguage();
   const { storeInfo } = useStore();
   const { tenantId } = useTenant();
+  const { branches, selectedBranchId: branchId } = useBranch();
   const [cashiers, setCashiers] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [showPin, setShowPin] = useState(false);
@@ -33,14 +35,12 @@ function CashierManagement() {
 
   const loadCashiers = useCallback(async () => {
     if (!tenantId) return;
-    const { data, error: loadError } = await supabase
-      .from("cashiers")
-      .select("id, full_name, username, created_at, is_active")
-      .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false });
+    let query = supabase.from("cashiers").select("id, full_name, username, branch_id, created_at, is_active").eq("tenant_id", tenantId);
+    if (branchId) query = query.eq("branch_id", branchId);
+    const { data, error: loadError } = await query.order("created_at", { ascending: false });
     if (loadError) setError(loadError.message);
     else setCashiers(data || []);
-  }, [tenantId]);
+  }, [tenantId, branchId]);
 
   useEffect(() => { void loadCashiers(); }, [loadCashiers]);
 
@@ -59,18 +59,20 @@ function CashierManagement() {
     setMessage("");
     setError("");
     const username = form.username.trim().toLowerCase();
-    if (form.full_name.trim().length < 2 || !username || !/^[a-z0-9._-]{3,40}$/.test(username) || !/^\d{4,6}$/.test(form.pin)) {
+    if ((branchId && form.full_name.trim().length < 2) || !form.full_name.trim() || !username || !/^[a-z0-9._-]{3,40}$/.test(username) || !/^\d{4,6}$/.test(form.pin)) {
       setError(t("managerCashierValidation"));
       return;
     }
 
     setLoading(true);
     try {
-      const { error: createError } = await supabase.rpc("create_cashier", {
+      const cashierPayload = {
         p_full_name: form.full_name.trim(),
         p_username: username,
         p_pin: form.pin,
-      });
+      };
+      if (branchId) cashierPayload.p_branch_id = branchId;
+      const { error: createError } = await supabase.rpc("create_cashier", cashierPayload);
       if (createError) {
         setError(createError.code === "23505" ? t("managerDuplicateUsername") : createError.message || t("genericLoginError"));
       } else {
@@ -117,7 +119,7 @@ function CashierManagement() {
         <Typography sx={{ fontWeight: 700 }} noWrap>{cashier.full_name}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ direction: "ltr", textAlign: "right" }} noWrap>@{cashier.username}</Typography>
       </Box>
-      {inactive ? <Chip size="small" color="default" label={t("managerCashierInactive")} /> : <Chip size="small" label={t("managerEncryptedPin")} />}
+      {inactive ? <Chip size="small" color="default" label={t("managerCashierInactive")} /> : <Chip size="small" label={branches.find((branch) => branch.id === cashier.branch_id)?.name || "—"} />}
       {(
         <Tooltip title={inactive ? t("managerCashierRetryDelete") : t("managerCashierDelete")}>
           <span>
@@ -133,7 +135,7 @@ function CashierManagement() {
   return (
     <Box sx={{ maxWidth: 760, mx: "auto" }}>
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>{t("managerCashierTitle")}</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t("managerCashierHint")}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t("managerCashierHint")} · {branches.find((branch) => branch.id === branchId)?.name || ""}</Typography>
       {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
