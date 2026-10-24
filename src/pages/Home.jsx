@@ -26,10 +26,10 @@ const steps = [
   { icon: <InsightsRoundedIcon />, title: "homeStep4Title", text: "homeStep4Text" },
 ];
 
-function Logo({ compact = false }) {
+function Logo({ compact = false, arabic = true }) {
   return <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
     <Box component="img" src="/logo-icon.webp" alt="SERVIO" sx={{ width: compact ? 36 : 46, height: compact ? 36 : 46, objectFit: "contain" }} />
-    <Box><Typography sx={{ fontWeight: 1000, letterSpacing: "-.04em", color: "secondary.main", fontSize: compact ? "1.1rem" : "1.3rem", lineHeight: 1 }}>SERVIO</Typography><Typography variant="caption" sx={{ color: "text.secondary", display: { xs: compact ? "none" : "block", sm: "block" }, fontWeight: 700 }}>Order flow, made clear.</Typography></Box>
+    <Box><Typography sx={{ fontWeight: 1000, letterSpacing: "-.04em", color: "secondary.main", fontSize: compact ? "1.1rem" : "1.3rem", lineHeight: 1 }}>SERVIO</Typography><Typography variant="caption" sx={{ color: "text.secondary", display: { xs: compact ? "none" : "block", sm: "block" }, fontWeight: 700 }}>{arabic ? "كل الطلبات في مسار واضح." : "Order flow, made clear."}</Typography></Box>
   </Stack>;
 }
 function SoftCard({ children, sx = {} }) { return <Card elevation={0} sx={{ border: "1px solid", borderColor: "rgba(255,255,255,.8)", bgcolor: "rgba(255,255,255,.72)", backdropFilter: "blur(20px)", boxShadow: "0 24px 70px rgba(23,26,47,.08)", ...sx }}>{children}</Card>; }
@@ -43,7 +43,7 @@ export default function Home() {
     <Box sx={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", top: 680, insetInlineStart: -300, background: "radial-gradient(circle, rgba(40,120,200,.10), transparent 68%)", filter: "blur(18px)", pointerEvents: "none" }} />
     <Container maxWidth="lg" sx={{ position: "relative", py: { xs: 1.5, md: 2.5 } }}>
       <SoftCard sx={{ borderRadius: 4, px: { xs: 1.5, sm: 2.5 }, py: 1.1, position: "sticky", top: 12, zIndex: 10 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}><Logo compact /><Stack direction="row" alignItems="center" spacing={{ xs: .5, sm: 1.2 }}><LanguageToggle compact /><Button component={RouterLink} to="/login" variant="text" sx={{ display: { xs: "none", sm: "inline-flex" }, fontWeight: 850 }}>{t("homeLogin")}</Button><Button component={RouterLink} to="/register" variant="contained" sx={{ borderRadius: 2.5, px: { xs: 1.4, sm: 2.4 }, fontWeight: 900 }}>{t("homeStart")}</Button></Stack></Stack>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}><Logo compact arabic={isArabic} /><Stack direction="row" alignItems="center" spacing={{ xs: .5, sm: 1.2 }}><LanguageToggle compact /><Button component={RouterLink} to="/login" variant="text" sx={{ display: { xs: "none", sm: "inline-flex" }, fontWeight: 850 }}>{t("homeLogin")}</Button><Button component={RouterLink} to="/register" variant="contained" sx={{ borderRadius: 2.5, px: { xs: 1.4, sm: 2.4 }, fontWeight: 900 }}>{t("homeStart")}</Button></Stack></Stack>
       </SoftCard>
 
       <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center" sx={{ pt: { xs: 7, md: 11 }, pb: { xs: 9, md: 14 } }}>
@@ -68,7 +68,7 @@ export default function Home() {
       <Box sx={{ pb: { xs: 9, md: 14 } }}><Grid container spacing={{ xs: 4, md: 8 }} alignItems="start"><Grid size={{ xs: 12, md: 5 }}><Typography variant="overline" sx={{ color: "primary.main", fontWeight: 950, letterSpacing: ".12em" }}>{t("homeFlowEyebrow")}</Typography><Typography variant="h2" sx={{ mt: 1, fontSize: { xs: "2.2rem", md: "3.4rem" } }}>{t("homeFlowTitle")}</Typography><Typography color="text.secondary" sx={{ mt: 2, lineHeight: 1.9 }}>{t("homeFlowText")}</Typography></Grid><Grid size={{ xs: 12, md: 7 }}><Stack spacing={1.2}>{steps.map((step, index) => <Box key={step.title} sx={{ display: "flex", gap: 2, alignItems: "flex-start", p: { xs: 1.8, sm: 2.2 }, borderRadius: 3, bgcolor: "rgba(255,255,255,.68)", border: "1px solid", borderColor: "rgba(23,26,47,.06)" }}><Box sx={{ minWidth: 42, height: 42, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: index === 0 ? "primary.main" : alpha("#171A2F", .07), color: index === 0 ? "#fff" : "secondary.main" }}>{step.icon}</Box><Box><Typography fontWeight={950}>{step.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .35, lineHeight: 1.7 }}>{step.text}</Typography></Box></Box>)}</Stack></Grid></Grid></Box>
 
       <SoftCard sx={{ borderRadius: 4, p: { xs: 2.5, md: 5 }, mb: 5, bgcolor: "secondary.main", color: "#fff", borderColor: "rgba(255,255,255,.08)" }}><Grid container spacing={3} alignItems="center"><Grid size={{ xs: 12, md: 8 }}><Typography variant="h3" sx={{ color: "#fff", fontSize: { xs: "2rem", md: "3rem" } }}>{t("homeCtaTitle")}</Typography><Typography sx={{ mt: 1.5, color: "rgba(255,255,255,.7)", lineHeight: 1.8, maxWidth: 650 }}>{t("homeCtaText")}</Typography></Grid><Grid size={{ xs: 12, md: 4 }}><Button component={RouterLink} to="/register" fullWidth variant="contained" size="large" endIcon={<DirectionIcon />} sx={{ py: 1.5, borderRadius: 2.5, fontWeight: 950 }}>{t("homeCtaStart")}</Button></Grid></Grid></SoftCard>
-      <Divider sx={{ mb: 2 }} /><Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={1} sx={{ pb: 2 }}><Logo compact /><Typography variant="body2" color="text.secondary">{t("homeFooterText")}</Typography></Stack>
+      <Divider sx={{ mb: 2 }} /><Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={1} sx={{ pb: 2 }}><Logo compact arabic={isArabic} /><Typography variant="body2" color="text.secondary">{t("homeFooterText")}</Typography></Stack>
     </Container><TrialNotice />
   </Box>;
 }

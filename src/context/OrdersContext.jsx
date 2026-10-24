@@ -112,6 +112,14 @@ export const OrdersProvider = ({ children }) => {
       return () => { active = false; };
     }
 
+    if (!branchId) {
+      setOrders([]);
+      setNewTableOrderAlert(null);
+      setOrdersLoading(true);
+      setOrdersLoadError(null);
+      return () => { active = false; };
+    }
+
     // يبدأ التحميل بعد معرفة المستأجر، لا بطلب REST ينتهي بـ tenant_id=null.
     setOrders([]);
     setNewTableOrderAlert(null);
@@ -202,6 +210,7 @@ export const OrdersProvider = ({ children }) => {
       const row = getRealtimeOrder(eventType, payload);
       if (!row?.id) return;
       if (row.tenant_id && row.tenant_id !== tenantId) return;
+      if (row.branch_id !== branchId) return;
 
       if (eventType === "DELETE") {
         realtimeChanges.set(row.id, null);

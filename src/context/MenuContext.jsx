@@ -369,6 +369,7 @@ export const MenuProvider = ({ children }) => {
     const { error } = await supabase.rpc("set_menu_ingredient_availability", {
       p_ingredient_id: ingredientId,
       p_available: Boolean(available),
+      p_branch_id: branchId,
     });
     if (!error) {
       const nextIngredients = ingredients.map((entry) => entry.id === ingredientId ? { ...entry, available: Boolean(available) } : entry);
@@ -433,6 +434,7 @@ export const MenuProvider = ({ children }) => {
       p_category_id: cat.id,
       p_separate_print: Boolean(cat.separate_print),
       p_printer_name: String(cat.printer_name || "").trim() || null,
+      p_branch_id: branchId,
     });
     if (!error && data) setCategoriesList((prev) => prev.map((entry) => entry.id === cat.id ? data : entry));
     return { data, error: error || (!data ? new Error("التصنيف غير موجود أو لا تملك صلاحية تعديله") : null) };
@@ -445,7 +447,7 @@ export const MenuProvider = ({ children }) => {
       separate_print: Boolean(route.separate_print),
       printer_name: String(route.printer_name || "").trim() || null,
     }));
-    const { data, error } = await supabase.rpc("save_category_print_routes", { p_routes: payload });
+    const { data, error } = await supabase.rpc("save_category_print_routes", { p_routes: payload, p_branch_id: branchId });
     if (!error) {
       const routesById = new Map(payload.map((route) => [route.category_id, route]));
       setCategoriesList((current) => current.map((category) => {

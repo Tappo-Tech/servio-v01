@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
     if (verifyError || !cashier) return json({ error: "بيانات الكاشير غير صحيحة" }, 401);
 
     const email = `${cashier.id}@cashier.servio.internal`;
-    const metadata = { tenant_id: cashier.tenant_id, full_name: cashier.full_name, role: "cashier" };
+    const metadata = { tenant_id: cashier.tenant_id, branch_id: cashier.branch_id, full_name: cashier.full_name, role: "cashier" };
     // The PIN is only verified here. The Auth password is a random one-time secret (Auth requires 6+ chars, PINs can be 4).
     const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;
 
@@ -31,7 +31,11 @@ Deno.serve(async (req: Request) => {
       const { data, error } = await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: metadata });
       if (error || !data.user) return json({ error: `تعذر إنشاء جلسة الكاشير: ${error?.message ?? ""}` }, 500);
       authUserId = data.user.id;
-      await supabase.from("cashiers").update({ auth_user_id: authUserId }).eq("id", cashier.id);
+      const { error: linkError } = await supabase.from("cashiers").update({ auth_user_id: authUserId }).eq("id", cashier.id).eq("branch_id", cashier.branch_id);
+      if (linkError) {
+        await supabase.auth.admin.deleteUser(authUserId);
+        return json({ error: `تعذر حفظ ربط فرع الكاشير: ${linkError.message}` }, 500);
+      }
     } else {
       const { error } = await supabase.auth.admin.updateUserById(authUserId, { password, user_metadata: metadata });
       if (error) return json({ error: `تعذر تحديث جلسة الكاشير: ${error.message}` }, 500);

@@ -6,6 +6,7 @@ import supabase from "../../../supabase";
 import { useStore } from "../../../context/StoreInfoContext";
 import { useTenant } from "../../../context/TenantContext";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useBranch } from "../../../context/BranchContext";
 
 jest.mock("../../../supabase", () => ({
   __esModule: true,
@@ -14,6 +15,7 @@ jest.mock("../../../supabase", () => ({
 jest.mock("../../../context/StoreInfoContext", () => ({ useStore: jest.fn() }));
 jest.mock("../../../context/TenantContext", () => ({ useTenant: jest.fn() }));
 jest.mock("../../../context/LanguageContext", () => ({ useLanguage: jest.fn() }));
+jest.mock("../../../context/BranchContext", () => ({ useBranch: jest.fn() }));
 
 const cashier = { id: "cashier-1", full_name: "أحمد", username: "ahmad", created_at: "2026-01-01", is_active: true };
 
@@ -22,6 +24,7 @@ beforeEach(() => {
   useStore.mockReturnValue({ storeInfo: { store_slug: "sample-cafe" } });
   useTenant.mockReturnValue({ tenantId: "tenant-1" });
   useLanguage.mockReturnValue({ t: (key) => key });
+  useBranch.mockReturnValue({ branches: [{ id: "branch-1", name: "الفرع الرئيسي" }], selectedBranchId: "branch-1" });
   const query = {
     select: jest.fn(),
     eq: jest.fn(),
@@ -53,16 +56,16 @@ test("ينشئ اسم المستخدم ورمز PIN منفصلين لكل كاش
   supabase.rpc.mockResolvedValue({ error: null });
   render(<CashierManagement />);
 
-  fireEvent.change(document.querySelector('input[value=""]'), { target: { value: "سارة" } });
-  const inputs = document.querySelectorAll("input");
-  fireEvent.change(inputs[1], { target: { value: "sara1" } });
-  fireEvent.change(inputs[2], { target: { value: "1234" } });
+  fireEvent.change(document.querySelector('input[name="full_name"]'), { target: { value: "سارة" } });
+  fireEvent.change(document.querySelector('input[name="username"]'), { target: { value: "sara1" } });
+  fireEvent.change(document.querySelector('input[name="pin"]'), { target: { value: "1234" } });
   fireEvent.click(screen.getAllByRole("button", { name: "managerAddCashier" }).slice(-1)[0]);
 
   await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith("create_cashier", {
     p_full_name: "سارة",
     p_username: "sara1",
     p_pin: "1234",
+    p_branch_id: "branch-1",
   }));
   expect(await screen.findByText(/sara1 — PIN: 1234/)).toBeTruthy();
 });

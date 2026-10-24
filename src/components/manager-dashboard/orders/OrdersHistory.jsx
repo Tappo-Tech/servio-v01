@@ -34,6 +34,7 @@ import Button from "@mui/material/Button";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 
 // DATE PICKER
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -205,6 +206,7 @@ function OrdersHistory() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [rangeMode, setRangeMode] = useState("day");
 
   const filteredOrders = useMemo(() => {
     return orders
@@ -218,7 +220,7 @@ function OrdersHistory() {
           statusFilter === "all" ? true : order.status === statusFilter;
 
         const matchesDate = selectedDate
-          ? dayjs(order.created_at).isSame(selectedDate, "day")
+          ? dayjs(order.created_at).isSame(selectedDate, rangeMode)
           : true;
 
         const matchesPayment = paymentFilter === "all"
@@ -230,11 +232,13 @@ function OrdersHistory() {
 
         return matchesSearch && matchesStatus && matchesDate && matchesPayment && matchesLocation;
       });
-  }, [orders, searchQuery, statusFilter, selectedDate, paymentFilter, locationFilter]);
+  }, [orders, searchQuery, statusFilter, selectedDate, paymentFilter, locationFilter, rangeMode]);
 
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
+      <style>{`@media print { @page { size: A4 landscape; margin: 10mm; } .orders-history-no-print { display: none !important; } }`}</style>
       <Box
+        className="orders-history-no-print"
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -306,6 +310,17 @@ function OrdersHistory() {
               }}
             />
           </LocalizationProvider>
+          <FormControl size="small" sx={{ minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
+            <InputLabel id="history-range-label">{language === "ar" ? "نطاق السجل" : "Log range"}</InputLabel>
+            <Select labelId="history-range-label" value={rangeMode} label={language === "ar" ? "نطاق السجل" : "Log range"} onChange={(e) => setRangeMode(e.target.value)}>
+              <MenuItem value="day">{language === "ar" ? "اليوم" : "Day"}</MenuItem>
+              <MenuItem value="week">{language === "ar" ? "الأسبوع" : "Week"}</MenuItem>
+              <MenuItem value="month">{language === "ar" ? "الشهر" : "Month"}</MenuItem>
+            </Select>
+          </FormControl>
+          <Button variant="contained" startIcon={<LocalPrintshopIcon />} onClick={() => window.print()} sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>
+            {language === "ar" ? "طباعة السجل" : "Print log"}
+          </Button>
         </Box>
       </Box>
 

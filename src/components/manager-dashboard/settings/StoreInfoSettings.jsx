@@ -41,7 +41,6 @@ function StoreInfoSettings() {
     store_slug: storeInfo?.store_slug || "",
     phone: storeInfo?.phone || "",
     email: storeInfo?.email || "",
-    tax_number: storeInfo?.tax_number || "",
     currency: storeInfo?.currency || "SAR",
     address: storeInfo?.address || "",
     receipt_footer: storeInfo?.receipt_footer || "",
@@ -247,19 +246,6 @@ function StoreInfoSettings() {
             value={formData.email || ""}
             onChange={handleInputChange}
             size="small"
-          />
-        </Grid>
-
-        {/* Tax Number */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            fullWidth
-            label={t("managerTax")}
-            name="tax_number"
-            value={formData.tax_number || ""}
-            onChange={handleInputChange}
-            size="small"
-            placeholder={t("taxExample")}
           />
         </Grid>
 

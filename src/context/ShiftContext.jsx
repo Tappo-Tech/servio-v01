@@ -66,7 +66,7 @@ export function ShiftProvider({ children }) {
 
   const loadSessions = useCallback(async (limit = 100) => {
     if (isPublic || !tenantId || !["admin", "cashier"].includes(user?.role)) return { data: [], error: null };
-    const { data, error: loadError } = await supabase.rpc("list_cashier_sessions", { p_limit: limit });
+    const { data, error: loadError } = await supabase.rpc("list_cashier_sessions", { p_limit: limit, p_branch_id: branchId });
     if (!loadError) setSessions((data || []).filter((session) => !branchId || session.branch_id === branchId));
     else setError(loadError.message || "تعذر تحميل الورديات");
     return { data: data || [], error: loadError };
