@@ -38,11 +38,10 @@ function CashierManagement() {
   const loadCashiers = useCallback(async () => {
     if (!tenantId) return;
     let query = supabase.from("cashiers").select("id, full_name, username, branch_id, created_at, is_active").eq("tenant_id", tenantId);
-    if (activeBranchId) query = query.eq("branch_id", activeBranchId);
     const { data, error: loadError } = await query.order("created_at", { ascending: false });
     if (loadError) setError(loadError.message);
     else setCashiers(data || []);
-  }, [tenantId, activeBranchId]);
+  }, [tenantId]);
 
   useEffect(() => { void loadCashiers(); }, [loadCashiers]);
   useEffect(() => {
@@ -72,16 +71,19 @@ function CashierManagement() {
     setLoading(true);
     try {
       const cashierPayload = { p_full_name: form.full_name.trim(), p_username: username, p_pin: form.pin || null, p_branch_id: form.branch_id };
-      const { error: saveError } = editingId
+      const { data: savedCashier, error: saveError } = editingId
         ? await supabase.rpc("update_cashier", { p_cashier_id: editingId, ...cashierPayload })
         : await supabase.rpc("create_cashier", { ...cashierPayload, p_pin: form.pin });
       if (saveError) {
         setError(saveError.code === "23505" ? t("managerDuplicateUsername") : saveError.message || t("genericLoginError"));
       } else {
+        const created = !editingId && (Array.isArray(savedCashier) ? savedCashier[0] : savedCashier);
+        if (created?.id) setCashiers((previous) => [{ ...created, is_active: true }, ...previous.filter((cashier) => cashier.id !== created.id)]);
         setMessage(editingId ? "تم حفظ تعديل الكاشير ونقله إلى الفرع المحدد" : `${t("managerCashierCreated")}: ${username} — PIN: ${form.pin}`);
         setForm({ ...emptyForm, branch_id: activeBranchId || "" });
         setEditingId(null);
         await loadCashiers();
+        if (created?.id) setCashiers((previous) => previous.some((cashier) => cashier.id === created.id) ? previous : [{ ...created, is_active: true }, ...previous]);
       }
     } catch (createError) {
       setError(createError?.message || t("genericLoginError"));
