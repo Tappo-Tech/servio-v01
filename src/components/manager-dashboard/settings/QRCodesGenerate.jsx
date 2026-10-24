@@ -54,13 +54,15 @@ function QRCodeGenerate() {
   // طباعة الكل أو طباعة طاولة محددة
   const handlePrint = (tableId = null) => {
     if (tableId) {
-      const singleCard = document.getElementById(`table-card-${tableId}`);
+      const isCashier = tableId === "cashier";
+      const singleCard = document.getElementById(isCashier ? "cashier-qr-card" : `table-card-${tableId}`);
       if (singleCard) {
-        singleCard.classList.add("print-single-target");
-        document.body.classList.add("printing-single");
+        singleCard.classList.add(isCashier ? "print-cashier-target" : "print-single-target");
+        document.body.classList.add(isCashier ? "printing-cashier" : "printing-single");
         const cleanup = () => {
           document.body.classList.remove("printing-single");
-          singleCard.classList.remove("print-single-target");
+          document.body.classList.remove("printing-cashier");
+          singleCard.classList.remove("print-single-target", "print-cashier-target");
           window.removeEventListener("afterprint", cleanup);
         };
         window.addEventListener("afterprint", cleanup);
@@ -105,6 +107,26 @@ function QRCodeGenerate() {
             /* طباعة طاولة واحدة فقط عند تحديدها */
             body.printing-single .qr-card:not(.print-single-target) {
               display: none !important;
+            }
+            body.printing-cashier #printable-area {
+              display: none !important;
+            }
+            body.printing-cashier #cashier-qr-card {
+              display: flex !important;
+              visibility: visible !important;
+              position: absolute !important;
+              left: 50% !important;
+              top: 12mm !important;
+              transform: translateX(-50%) !important;
+              width: 82mm !important;
+              min-height: 102mm !important;
+              margin: 0 !important;
+              border: 0 !important;
+              box-shadow: none !important;
+              background: #fff !important;
+            }
+            body.printing-cashier #cashier-qr-card * {
+              visibility: visible !important;
             }
           }
         `}
@@ -204,15 +226,12 @@ function QRCodeGenerate() {
 
       {cashierQrValue && (
         <Card id="cashier-qr-card" className="qr-card" variant="outlined" sx={{ mb: 3, borderRadius: "16px", textAlign: "center", borderColor: "primary.main", background: "linear-gradient(135deg, rgba(244,121,32,.08), rgba(255,255,255,.96))" }}>
-          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.2, p: { xs: 2, sm: 3 }, "&:last-child": { pb: { xs: 2, sm: 3 } } }}>
             <Chip label={language === "en" ? "Cashier QR" : "QR الكاشير"} color="secondary" sx={{ fontWeight: 800 }} />
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
-              {language === "en" ? "One code for customers ordering directly in front of the cashier. Orders are recorded as cashier sales." : "كود واحد للزبون الذي يطلب أمام الكاشير؛ ستُسجّل الطلبات تلقائيًا كمبيعات كاشير."}
-            </Typography>
             <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}><QRCodeSVG value={cashierQrValue} size={190} level="H" includeMargin /></Box>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>كاشير</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>{cashierQrValue}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>{language === "en" ? "Cashier" : "كاشير"}</Typography>
           </CardContent>
+          <CardActions className="no-print" sx={{ justifyContent: "center", pt: 0, pb: 2 }}><Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrint("cashier")} sx={{ borderRadius: 2, fontWeight: 800 }}>{language === "en" ? "Print cashier QR" : "طباعة QR الكاشير"}</Button></CardActions>
         </Card>
       )}
 
