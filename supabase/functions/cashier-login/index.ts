@@ -14,10 +14,10 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method Not Allowed" }, 405);
   try {
-    const { slug, username, pin } = await req.json();
-    if (!slug || !username || !pin) return json({ error: "بيانات الدخول ناقصة" }, 400);
+    const { slug, branch_slug, username, pin } = await req.json();
+    if (!slug || !branch_slug || !username || !pin) return json({ error: "بيانات الدخول ناقصة" }, 400);
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: verified, error: verifyError } = await supabase.rpc("verify_cashier_login", { p_tenant_slug: slug, p_username: username, p_pin: pin });
+    const { data: verified, error: verifyError } = await supabase.rpc("verify_cashier_login", { p_tenant_slug: slug, p_branch_slug: branch_slug, p_username: username, p_pin: pin });
     const cashier = verified?.[0];
     if (verifyError || !cashier) return json({ error: "بيانات الكاشير غير صحيحة" }, 401);
 
