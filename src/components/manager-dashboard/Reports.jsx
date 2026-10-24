@@ -115,6 +115,8 @@ function localDateForDisplay(value, locale) {
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(year, month - 1, day));
 }
 
+const printSafe = (value) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+
 function createReportRows(report, text, from, to, currency) {
   return [
     [text.csvTitle],
@@ -233,6 +235,16 @@ function Reports() {
     window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 0);
   };
 
+  const printReportTable = () => {
+    const printWindow = window.open("", "_blank", "width=1000,height=800");
+    if (!printWindow) return;
+    const metrics = [[text.gross, formatMoney(report.gross)], [text.net, formatMoney(report.net)], [text.vat, formatMoney(report.vat)], [text.orders, new Intl.NumberFormat(locale).format(report.orderCount)], [text.average, formatMoney(report.averageOrder)], [text.itemQuantity, new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(report.itemQuantity)]]
+      .map(([label, value]) => `<tr><th>${printSafe(label)}</th><td>${printSafe(value)}</td></tr>`).join("");
+    const items = report.topItems.map((item, index) => `<tr><td>${index + 1}</td><td>${printSafe(item.name || text.unknownItem)}</td><td>${printSafe(item.quantity)}</td><td>${printSafe(formatMoney(item.revenue))}</td></tr>`).join("");
+    printWindow.document.write(`<!doctype html><html lang="${language}" dir="${language === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${printSafe(text.csvTitle)}</title><style>@page{size:A4 portrait;margin:12mm}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px}.meta{color:#606778;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}th{background:#171A2F;color:#fff;font-weight:700;text-align:start}th,td{border:1px solid #d9dde5;padding:9px 8px;text-align:start}table.metrics th{background:#f0f2f5;color:#171A2F;width:55%}tbody tr:nth-child(even){background:#f7f8fa}</style></head><body><h1>${printSafe(text.title)}</h1><div class="meta">${printSafe(text.range)}: ${printSafe(rangeLabel)}</div><h2>${printSafe(text.title)}</h2><table class="metrics"><tbody>${metrics}</tbody></table><h2>${printSafe(text.topItems)}</h2><table><thead><tr><th>${printSafe(text.rank)}</th><th>${printSafe(text.item)}</th><th>${printSafe(text.quantity)}</th><th>${printSafe(text.itemSales)}</th></tr></thead><tbody>${items || `<tr><td colspan="4">${printSafe(text.noData)}</td></tr>`}</tbody></table><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script></body></html>`);
+    printWindow.document.close();
+  };
+
   const metricCards = [
     { title: text.gross, value: formatMoney(report.gross) },
     { title: text.net, value: formatMoney(report.net) },
@@ -279,7 +291,7 @@ function Reports() {
             <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={handleCsvDownload} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.saveCsv}
             </Button>
-            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={() => window.print()} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
+            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={printReportTable} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.print}
             </Button>
           </Stack>

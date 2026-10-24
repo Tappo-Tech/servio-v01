@@ -68,6 +68,8 @@ const orderLocation = (order) => {
   return "table";
 };
 
+const printSafe = (value) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+
 function OrderRow({ order, currency, t, language }) {
   const [open, setOpen] = useState(false);
   const [openInvoice, setOpenInvoice] = useState(false);
@@ -235,6 +237,14 @@ function OrdersHistory() {
       });
   }, [orders, searchQuery, statusFilter, selectedDate, paymentFilter, locationFilter, rangeMode]);
 
+  const printFilteredOrders = () => {
+    const printWindow = window.open("", "_blank", "width=1100,height=800");
+    if (!printWindow) return;
+    const rows = filteredOrders.map((order) => `<tr><td>${printSafe(order.order_number || order.displayOrderNumber || "—")}</td><td>${printSafe(order.table_number)}</td><td>${printSafe(dayjs(order.created_at).format("DD/MM/YYYY HH:mm"))}</td><td>${printSafe(order.status)}</td><td>${printSafe(order.payment_status === "paid" ? (language === "ar" ? "مدفوع" : "Paid") : (language === "ar" ? "غير مدفوع" : "Unpaid"))}</td><td>${printSafe(order.total_price)} ${printSafe(currency)}</td></tr>`).join("");
+    printWindow.document.write(`<!doctype html><html lang="${language}" dir="${language === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${language === "ar" ? "سجل الطلبات" : "Order history"}</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}p{color:#606778;margin:0 0 18px;font-size:12px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#171A2F;color:#fff;font-weight:700}th,td{border:1px solid #d9dde5;padding:9px 8px;text-align:start}tbody tr:nth-child(even){background:#f7f8fa}.meta{display:flex;justify-content:space-between;margin-bottom:18px;color:#606778;font-size:12px}</style></head><body><h1>${language === "ar" ? "سجل الطلبات" : "Order history"}</h1><div class="meta"><span>${language === "ar" ? "البيانات الظاهرة بعد الفلترة" : "Data shown after filters"}</span><span>${filteredOrders.length} ${language === "ar" ? "طلب" : "orders"}</span></div><table><thead><tr><th>${language === "ar" ? "رقم الطلب" : "Order"}</th><th>${language === "ar" ? "الموقع" : "Location"}</th><th>${language === "ar" ? "التاريخ والوقت" : "Date & time"}</th><th>${language === "ar" ? "الحالة" : "Status"}</th><th>${language === "ar" ? "الدفع" : "Payment"}</th><th>${language === "ar" ? "الإجمالي" : "Total"}</th></tr></thead><tbody>${rows || `<tr><td colspan="6" style="text-align:center">${language === "ar" ? "لا توجد بيانات" : "No data"}</td></tr>`}</tbody></table><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script></body></html>`);
+    printWindow.document.close();
+  };
+
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
       <style>{`@media print { @page { size: A4 landscape; margin: 10mm; } .orders-history-no-print { display: none !important; } .orders-history-print-summary { display: block !important; } .orders-history-print-table { box-shadow: none !important; border: 1px solid #d7dbe2 !important; overflow: visible !important; } .orders-history-print-table table { min-width: 0 !important; width: 100% !important; } .orders-history-print-table th, .orders-history-print-table td { padding: 6px 8px !important; font-size: 10pt !important; } } .orders-history-print-summary { display: none; }`}</style>
@@ -319,7 +329,7 @@ function OrdersHistory() {
               <MenuItem value="month">{language === "ar" ? "الشهر" : "Month"}</MenuItem>
             </Select>
           </FormControl>
-          <Button variant="contained" startIcon={<LocalPrintshopIcon />} onClick={() => window.print()} sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>
+          <Button variant="contained" startIcon={<LocalPrintshopIcon />} onClick={printFilteredOrders} sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>
             {language === "ar" ? "طباعة السجل" : "Print log"}
           </Button>
         </Box>

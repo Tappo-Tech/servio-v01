@@ -10,6 +10,8 @@ import { useStore } from "../../context/StoreInfoContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { buildShiftReportHtml } from "../../utils/shiftReportHtml";
 
+const printSafe = (value) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+
 function Metric({ label, value, detail }) {
   return <Card elevation={0} sx={{ height: "100%", minWidth: 0, border: "1px solid", borderColor: "divider", borderRadius: 3 }}><CardContent sx={{ p: { xs: 1.45, sm: 2.25 }, "&:last-child": { pb: { xs: 1.45, sm: 2.25 } } }}><Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ fontSize: { xs: ".75rem", sm: ".875rem" } }}>{label}</Typography><Typography variant="h5" fontWeight={950} sx={{ mt: .7, fontSize: { xs: "1.05rem", sm: "1.5rem" }, overflowWrap: "anywhere", fontVariantNumeric: "tabular-nums" }}>{value}</Typography>{detail && <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflowWrap: "anywhere" }}>{detail}</Typography>}</CardContent></Card>;
 }
@@ -67,12 +69,20 @@ export default function ShiftReports() {
     printWindow.document.close();
   };
 
+  const printFilteredShifts = () => {
+    const printWindow = window.open("", "_blank", "width=1100,height=800");
+    if (!printWindow) { setError(ar ? "اسمح بفتح النوافذ المنبثقة لطباعة التقرير." : "Allow pop-up windows to print this report."); return; }
+    const rows = filtered.map((session) => `<tr><td>${printSafe(session.cashier_name || session.cashier_username || (ar ? "كاشير" : "Cashier"))}</td><td>${printSafe(session.status === "open" ? text.open : text.closed)}</td><td>${printSafe(new Date(session.opened_at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }))}</td><td>${printSafe(session.closed_at ? new Date(session.closed_at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }) : text.open)}</td><td>${printSafe(money(session.total_sales))}</td><td>${printSafe(money(session.cash_sales))}</td><td>${printSafe(money(session.card_sales))}</td></tr>`).join("");
+    printWindow.document.write(`<!doctype html><html lang="${language}" dir="${ar ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${printSafe(text.title)}</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}.meta{color:#606778;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#171A2F;color:#fff;font-weight:700;text-align:start}th,td{border:1px solid #d9dde5;padding:8px;text-align:start}tbody tr:nth-child(even){background:#f7f8fa}</style></head><body><h1>${printSafe(text.title)}</h1><div class="meta">${printSafe(text.printAll)} · ${filtered.length} ${printSafe(text.count)}</div><table><thead><tr><th>${printSafe(text.cashier)}</th><th>${printSafe(text.open)}</th><th>${printSafe(text.start)}</th><th>${printSafe(text.end)}</th><th>${printSafe(text.total)}</th><th>${printSafe(text.cash)}</th><th>${printSafe(text.card)}</th></tr></thead><tbody>${rows || `<tr><td colspan="7">${printSafe(text.empty)}</td></tr>`}</tbody></table><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script></body></html>`);
+    printWindow.document.close();
+  };
+
   return <Box component="main" dir={ar ? "rtl" : "ltr"} sx={{ width: "100%", minWidth: 0 }}>
     <style>{`@media print { @page { size: A4 portrait; margin: 12mm; } .shift-report-no-print { display: none !important; } .shift-report-page { background: #fff !important; padding: 0 !important; } .shift-report-row { break-inside: avoid; box-shadow: none !important; } }`}</style>
     <Stack spacing={{ xs: 2, md: 2.5 }} className="shift-report-page">
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" gap={1.5}>
         <Stack direction="row" spacing={1.25} alignItems="center"><Box sx={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "rgba(244,121,32,.10)", color: "primary.main" }}><AccessTimeRoundedIcon /></Box><Box><Typography variant="h4" component="h1" fontWeight={950} sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .3 }}>{text.subtitle}</Typography></Box></Stack>
-        <Stack className="shift-report-no-print" direction="row" spacing={1} sx={{ width: { xs: "100%", md: "auto" } }}><Button fullWidth variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => setRefreshKey((value) => value + 1)} sx={{ flex: 1 }}>{text.refresh}</Button><Button fullWidth variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} disabled={loading || Boolean(error) || !filtered.length} onClick={() => window.print()} sx={{ flex: 1 }}>{text.printAll}</Button></Stack>
+        <Stack className="shift-report-no-print" direction="row" spacing={1} sx={{ width: { xs: "100%", md: "auto" } }}><Button fullWidth variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => setRefreshKey((value) => value + 1)} sx={{ flex: 1 }}>{text.refresh}</Button><Button fullWidth variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} disabled={loading || Boolean(error) || !filtered.length} onClick={printFilteredShifts} sx={{ flex: 1 }}>{text.printAll}</Button></Stack>
       </Stack>
 
       <Stack className="shift-report-no-print" direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1.25}>
