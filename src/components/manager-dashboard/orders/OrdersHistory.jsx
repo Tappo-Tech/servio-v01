@@ -82,7 +82,7 @@ function OrderRow({ order, currency, t, language }) {
         }}
       >
         <TableCell width={50}>
-          <IconButton size="small" onClick={() => setOpen(!open)}>
+          <IconButton className="orders-history-no-print" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -137,6 +137,7 @@ function OrderRow({ order, currency, t, language }) {
                 </Typography>
 
                 <Button
+                  className="orders-history-no-print"
                   size="small"
                   variant="outlined"
                   startIcon={<ReceiptLongIcon />}
@@ -236,7 +237,7 @@ function OrdersHistory() {
 
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
-      <style>{`@media print { @page { size: A4 landscape; margin: 10mm; } .orders-history-no-print { display: none !important; } }`}</style>
+      <style>{`@media print { @page { size: A4 landscape; margin: 10mm; } .orders-history-no-print { display: none !important; } .orders-history-print-summary { display: block !important; } .orders-history-print-table { box-shadow: none !important; border: 1px solid #d7dbe2 !important; overflow: visible !important; } .orders-history-print-table table { min-width: 0 !important; width: 100% !important; } .orders-history-print-table th, .orders-history-print-table td { padding: 6px 8px !important; font-size: 10pt !important; } } .orders-history-print-summary { display: none; }`}</style>
       <Box
         className="orders-history-no-print"
         sx={{
@@ -324,10 +325,17 @@ function OrdersHistory() {
         </Box>
       </Box>
 
-      <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" }, mb: .7, textAlign: "start" }}>
+      <Box className="orders-history-print-summary" sx={{ mb: 2, textAlign: "start" }}>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 900 }}>{language === "ar" ? "سجل الطلبات" : "Order history"}</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: .5 }}>
+          {language === "ar" ? `البيانات الظاهرة بعد الفلترة · ${filteredOrders.length} طلب` : `Data currently shown after filters · ${filteredOrders.length} orders`}
+        </Typography>
+      </Box>
+
+      <Typography className="orders-history-no-print" variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" }, mb: .7, textAlign: "start" }}>
         {language === "ar" ? "اسحب الجدول أفقيًا لعرض بقية التفاصيل." : "Swipe the table horizontally to view all details."}
       </Typography>
-      <TableContainer component={Paper} sx={{ maxWidth: "100%", borderRadius: { xs: 2.5, md: 3.5 }, boxShadow: "0 14px 40px rgba(23,26,47,.055)", border: "1px solid rgba(255,255,255,.75)", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch" }}>
+      <TableContainer component={Paper} className="orders-history-print-table" sx={{ maxWidth: "100%", borderRadius: { xs: 2.5, md: 3.5 }, boxShadow: "0 14px 40px rgba(23,26,47,.055)", border: "1px solid rgba(255,255,255,.75)", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch" }}>
         <Table sx={{ minWidth: { xs: 680, sm: 760 } }}>
           <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
