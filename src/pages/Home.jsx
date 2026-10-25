@@ -70,8 +70,8 @@ export default function Home() {
     <Box sx={{ position: "absolute", width: 700, height: 700, borderRadius: "50%", top: -420, insetInlineEnd: -260, background: "radial-gradient(circle, rgba(244,121,32,.13), transparent 67%)", pointerEvents: "none" }} />
     <Box sx={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", top: 1150, insetInlineStart: -390, background: "radial-gradient(circle, rgba(40,120,200,.08), transparent 68%)", pointerEvents: "none" }} />
 
-    <Container maxWidth="lg" sx={{ position: "relative", py: { xs: 1.5, md: 2.5 } }}>
-      <Surface sx={{ borderRadius: 4, px: { xs: 1.5, sm: 2.5 }, py: 1.05, position: "sticky", top: 12, zIndex: 10, bgcolor: "rgba(255,255,255,.88)", backdropFilter: "blur(18px)" }}>
+    <Container maxWidth="md" sx={{ position: "relative", py: { xs: 1.5, md: 2.2 } }}>
+      <Surface sx={{ borderRadius: 5, px: { xs: 1.5, sm: 2.35 }, py: 1.05, position: "sticky", top: 12, zIndex: 10, bgcolor: "rgba(255,255,255,.91)", backdropFilter: "blur(18px)" }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
           <Logo compact arabic={isArabic} />
           <Stack direction="row" alignItems="center" spacing={{ xs: .5, sm: 1.1 }}>
@@ -82,11 +82,11 @@ export default function Home() {
         </Stack>
       </Surface>
 
-      <Box component="section" sx={{ pt: { xs: 7, md: 10 }, pb: { xs: 9, md: 13 } }}>
+      <Box component="section" sx={{ pt: { xs: 6.5, md: 8.5 }, pb: { xs: 8, md: 12 } }}>
         <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
           <Grid size={{ xs: 12, md: 7 }}>
             <Chip icon={<BoltRoundedIcon />} label={t("homeTag")} sx={{ mb: 2.5, borderRadius: 2, fontWeight: 900, bgcolor: alpha("#F47920", .1), color: "primary.dark", border: "1px solid", borderColor: alpha("#F47920", .22) }} />
-            <Typography component="h1" sx={{ fontSize: { xs: "clamp(2.75rem, 13vw, 4.35rem)", md: "5.55rem" }, fontWeight: 1000, letterSpacing: "-.085em", lineHeight: .96, maxWidth: 760 }}>{t("homeTitleA")}<br /><Box component="span" sx={{ color: "primary.main" }}>{t("homeTitleB")}</Box></Typography>
+            <Typography component="h1" sx={{ fontSize: { xs: "clamp(2.75rem, 13vw, 4.35rem)", md: "4.85rem" }, fontWeight: 1000, letterSpacing: "-.085em", lineHeight: .96, maxWidth: 760 }}>{t("homeTitleA")}<br /><Box component="span" sx={{ color: "primary.main" }}>{t("homeTitleB")}</Box></Typography>
             <Typography sx={{ mt: 3, maxWidth: 650, fontSize: { xs: "1rem", md: "1.13rem" }, lineHeight: 1.9, color: "text.secondary", fontWeight: 550 }}>{t("homeDescription")}</Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} sx={{ mt: 4, alignItems: { xs: "stretch", sm: "center" } }}>
               <Button component={RouterLink} to="/register" variant="contained" size="large" endIcon={<DirectionIcon />} sx={{ borderRadius: 2.5, py: 1.4, px: 3, fontWeight: 950, boxShadow: "0 14px 30px rgba(244,121,32,.2)" }}>{t("homeCreate")}</Button>
@@ -98,7 +98,7 @@ export default function Home() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 5 }}>
-            <Surface sx={{ borderRadius: 5, p: { xs: 1.4, sm: 2 }, transform: { md: "rotate(1.3deg)" }, bgcolor: "#fff", overflow: "hidden" }}>
+            <Surface sx={{ borderRadius: 5, p: { xs: 1.25, sm: 1.7 }, transform: { md: "rotate(1.3deg)" }, bgcolor: "#fff", overflow: "hidden" }}>
               <Stack direction="row" spacing={1.2} sx={{ minHeight: { xs: 330, sm: 365 } }}>
                 <Box sx={{ width: { xs: 41, sm: 54 }, flexShrink: 0, borderRadius: 2.5, bgcolor: "secondary.main", p: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}><Box sx={{ width: 27, height: 27, borderRadius: 1.2, bgcolor: "primary.main" }} /><Box sx={{ width: 23, height: 6, borderRadius: 3, bgcolor: "rgba(255,255,255,.3)" }} /><Box sx={{ width: 23, height: 6, borderRadius: 3, bgcolor: "rgba(255,255,255,.18)" }} /><Box sx={{ width: 23, height: 6, borderRadius: 3, bgcolor: "rgba(255,255,255,.18)" }} /><Box sx={{ width: 23, height: 6, borderRadius: 3, bgcolor: "rgba(255,255,255,.18)" }} /></Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -113,16 +113,16 @@ export default function Home() {
         </Grid>
       </Box>
 
-      <Box component="section" sx={{ pb: { xs: 9, md: 13 } }}>
+      <Box component="section" sx={{ pb: { xs: 8, md: 12 } }}>
         <SectionIntro align="center" eyebrow={t("homeViewEyebrow")} title={t("homeViewTitle")} text={t("homeViewText")} />
         <Grid container spacing={2}>{features.map((feature) => <Grid size={{ xs: 12, md: 4 }} key={feature.title}><Surface sx={{ height: "100%", borderRadius: 3.2, p: { xs: 2.3, md: 2.7 }, position: "relative" }}><Typography variant="caption" sx={{ position: "absolute", top: 20, insetInlineEnd: 22, color: "text.disabled", fontWeight: 900 }}>{feature.number}</Typography><Box sx={{ width: 47, height: 47, display: "grid", placeItems: "center", borderRadius: 2.2, color: feature.color, bgcolor: alpha(feature.color, .11), mb: 2 }}>{feature.icon}</Box><Typography variant="h6" sx={{ mb: 1 }}>{t(feature.title)}</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>{t(feature.text)}</Typography></Surface></Grid>)}</Grid>
       </Box>
 
-      <Box component="section" sx={{ pb: { xs: 9, md: 13 } }}>
+      <Box component="section" sx={{ pb: { xs: 8, md: 12 } }}>
         <Grid container spacing={{ xs: 4, md: 9 }} alignItems="center"><Grid size={{ xs: 12, md: 5 }}><SectionIntro eyebrow={t("homeFlowEyebrow")} title={t("homeFlowTitle")} text={t("homeFlowText")} /><Stack spacing={1}>{["homeBenefits1", "homeBenefits2", "homeBenefits3"].map((key) => <Stack key={key} direction="row" spacing={.8} alignItems="center"><CheckCircleRoundedIcon sx={{ fontSize: 18, color: "primary.main" }} /><Typography variant="body2" color="text.secondary" fontWeight={750}>{t(key)}</Typography></Stack>)}</Stack><Button component={RouterLink} to="/register" variant="outlined" endIcon={<DirectionIcon />} sx={{ mt: 3, borderRadius: 2.2, fontWeight: 900 }}>{t("homeStart")}</Button></Grid><Grid size={{ xs: 12, md: 7 }}><Surface sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3.5, bgcolor: "rgba(255,255,255,.72)" }}><Grid container spacing={1.3}>{steps.map((step, index) => <Grid size={{ xs: 12, sm: 6 }} key={step.title}><Box sx={{ height: "100%", p: 2, borderRadius: 2.5, bgcolor: index === 0 ? "#FFF1E8" : "#F8F9FA", border: "1px solid", borderColor: index === 0 ? alpha("#F47920", .18) : "rgba(23,26,47,.05)" }}><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}><Box sx={{ width: 32, height: 32, borderRadius: 1.6, display: "grid", placeItems: "center", bgcolor: index === 0 ? "primary.main" : alpha("#171A2F", .07), color: index === 0 ? "#fff" : "secondary.main" }}>{step.icon}</Box><Typography variant="caption" color="text.secondary" fontWeight={900}>{t("homeStepLabel")} {index + 1}</Typography></Stack><Typography fontWeight={950}>{t(step.title)}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .45, lineHeight: 1.7 }}>{t(step.text)}</Typography></Box></Grid>)}</Grid></Surface></Grid></Grid>
       </Box>
 
-      <Box component="section" sx={{ pb: { xs: 9, md: 13 } }}>
+      <Box component="section" sx={{ pb: { xs: 8, md: 12 } }}>
         <SectionIntro align="center" eyebrow={t("homeRolesEyebrow")} title={t("homeRolesTitle")} text={isArabic ? "صاحب النشاط، الفريق، والعميل يشوفون التجربة المناسبة لهم." : "Owners, teams, and guests each get the experience they need."} />
         <Grid container spacing={2}>{roles.map((role, index) => <Grid size={{ xs: 12, md: 4 }} key={role.title}><Surface sx={{ height: "100%", borderRadius: 3.2, p: 2.5, bgcolor: "rgba(255,255,255,.72)" }}><Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 2, color: "primary.main", bgcolor: alpha("#F47920", .1), mb: 2 }}>{role.icon}</Box><Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 900 }}>{`0${index + 1}`}</Typography><Typography variant="h6" sx={{ mt: .5, mb: 1 }}>{t(role.title)}</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>{t(role.text)}</Typography></Surface></Grid>)}</Grid>
       </Box>
