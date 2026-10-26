@@ -1,6 +1,21 @@
+// HOOKS
 import { useState } from "react";
-import { Box, Button, Card, Chip, Container, Divider, Grid, Stack, Typography } from "@mui/material";
+
+// MUI COMPONENTS
+import {
+  Box,
+  Button,
+  Card,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { alpha } from "@mui/material/styles";
+
+// ICONS
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -13,49 +28,1251 @@ import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import AutoGraphRoundedIcon from "@mui/icons-material/AutoGraphRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
+
+// OTHERS
 import { Link as RouterLink } from "react-router-dom";
+
+// COMPONENTS
 import LanguageToggle from "../components/LanguageToggle";
 import TrialNotice from "../components/TrialNotice";
+
+// CONTEXTS
 import { useLanguage } from "../context/LanguageContext";
 
-const iconMap = { menu: <MenuBookRoundedIcon />, orders: <PointOfSaleRoundedIcon />, insight: <AutoGraphRoundedIcon />, qr: <QrCode2RoundedIcon />, teams: <GroupsRoundedIcon />, calls: <NotificationsActiveRoundedIcon /> };
+const iconMap = {
+  menu: <MenuBookRoundedIcon />,
+  orders: <PointOfSaleRoundedIcon />,
+  insight: <AutoGraphRoundedIcon />,
+  qr: <QrCode2RoundedIcon />,
+  teams: <GroupsRoundedIcon />,
+  calls: <NotificationsActiveRoundedIcon />,
+};
 
+// LOGO SECTION
 function Brand({ ar, light = false }) {
-  return <Stack direction="row" alignItems="center" spacing={1.05}><Box component="img" src="/logo-icon.webp" alt="SERVIO" sx={{ width: 38, height: 38, objectFit: "contain" }} /><Box><Typography sx={{ color: light ? "#fff" : "secondary.main", fontWeight: 1000, letterSpacing: "-.06em", fontSize: "1.1rem", lineHeight: 1 }}>SERVIO</Typography><Typography variant="caption" sx={{ color: light ? "rgba(255,255,255,.55)" : "text.secondary", fontWeight: 700 }}>{ar ? "تشغيل أذكى للضيافة" : "Smarter hospitality operations"}</Typography></Box></Stack>;
+  return (
+    <Stack direction="row" alignItems="start">
+      <Box
+        component="img"
+        src="/logo-icon.webp"
+        alt="SERVIO"
+        sx={{
+          width: 38,
+          height: 38,
+          objectFit: "contain",
+          mr: ar ? 0 : 1.2,
+          ml: ar ? 1.2 : 0,
+        }}
+      />
+      <Box>
+        <Typography
+          sx={{
+            color: light ? "#fff" : "secondary.main",
+            fontWeight: 1000,
+            letterSpacing: "-.06em",
+            fontSize: "1.1rem",
+            lineHeight: 1,
+          }}
+        >
+          SERVIO
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: light ? "rgba(255,255,255,.55)" : "text.secondary",
+            fontWeight: 700,
+          }}
+        >
+          {ar ? "تشغيل أذكى للضيافة" : "Smarter hospitality operations"}
+        </Typography>
+      </Box>
+    </Stack>
+  );
 }
 
+// THE MOCK FUNCTION
 function ProductMock({ ar }) {
-  const activity = ar ? [{ title: "طلب جديد", sub: "طاولة 08", color: "#F47920" }, { title: "جاهز للتقديم", sub: "طلب #1048", color: "#33C18A" }, { title: "نداء خدمة", sub: "طاولة 04", color: "#E5A83C" }] : [{ title: "New order", sub: "Table 08", color: "#F47920" }, { title: "Ready to serve", sub: "Order #1048", color: "#33C18A" }, { title: "Service call", sub: "Table 04", color: "#E5A83C" }];
-  return <Box sx={{ position: "relative", maxWidth: 520, mx: "auto" }}><Box sx={{ position: "absolute", width: 280, height: 280, borderRadius: "50%", bgcolor: "rgba(244,121,32,.22)", filter: "blur(55px)", top: 40, insetInlineEnd: -30 }} /><Card elevation={0} sx={{ position: "relative", borderRadius: 4, p: { xs: 1.4, sm: 2 }, bgcolor: "#fff", border: "1px solid rgba(255,255,255,.2)", boxShadow: "0 35px 90px rgba(0,0,0,.28)" }}><Stack direction="row" spacing={1.2}><Box sx={{ width: 48, bgcolor: "#171A2F", borderRadius: 2.5, p: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, flexShrink: 0 }}><Box sx={{ width: 25, height: 25, borderRadius: 1, bgcolor: "#F47920" }} />{[1,2,3,4,5].map((item) => <Box key={item} sx={{ width: 22, height: 6, borderRadius: 3, bgcolor: item === 1 ? "rgba(255,255,255,.34)" : "rgba(255,255,255,.14)" }} />)}</Box><Box sx={{ flex: 1, minWidth: 0, p: .6 }}><Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}><Box><Typography fontWeight={950} sx={{ fontSize: { xs: ".88rem", sm: "1rem" } }}>{ar ? "مركز التشغيل" : "Operations center"}</Typography><Typography variant="caption" color="text.secondary">{ar ? "نظرة لحظية على مكانك" : "A live view of your venue"}</Typography></Box><Chip size="small" label="LIVE" sx={{ bgcolor: "#E8F8F1", color: "#17835D", fontWeight: 950, fontSize: ".62rem" }} /></Stack><Grid container spacing={.8} sx={{ mb: 1.4 }}><Grid size={4}><Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}><Typography variant="caption" color="text.secondary">{ar ? "طلبات" : "Orders"}</Typography><Typography fontWeight={1000} fontSize="1.25rem">24</Typography><Typography variant="caption" color="#17835D">+18%</Typography></Box></Grid><Grid size={4}><Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}><Typography variant="caption" color="text.secondary">{ar ? "مبيعات" : "Sales"}</Typography><Typography fontWeight={1000} fontSize="1.25rem">1.8k</Typography><Typography variant="caption" color="#17835D">+12%</Typography></Box></Grid><Grid size={4}><Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}><Typography variant="caption" color="text.secondary">{ar ? "تقييم" : "Rating"}</Typography><Typography fontWeight={1000} fontSize="1.25rem">4.8</Typography><Typography variant="caption" color="#F47920">★★★★★</Typography></Box></Grid></Grid><Typography variant="caption" fontWeight={950}>{ar ? "النشاط الآن" : "Live activity"}</Typography><Stack spacing={.7} sx={{ mt: .8 }}>{activity.map((item) => <Box key={item.title} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: .85, borderRadius: 1.7, bgcolor: "#F7F8FA" }}><Stack direction="row" spacing={.7} alignItems="center"><Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: item.color }} /><Box><Typography variant="caption" fontWeight={900} display="block">{item.title}</Typography><Typography variant="caption" color="text.secondary">{item.sub}</Typography></Box></Stack><Typography variant="caption" color="text.secondary">{ar ? "الآن" : "Now"}</Typography></Box>)}</Stack></Box></Stack><Divider sx={{ my: 1.5 }} /><Stack direction="row" justifyContent="space-between" sx={{ px: .5 }}><Stack direction="row" spacing={.5} alignItems="center"><QrCode2RoundedIcon sx={{ fontSize: 16, color: "primary.main" }} /><Typography variant="caption" fontWeight={850}>QR</Typography></Stack><Stack direction="row" spacing={.5} alignItems="center"><PointOfSaleRoundedIcon sx={{ fontSize: 16, color: "primary.main" }} /><Typography variant="caption" fontWeight={850}>{ar ? "طلبات" : "Orders"}</Typography></Stack><Stack direction="row" spacing={.5} alignItems="center"><InsightsRoundedIcon sx={{ fontSize: 16, color: "primary.main" }} /><Typography variant="caption" fontWeight={850}>{ar ? "تحليلات" : "Insights"}</Typography></Stack></Stack></Card></Box>;
+  const activity = ar
+    ? [
+        { title: "طلب جديد", sub: "طاولة 08", color: "#F47920" },
+        { title: "جاهز للتقديم", sub: "طلب #1048", color: "#33C18A" },
+        { title: "نداء خدمة", sub: "طاولة 04", color: "#E5A83C" },
+      ]
+    : [
+        { title: "New order", sub: "Table 08", color: "#F47920" },
+        { title: "Ready to serve", sub: "Order #1048", color: "#33C18A" },
+        { title: "Service call", sub: "Table 04", color: "#E5A83C" },
+      ];
+  return (
+    <Box sx={{ position: "relative", maxWidth: 520, mx: "auto" }}>
+      <Box
+        sx={{
+          position: "absolute",
+          width: 280,
+          height: 280,
+          borderRadius: "50%",
+          bgcolor: "rgba(244,121,32,.22)",
+          filter: "blur(55px)",
+          top: 40,
+          insetInlineEnd: -30,
+        }}
+      />
+      <Card
+        elevation={0}
+        sx={{
+          position: "relative",
+          borderRadius: 4,
+          p: { xs: 1.4, sm: 2 },
+          bgcolor: "#fff",
+          border: "1px solid rgba(255,255,255,.2)",
+          boxShadow: "0 35px 90px rgba(0,0,0,.28)",
+        }}
+      >
+        <Stack direction="row" spacing={1.2}>
+          <Box
+            sx={{
+              width: 48,
+              bgcolor: "#171A2F",
+              borderRadius: 2.5,
+              p: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1.5,
+              flexShrink: 0,
+            }}
+          >
+            <Box
+              sx={{
+                width: 25,
+                height: 25,
+                borderRadius: 1,
+                bgcolor: "#F47920",
+              }}
+            />
+            {[1, 2, 3, 4, 5].map((item) => (
+              <Box
+                key={item}
+                sx={{
+                  width: 22,
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor:
+                    item === 1
+                      ? "rgba(255,255,255,.34)"
+                      : "rgba(255,255,255,.14)",
+                }}
+              />
+            ))}
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0, p: 0.6 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 1.5 }}
+            >
+              <Box>
+                <Typography
+                  fontWeight={950}
+                  sx={{ fontSize: { xs: ".88rem", sm: "1rem" } }}
+                >
+                  {ar ? "مركز التشغيل" : "Operations center"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {ar ? "نظرة لحظية على مكانك" : "A live view of your venue"}
+                </Typography>
+              </Box>
+              <Chip
+                size="small"
+                label="LIVE"
+                sx={{
+                  bgcolor: "#E8F8F1",
+                  color: "#17835D",
+                  fontWeight: 950,
+                  fontSize: ".62rem",
+                }}
+              />
+            </Stack>
+            <Grid container spacing={0.8} sx={{ mb: 1.4 }}>
+              <Grid size={4}>
+                <Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {ar ? "طلبات" : "Orders"}
+                  </Typography>
+                  <Typography fontWeight={1000} fontSize="1.25rem">
+                    24
+                  </Typography>
+                  <Typography variant="caption" color="#17835D">
+                    +18%
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={4}>
+                <Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {ar ? "مبيعات" : "Sales"}
+                  </Typography>
+                  <Typography fontWeight={1000} fontSize="1.25rem">
+                    1.8k
+                  </Typography>
+                  <Typography variant="caption" color="#17835D">
+                    +12%
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={4}>
+                <Box sx={{ bgcolor: "#F6F7F9", borderRadius: 1.8, p: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {ar ? "تقييم" : "Rating"}
+                  </Typography>
+                  <Typography fontWeight={1000} fontSize="1.25rem">
+                    4.8
+                  </Typography>
+                  <Typography variant="caption" color="#F47920">
+                    ★★★★★
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+            <Typography variant="caption" fontWeight={950}>
+              {ar ? "النشاط الآن" : "Live activity"}
+            </Typography>
+            <Stack spacing={0.7} sx={{ mt: 0.8 }}>
+              {activity.map((item) => (
+                <Box
+                  key={item.title}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 0.85,
+                    borderRadius: 1.7,
+                    bgcolor: "#F7F8FA",
+                  }}
+                >
+                  <Stack direction="row" spacing={0.7} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        bgcolor: item.color,
+                      }}
+                    />
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        fontWeight={900}
+                        display="block"
+                      >
+                        {item.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {item.sub}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary">
+                    {ar ? "الآن" : "Now"}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        </Stack>
+        <Divider sx={{ my: 1.5 }} />
+        <Stack direction="row" justifyContent="space-between" sx={{ px: 0.5 }}>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <QrCode2RoundedIcon sx={{ fontSize: 16, color: "primary.main" }} />
+            <Typography variant="caption" fontWeight={850}>
+              QR
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <PointOfSaleRoundedIcon
+              sx={{ fontSize: 16, color: "primary.main" }}
+            />
+            <Typography variant="caption" fontWeight={850}>
+              {ar ? "طلبات" : "Orders"}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <InsightsRoundedIcon sx={{ fontSize: 16, color: "primary.main" }} />
+            <Typography variant="caption" fontWeight={850}>
+              {ar ? "تحليلات" : "Insights"}
+            </Typography>
+          </Stack>
+        </Stack>
+      </Card>
+    </Box>
+  );
 }
 
-function FeatureCard({ icon, title, text, accent = "#F47920" }) { return <Card elevation={0} sx={{ height: "100%", borderRadius: 3, p: { xs: 2.2, md: 2.7 }, border: "1px solid #E8EBF0", boxShadow: "0 14px 35px rgba(23,26,47,.04)", transition: "transform .2s ease, box-shadow .2s ease", "&:hover": { transform: "translateY(-5px)", boxShadow: "0 20px 45px rgba(23,26,47,.09)" } }}><Box sx={{ width: 46, height: 46, display: "grid", placeItems: "center", color: accent, bgcolor: alpha(accent, .11), borderRadius: 2, mb: 2 }}>{icon}</Box><Typography variant="h6" sx={{ mb: 1, fontWeight: 950 }}>{title}</Typography><Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>{text}</Typography></Card>; }
+// FEATURE
+function FeatureCard({ icon, title, text, accent = "#F47920" }) {
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        borderRadius: 3,
+        p: { xs: 2.2, md: 2.7 },
+        border: "1px solid #E8EBF0",
+        boxShadow: "0 14px 35px rgba(23,26,47,.04)",
+        transition: "transform .2s ease, box-shadow .2s ease",
+        "&:hover": {
+          transform: "translateY(-5px)",
+          boxShadow: "0 20px 45px rgba(23,26,47,.09)",
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: 46,
+          height: 46,
+          display: "grid",
+          placeItems: "center",
+          color: accent,
+          bgcolor: alpha(accent, 0.11),
+          borderRadius: 2,
+          mb: 2,
+        }}
+      >
+        {icon}
+      </Box>
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 950 }}>
+        {title}
+      </Typography>
+      <Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>
+        {text}
+      </Typography>
+    </Card>
+  );
+}
 
 export default function Home() {
-  const { language } = useLanguage(); const ar = language !== "en"; const Arrow = ar ? ArrowBackRoundedIcon : ArrowForwardRoundedIcon; const [faq, setFaq] = useState(null);
-  const c = ar ? {
-    navFeatures: "المزايا", navHow: "كيف يعمل", navRoles: "لمن صُمم؟", login: "تسجيل الدخول", start: "ابدأ مجانًا", eyebrow: "منصة تشغيل المقاهي والمطاعم", title: "كل تفاصيل يومك في", titleAccent: "مسار واضح.", desc: "SERVIO يربط المنيو الرقمي والطلبات والكاشير ونداءات الخدمة والتحليلات في مساحة تشغيل واحدة — حتى يتحرك فريقك أسرع ويستمتع عميلك بتجربة أفضل.", primary: "أنشئ حساب نشاطك", secondary: "لدي حساب بالفعل", proof: "مصمم لفرق الضيافة التي تريد تشغيلًا أوضح", metric1: "منيو وطاولات", metric2: "تدفق طلبات", metric3: "لوحة تشغيل", featureEyebrow: "كل ما تحتاجه للتشغيل", featureTitle: "أدوات بسيطة، أثر واضح", featureText: "بدل جمع أدوات منفصلة، اجمع رحلة العميل والفريق في نظام واحد يفهم يومك التشغيلي بوضوح.", features: [{ k: "menu", t: "منيو رقمي بلا تطبيق", d: "امنح كل طاولة رابطها وQR الخاص بها، ودع العميل يطلب مباشرة من جواله." }, { k: "orders", t: "الطلبات تصل للفريق فورًا", d: "تابع الطلبات وحالاتها من شاشة واضحة للكاشير والفريق بدون ضياع أو تأخير." }, { k: "insight", t: "قرارات مبنية على بيانات", d: "راجع المبيعات والتقييمات وأداء الأصناف والفروع من لوحة إدارة واحدة." }], howEyebrow: "طريقة العمل", howTitle: "من أول QR إلى آخر طلب", howText: "صممنا SERVIO ليكون جزءًا من يوم فريقك، لا نظامًا إضافيًا يربك الفريق.", steps: [{ t: "أنشئ نشاطك", d: "أدخل بيانات المكان وأنشئ هويتك ورابطك الخاص." }, { t: "اربط الطاولات", d: "ولّد QR مستقلًا لكل طاولة وشاركه مع عملائك." }, { t: "استقبل الطلبات", d: "تصل الطلبات إلى الكاشير والفريق مع حالة واضحة." }, { t: "تابع وتحسّن", d: "استخدم التقارير والتقييمات لفهم ما يحدث يوميًا." }], rolesEyebrow: "مصمم لكل فريق", rolesTitle: "كل شخص يرى ما يحتاجه", roles: [{ icon: "teams", t: "صاحب النشاط", d: "إدارة المنيو والفروع والموظفين والمبيعات من مكان واحد." }, { icon: "orders", t: "الكاشير والفريق", d: "شاشة عمل واضحة للطلبات والورديات ونداءات الخدمة." }, { icon: "qr", t: "العميل", d: "طلب سريع من الطاولة بدون تحميل تطبيق أو انتظار طويل." }], faqTitle: "أسئلة قبل أن تبدأ", faq: [{ q: "هل يحتاج العميل إلى تطبيق؟", a: "لا. يفتح العميل رابط المنيو أو يمسح QR الطاولة من متصفح جواله مباشرة." }, { q: "هل يدعم SERVIO أكثر من فرع؟", a: "نعم. يمكنك إنشاء الفروع وربط الكاشير والطلبات والمنيو بكل فرع." }, { q: "هل يمكن استخدامه للطلبات أمام الكاشير؟", a: "نعم. يوجد QR خاص بالكاشير لتسجيل الطلبات المحلية ضمن تدفق الكاشير." }], ctaTitle: "اجعل تشغيل مكانك يسير في مسار واحد.", ctaText: "ابدأ بهوية نشاطك اليوم، واترك لـSERVIO تنظيم التفاصيل التي تصنع تجربة أفضل.", cta: "ابدأ مع SERVIO", footer: "منصة تشغيل رقمية تربط العميل والفريق والإدارة في تجربة واحدة."
-  } : {
-    navFeatures: "Features", navHow: "How it works", navRoles: "Who it is for", login: "Sign in", start: "Start free", eyebrow: "Cafe & restaurant operations platform", title: "Every part of your day in", titleAccent: "one clear flow.", desc: "SERVIO connects digital menus, orders, cashier workflows, service calls, and analytics in one operations space — so your team moves faster and guests get a better experience.", primary: "Create your cafe account", secondary: "I already have an account", proof: "Built for hospitality teams that want clearer operations", metric1: "Menus & tables", metric2: "Order flow", metric3: "Live dashboard", featureEyebrow: "Everything you need to run", featureTitle: "Simple tools. Visible impact.", featureText: "Replace disconnected tools with one system that connects the guest journey to the way your team works.", features: [{ k: "menu", t: "A digital menu without an app", d: "Give every table its own link and QR code so guests can order from their phones." }, { k: "orders", t: "Orders reach the team instantly", d: "Follow orders and statuses from a clear cashier and team workspace without delays." }, { k: "insight", t: "Decisions backed by data", d: "Review sales, feedback, item performance, and branches from one manager view." }], howEyebrow: "How it works", howTitle: "From the first QR to the last order", howText: "SERVIO is designed to fit into your team’s day, not add another system to manage.", steps: [{ t: "Create your business", d: "Add your venue details and create its identity and link." }, { t: "Connect your tables", d: "Generate a unique QR code for every table." }, { t: "Receive orders", d: "Orders reach the cashier and team with a clear status." }, { t: "Track and improve", d: "Use reports and feedback to understand the day." }], rolesEyebrow: "Made for every team", rolesTitle: "Everyone sees what they need", roles: [{ icon: "teams", t: "Business owners", d: "Manage menus, branches, staff, and sales from one place." }, { icon: "orders", t: "Cashiers and teams", d: "A focused workspace for orders, shifts, and service calls." }, { icon: "qr", t: "Guests", d: "A fast table-ordering experience without downloading an app." }], faqTitle: "Questions before you start", faq: [{ q: "Does the guest need an app?", a: "No. Guests open the menu link or scan the table QR code directly from their phone browser." }, { q: "Can SERVIO support multiple branches?", a: "Yes. Create branches and connect their cashiers, orders, and menus separately." }, { q: "Can it handle orders in front of the cashier?", a: "Yes. A dedicated cashier QR records local orders within the cashier workflow." }], ctaTitle: "Put your operations on one clear flow.", ctaText: "Set up your business identity today and let SERVIO organize the details behind a better guest experience.", cta: "Start with SERVIO", footer: "A digital operations platform connecting guests, teams, and managers."
-  };
+  const { language } = useLanguage();
+  const ar = language !== "en";
+  const Arrow = ar ? ArrowBackRoundedIcon : ArrowForwardRoundedIcon;
+  const [faq, setFaq] = useState(null);
+  const c = ar
+    ? {
+        navFeatures: "المزايا",
+        navHow: "كيف يعمل",
+        navRoles: "لمن صُمم؟",
+        login: "تسجيل الدخول",
+        start: "ابدأ مجانًا",
+        eyebrow: "منصة تشغيل المقاهي والمطاعم",
+        title: "كل تفاصيل يومك في",
+        titleAccent: "مسار واضح.",
+        desc: "SERVIO يربط المنيو الرقمي والطلبات والكاشير ونداءات الخدمة والتحليلات في مساحة تشغيل واحدة — حتى يتحرك فريقك أسرع ويستمتع عميلك بتجربة أفضل.",
+        primary: "أنشئ حساب نشاطك",
+        secondary: "لدي حساب بالفعل",
+        proof: "مصمم لفرق الضيافة التي تريد تشغيلًا أوضح",
+        metric1: "منيو وطاولات",
+        metric2: "تدفق طلبات",
+        metric3: "لوحة تشغيل",
+        featureEyebrow: "كل ما تحتاجه للتشغيل",
+        featureTitle: "أدوات بسيطة، أثر واضح",
+        featureText:
+          "بدل جمع أدوات منفصلة، اجمع رحلة العميل والفريق في نظام واحد يفهم يومك التشغيلي بوضوح.",
+        features: [
+          {
+            k: "menu",
+            t: "منيو رقمي بلا تطبيق",
+            d: "امنح كل طاولة رابطها وQR الخاص بها، ودع العميل يطلب مباشرة من جواله.",
+          },
+          {
+            k: "orders",
+            t: "الطلبات تصل للفريق فورًا",
+            d: "تابع الطلبات وحالاتها من شاشة واضحة للكاشير والفريق بدون ضياع أو تأخير.",
+          },
+          {
+            k: "insight",
+            t: "قرارات مبنية على بيانات",
+            d: "راجع المبيعات والتقييمات وأداء الأصناف والفروع من لوحة إدارة واحدة.",
+          },
+        ],
+        howEyebrow: "طريقة العمل",
+        howTitle: "من أول QR إلى آخر طلب",
+        howText:
+          "صممنا SERVIO ليكون جزءًا من يوم فريقك، لا نظامًا إضافيًا يربك الفريق.",
+        steps: [
+          {
+            t: "أنشئ نشاطك",
+            d: "أدخل بيانات المكان وأنشئ هويتك ورابطك الخاص.",
+          },
+          {
+            t: "اربط الطاولات",
+            d: "ولّد QR مستقلًا لكل طاولة وشاركه مع عملائك.",
+          },
+          {
+            t: "استقبل الطلبات",
+            d: "تصل الطلبات إلى الكاشير والفريق مع حالة واضحة.",
+          },
+          {
+            t: "تابع وتحسّن",
+            d: "استخدم التقارير والتقييمات لفهم ما يحدث يوميًا.",
+          },
+        ],
+        rolesEyebrow: "مصمم لكل فريق",
+        rolesTitle: "كل شخص يرى ما يحتاجه",
+        roles: [
+          {
+            icon: "teams",
+            t: "صاحب النشاط",
+            d: "إدارة المنيو والفروع والموظفين والمبيعات من مكان واحد.",
+          },
+          {
+            icon: "orders",
+            t: "الكاشير والفريق",
+            d: "شاشة عمل واضحة للطلبات والورديات ونداءات الخدمة.",
+          },
+          {
+            icon: "qr",
+            t: "العميل",
+            d: "طلب سريع من الطاولة بدون تحميل تطبيق أو انتظار طويل.",
+          },
+        ],
+        faqTitle: "أسئلة قبل أن تبدأ",
+        faq: [
+          {
+            q: "هل يحتاج العميل إلى تطبيق؟",
+            a: "لا. يفتح العميل رابط المنيو أو يمسح QR الطاولة من متصفح جواله مباشرة.",
+          },
+          {
+            q: "هل يدعم SERVIO أكثر من فرع؟",
+            a: "نعم. يمكنك إنشاء الفروع وربط الكاشير والطلبات والمنيو بكل فرع.",
+          },
+          {
+            q: "هل يمكن استخدامه للطلبات أمام الكاشير؟",
+            a: "نعم. يوجد QR خاص بالكاشير لتسجيل الطلبات المحلية ضمن تدفق الكاشير.",
+          },
+        ],
+        ctaTitle: "اجعل تشغيل مكانك يسير في مسار واحد.",
+        ctaText:
+          "ابدأ بهوية نشاطك اليوم، واترك لـSERVIO تنظيم التفاصيل التي تصنع تجربة أفضل.",
+        cta: "ابدأ مع SERVIO",
+        footer: "منصة تشغيل رقمية تربط العميل والفريق والإدارة في تجربة واحدة.",
+      }
+    : {
+        navFeatures: "Features",
+        navHow: "How it works",
+        navRoles: "Who it is for",
+        login: "Sign in",
+        start: "Start free",
+        eyebrow: "Cafe & restaurant operations platform",
+        title: "Every part of your day in",
+        titleAccent: "one clear flow.",
+        desc: "SERVIO connects digital menus, orders, cashier workflows, service calls, and analytics in one operations space — so your team moves faster and guests get a better experience.",
+        primary: "Create your cafe account",
+        secondary: "I already have an account",
+        proof: "Built for hospitality teams that want clearer operations",
+        metric1: "Menus & tables",
+        metric2: "Order flow",
+        metric3: "Live dashboard",
+        featureEyebrow: "Everything you need to run",
+        featureTitle: "Simple tools. Visible impact.",
+        featureText:
+          "Replace disconnected tools with one system that connects the guest journey to the way your team works.",
+        features: [
+          {
+            k: "menu",
+            t: "A digital menu without an app",
+            d: "Give every table its own link and QR code so guests can order from their phones.",
+          },
+          {
+            k: "orders",
+            t: "Orders reach the team instantly",
+            d: "Follow orders and statuses from a clear cashier and team workspace without delays.",
+          },
+          {
+            k: "insight",
+            t: "Decisions backed by data",
+            d: "Review sales, feedback, item performance, and branches from one manager view.",
+          },
+        ],
+        howEyebrow: "How it works",
+        howTitle: "From the first QR to the last order",
+        howText:
+          "SERVIO is designed to fit into your team’s day, not add another system to manage.",
+        steps: [
+          {
+            t: "Create your business",
+            d: "Add your venue details and create its identity and link.",
+          },
+          {
+            t: "Connect your tables",
+            d: "Generate a unique QR code for every table.",
+          },
+          {
+            t: "Receive orders",
+            d: "Orders reach the cashier and team with a clear status.",
+          },
+          {
+            t: "Track and improve",
+            d: "Use reports and feedback to understand the day.",
+          },
+        ],
+        rolesEyebrow: "Made for every team",
+        rolesTitle: "Everyone sees what they need",
+        roles: [
+          {
+            icon: "teams",
+            t: "Business owners",
+            d: "Manage menus, branches, staff, and sales from one place.",
+          },
+          {
+            icon: "orders",
+            t: "Cashiers and teams",
+            d: "A focused workspace for orders, shifts, and service calls.",
+          },
+          {
+            icon: "qr",
+            t: "Guests",
+            d: "A fast table-ordering experience without downloading an app.",
+          },
+        ],
+        faqTitle: "Questions before you start",
+        faq: [
+          {
+            q: "Does the guest need an app?",
+            a: "No. Guests open the menu link or scan the table QR code directly from their phone browser.",
+          },
+          {
+            q: "Can SERVIO support multiple branches?",
+            a: "Yes. Create branches and connect their cashiers, orders, and menus separately.",
+          },
+          {
+            q: "Can it handle orders in front of the cashier?",
+            a: "Yes. A dedicated cashier QR records local orders within the cashier workflow.",
+          },
+        ],
+        ctaTitle: "Put your operations on one clear flow.",
+        ctaText:
+          "Set up your business identity today and let SERVIO organize the details behind a better guest experience.",
+        cta: "Start with SERVIO",
+        footer:
+          "A digital operations platform connecting guests, teams, and managers.",
+      };
 
-  return <Box dir={ar ? "rtl" : "ltr"} sx={{ minHeight: "100vh", bgcolor: "#F7F8FA", color: "secondary.main", direction: ar ? "rtl" : "ltr", textAlign: ar ? "right" : "left" }}>
-    <Box component="header" sx={{ bgcolor: "#171A2F", color: "#fff", position: "relative", overflow: "hidden" }}><Box sx={{ position: "absolute", width: 700, height: 700, borderRadius: "50%", top: -450, insetInlineEnd: -170, border: "1px solid rgba(255,255,255,.08)", boxShadow: "0 0 0 80px rgba(255,255,255,.025), 0 0 0 160px rgba(255,255,255,.02)" }} /><Container maxWidth="lg" sx={{ position: "relative" }}><Stack component="nav" direction="row" alignItems="center" spacing={{ xs: 1, md: 2 }} sx={{ py: 2.1, minHeight: 74 }}><Brand ar={ar} light /><Box sx={{ flex: 1, display: { xs: "none", md: "flex" }, justifyContent: "center" }}><Box sx={{ display: "flex", direction: ar ? "rtl" : "ltr", columnGap: { md: 3.2, lg: 4.2 }, alignItems: "center", whiteSpace: "nowrap" }}><Typography component="a" href="#features" variant="body2" sx={{ color: "rgba(255,255,255,.72)", textDecoration: "none", fontWeight: 800, transition: "color .2s", "&:hover": { color: "#fff" } }}>{c.navFeatures}</Typography><Typography component="a" href="#how" variant="body2" sx={{ color: "rgba(255,255,255,.72)", textDecoration: "none", fontWeight: 800, transition: "color .2s", "&:hover": { color: "#fff" } }}>{c.navHow}</Typography><Typography component="a" href="#roles" variant="body2" sx={{ color: "rgba(255,255,255,.72)", textDecoration: "none", fontWeight: 800, transition: "color .2s", "&:hover": { color: "#fff" } }}>{c.navRoles}</Typography></Box></Box><Stack direction="row" alignItems="center" spacing={{ xs: .45, sm: 1 }} sx={{ direction: "ltr", flexShrink: 0 }}><LanguageToggle compact dark /><Button component={RouterLink} to="/login" size="small" sx={{ color: "#fff", fontWeight: 850, display: { xs: "none", sm: "inline-flex" }, whiteSpace: "nowrap" }}>{c.login}</Button><Button component={RouterLink} to="/register" size="small" variant="contained" sx={{ bgcolor: "#F47920", color: "#fff", borderRadius: 2, px: { xs: 1.1, sm: 1.8 }, fontWeight: 950, whiteSpace: "nowrap", "&:hover": { bgcolor: "#D96210" } }}>{c.start}</Button></Stack></Stack><Box component="section" sx={{ pt: { xs: 7, md: 10 }, pb: { xs: 8, md: 12 } }}><Grid container spacing={{ xs: 5, md: 8 }} alignItems="center"><Grid size={{ xs: 12, md: 6 }}><Chip label={c.eyebrow} icon={<StorefrontRoundedIcon />} sx={{ color: "#FFD8BE", bgcolor: "rgba(244,121,32,.16)", border: "1px solid rgba(244,121,32,.3)", fontWeight: 850, mb: 2.5 }} /><Typography component="h1" sx={{ fontSize: { xs: "clamp(2.8rem, 13vw, 4.5rem)", md: "5.2rem" }, lineHeight: .98, letterSpacing: "-.085em", fontWeight: 1000, maxWidth: 650 }}>{c.title}<Box component="span" sx={{ display: "block", color: "#F47920" }}>{c.titleAccent}</Box></Typography><Typography sx={{ mt: 3, maxWidth: 590, color: "rgba(255,255,255,.68)", fontSize: { xs: "1rem", md: "1.12rem" }, lineHeight: 1.9 }}>{c.desc}</Typography><Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} sx={{ mt: 4, alignItems: { xs: "stretch", sm: "center" } }}><Button component={RouterLink} to="/register" variant="contained" size="large" endIcon={<Arrow />} sx={{ bgcolor: "#F47920", color: "#fff", borderRadius: 2.2, px: 2.7, py: 1.35, fontWeight: 950, "&:hover": { bgcolor: "#D96210" } }}>{c.primary}</Button><Button component={RouterLink} to="/login" variant="text" size="large" sx={{ color: "#fff", fontWeight: 850 }}>{c.secondary}</Button></Stack><Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 3, color: "rgba(255,255,255,.54)" }}><CheckRoundedIcon sx={{ fontSize: 17, color: "#F47920" }} /><Typography variant="body2">{c.proof}</Typography></Stack></Grid><Grid size={{ xs: 12, md: 6 }}><ProductMock ar={ar} /></Grid></Grid></Box></Container></Box>
+  return (
+    <Box
+      dir={ar ? "rtl" : "ltr"}
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#F7F8FA",
+        color: "secondary.main",
+        direction: ar ? "rtl" : "ltr",
+        textAlign: ar ? "right" : "left",
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "#171A2F",
+          color: "#fff",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            width: 700,
+            height: 700,
+            borderRadius: "50%",
+            top: -450,
+            insetInlineEnd: -170,
+            border: "1px solid rgba(255,255,255,.08)",
+            boxShadow:
+              "0 0 0 80px rgba(255,255,255,.025), 0 0 0 160px rgba(255,255,255,.02)",
+          }}
+        />
+        <Container maxWidth="lg" sx={{ position: "relative" }}>
+          <Stack
+            component="nav"
+            direction="row"
+            sx={{
+              py: 2.1,
+              minHeight: 74,
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Brand ar={ar} light />
+            <Box
+              sx={{
+                flex: 1,
+                display: { xs: "none", md: "flex" },
+                justifyContent: "center",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  direction: ar ? "rtl" : "ltr",
+                  columnGap: { md: 3.2, lg: 4.2 },
+                  alignItems: "center",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <Typography
+                  component="a"
+                  href="#features"
+                  variant="body2"
+                  sx={{
+                    color: "rgba(255,255,255,.72)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    transition: "color .2s",
+                    "&:hover": { color: "#fff" },
+                  }}
+                >
+                  {c.navFeatures}
+                </Typography>
+                <Typography
+                  component="a"
+                  href="#how"
+                  variant="body2"
+                  sx={{
+                    color: "rgba(255,255,255,.72)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    transition: "color .2s",
+                    "&:hover": { color: "#fff" },
+                  }}
+                >
+                  {c.navHow}
+                </Typography>
+                <Typography
+                  component="a"
+                  href="#roles"
+                  variant="body2"
+                  sx={{
+                    color: "rgba(255,255,255,.72)",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    transition: "color .2s",
+                    "&:hover": { color: "#fff" },
+                  }}
+                >
+                  {c.navRoles}
+                </Typography>
+              </Box>
+            </Box>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={{ xs: 0.45, sm: 1 }}
+              sx={{ direction: "ltr", flexShrink: 0 }}
+            >
+              <LanguageToggle compact dark />
+              <Button
+                component={RouterLink}
+                to="/login"
+                size="small"
+                sx={{
+                  color: "#fff",
+                  fontWeight: 850,
+                  display: { xs: "none", sm: "inline-flex" },
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {c.login}
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/register"
+                size="small"
+                variant="contained"
+                sx={{
+                  bgcolor: "#F47920",
+                  color: "#fff",
+                  borderRadius: 2,
+                  px: { xs: 1.1, sm: 1.8 },
+                  display: { xs: "none", sm: "inline-flex" },
+                  fontWeight: 950,
+                  whiteSpace: "nowrap",
+                  "&:hover": { bgcolor: "#D96210" },
+                }}
+              >
+                {c.start}
+              </Button>
+            </Stack>
+          </Stack>
 
-    <Container maxWidth="lg" sx={{ py: { xs: 7, md: 11 } }}>
-      <Grid container spacing={1.5} sx={{ mb: { xs: 8, md: 13 } }}><Grid size={{ xs: 12, sm: 4 }}><Card elevation={0} sx={{ p: 2.2, borderRadius: 2.5, bgcolor: "#fff", border: "1px solid #E8EBF0" }}><Typography variant="h5" fontWeight={1000}>{c.metric1}</Typography><Typography variant="body2" color="text.secondary">{ar ? "تجربة طلب تبدأ من الطاولة" : "A guest journey that starts at the table"}</Typography></Card></Grid><Grid size={{ xs: 12, sm: 4 }}><Card elevation={0} sx={{ p: 2.2, borderRadius: 2.5, bgcolor: "#fff", border: "1px solid #E8EBF0" }}><Typography variant="h5" fontWeight={1000}>{c.metric2}</Typography><Typography variant="body2" color="text.secondary">{ar ? "من الطلب إلى التسليم بوضوح" : "From order to handoff with clarity"}</Typography></Card></Grid><Grid size={{ xs: 12, sm: 4 }}><Card elevation={0} sx={{ p: 2.2, borderRadius: 2.5, bgcolor: "#fff", border: "1px solid #E8EBF0" }}><Typography variant="h5" fontWeight={1000}>{c.metric3}</Typography><Typography variant="body2" color="text.secondary">{ar ? "قرارات أفضل في نهاية اليوم" : "Better decisions at the end of the day"}</Typography></Card></Grid></Grid>
+          <Box
+            component="section"
+            sx={{ pt: { xs: 7, md: 10 }, pb: { xs: 8, md: 12 } }}
+          >
+            <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Chip
+                  label={c.eyebrow}
+                  icon={<StorefrontRoundedIcon />}
+                  sx={{
+                    color: "#FFD8BE",
+                    bgcolor: "rgba(244,121,32,.16)",
+                    border: "1px solid rgba(244,121,32,.3)",
+                    fontWeight: 850,
+                    mb: 2.5,
+                    p: 1.2,
+                    "& .MuiChip-icon": { color: "#F47920" },
+                  }}
+                />
+                <Typography
+                  component="h1"
+                  sx={{
+                    fontSize: {
+                      xs: "clamp(2.8rem, 13vw, 4.5rem)",
+                      md: "5.2rem",
+                    },
+                    lineHeight: 0.98,
+                    letterSpacing: "-.085em",
+                    fontWeight: 1000,
+                    maxWidth: 650,
+                  }}
+                >
+                  {c.title}
+                  <Box
+                    component="span"
+                    sx={{ display: "block", color: "#F47920" }}
+                  >
+                    {c.titleAccent}
+                  </Box>
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 3,
+                    maxWidth: 590,
+                    color: "rgba(255,255,255,.68)",
+                    fontSize: { xs: "1rem", md: "1.12rem" },
+                    lineHeight: 1.9,
+                  }}
+                >
+                  {c.desc}
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.2}
+                  sx={{ mt: 4, alignItems: { xs: "stretch", sm: "center" } }}
+                >
+                  <Button
+                    component={RouterLink}
+                    to="/register"
+                    variant="contained"
+                    size="large"
+                    endIcon={<Arrow />}
+                    sx={{
+                      bgcolor: "#F47920",
+                      color: "#fff",
+                      borderRadius: 2.2,
+                      px: 2.7,
+                      py: 1.35,
+                      fontWeight: 950,
+                      "&:hover": { bgcolor: "#D96210" },
+                    }}
+                  >
+                    {c.primary}
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/login"
+                    variant="text"
+                    size="large"
+                    sx={{ color: "#fff", fontWeight: 850 }}
+                  >
+                    {c.secondary}
+                  </Button>
+                </Stack>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mt: 3, color: "rgba(255,255,255,.54)" }}
+                >
+                  <CheckRoundedIcon sx={{ fontSize: 17, color: "#F47920" }} />
+                  <Typography variant="body2">{c.proof}</Typography>
+                </Stack>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <ProductMock ar={ar} />
+              </Grid>
+            </Grid>
+          </Box>
+        </Container>
+      </Box>
 
-      <Box component="section" id="features" sx={{ mb: { xs: 9, md: 14 } }}><Stack alignItems="center" textAlign="center" sx={{ maxWidth: 720, mx: "auto", mb: 5 }}><Typography variant="overline" sx={{ color: "primary.main", fontWeight: 950, letterSpacing: ".15em" }}>{c.featureEyebrow}</Typography><Typography component="h2" sx={{ mt: 1, fontSize: { xs: "2.15rem", md: "3.35rem" }, fontWeight: 1000, letterSpacing: "-.07em", lineHeight: 1.03 }}>{c.featureTitle}</Typography><Typography color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.85 }}>{c.featureText}</Typography></Stack><Grid container spacing={2}>{c.features.map((item) => <Grid size={{ xs: 12, md: 4 }} key={item.t}><FeatureCard icon={iconMap[item.k]} title={item.t} text={item.d} /></Grid>)}</Grid></Box>
+      <Container maxWidth="lg" sx={{ py: { xs: 7, md: 11 } }}>
+        <Grid container spacing={1.5} sx={{ mb: { xs: 8, md: 13 } }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              elevation={0}
+              sx={{
+                p: 2.2,
+                borderRadius: 2.5,
+                bgcolor: "#fff",
+                border: "1px solid #E8EBF0",
+              }}
+            >
+              <Typography variant="h5" fontWeight={1000}>
+                {c.metric1}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {ar
+                  ? "تجربة طلب تبدأ من الطاولة"
+                  : "A guest journey that starts at the table"}
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              elevation={0}
+              sx={{
+                p: 2.2,
+                borderRadius: 2.5,
+                bgcolor: "#fff",
+                border: "1px solid #E8EBF0",
+              }}
+            >
+              <Typography variant="h5" fontWeight={1000}>
+                {c.metric2}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {ar
+                  ? "من الطلب إلى التسليم بوضوح"
+                  : "From order to handoff with clarity"}
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              elevation={0}
+              sx={{
+                p: 2.2,
+                borderRadius: 2.5,
+                bgcolor: "#fff",
+                border: "1px solid #E8EBF0",
+              }}
+            >
+              <Typography variant="h5" fontWeight={1000}>
+                {c.metric3}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {ar
+                  ? "قرارات أفضل في نهاية اليوم"
+                  : "Better decisions at the end of the day"}
+              </Typography>
+            </Card>
+          </Grid>
+        </Grid>
 
-      <Box component="section" id="how" sx={{ mb: { xs: 9, md: 14 } }}><Grid container spacing={{ xs: 4, md: 9 }} alignItems="center"><Grid size={{ xs: 12, md: 5 }}><Typography variant="overline" sx={{ color: "primary.main", fontWeight: 950, letterSpacing: ".15em" }}>{c.howEyebrow}</Typography><Typography component="h2" sx={{ mt: 1, fontSize: { xs: "2.15rem", md: "3.3rem" }, fontWeight: 1000, letterSpacing: "-.07em", lineHeight: 1.05 }}>{c.howTitle}</Typography><Typography color="text.secondary" sx={{ mt: 2, lineHeight: 1.85 }}>{c.howText}</Typography><Button component={RouterLink} to="/register" variant="outlined" endIcon={<Arrow />} sx={{ mt: 3, borderRadius: 2, fontWeight: 900 }}>{c.primary}</Button></Grid><Grid size={{ xs: 12, md: 7 }}><Card elevation={0} sx={{ p: { xs: 1.3, sm: 2 }, borderRadius: 3.5, bgcolor: "#FFF8F2", color: "secondary.main", border: "1px solid rgba(244,121,32,.16)", boxShadow: "0 22px 55px rgba(23,26,47,.10)" }}><Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: .5, pb: 1.5 }}><Box><Typography variant="caption" sx={{ color: "#F47920", fontWeight: 950, letterSpacing: ".08em" }}>{ar ? "رحلة التشغيل" : "THE OPERATIONS JOURNEY"}</Typography><Typography fontWeight={950}>{ar ? "تدفق واضح من البداية للنهاية" : "A clear flow from start to finish"}</Typography></Box><Box sx={{ width: 42, height: 42, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.16)", color: "#F47920" }}><AutoGraphRoundedIcon /></Box></Stack><Box sx={{ height: 4, borderRadius: 99, bgcolor: "rgba(23,26,47,.10)", mb: 1.5, overflow: "hidden" }}><Box sx={{ width: "72%", height: "100%", borderRadius: 99, bgcolor: "#F47920" }} /></Box><Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 1.2, width: "100%" }}>{c.steps.map((step, index) => <Box key={step.t} sx={{ p: { xs: 1.8, sm: 2 }, minHeight: { xs: 140, sm: 168 }, borderRadius: 2.5, bgcolor: index === 0 ? "#FFF1E8" : "#FFFFFF", color: "secondary.main", border: "1px solid", borderColor: index === 0 ? "rgba(244,121,32,.25)" : "rgba(23,26,47,.08)", boxShadow: "0 8px 18px rgba(23,26,47,.04)" }}><Typography variant="caption" sx={{ color: "primary.main", fontWeight: 950 }}>{ar ? "الخطوة" : "STEP"} {index + 1}</Typography><Typography fontWeight={950} sx={{ mt: .7 }}>{step.t}</Typography><Typography variant="body2" sx={{ mt: .6, color: "text.secondary", lineHeight: 1.7 }}>{step.d}</Typography></Box>)}</Box></Card></Grid></Grid></Box>
+        <Box component="section" id="features" sx={{ mb: { xs: 9, md: 14 } }}>
+          <Stack
+            sx={{
+              maxWidth: 720,
+              mx: "auto",
+              mb: 5,
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{
+                color: "primary.main",
+                fontWeight: 950,
+                letterSpacing: ".15em",
+              }}
+            >
+              {c.featureEyebrow}
+            </Typography>
+            <Typography
+              component="h2"
+              sx={{
+                mt: 1,
+                fontSize: { xs: "2.15rem", md: "3.35rem" },
+                fontWeight: 1000,
+                letterSpacing: "-.07em",
+                lineHeight: 1.03,
+              }}
+            >
+              {c.featureTitle}
+            </Typography>
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 1.5, lineHeight: 1.85 }}
+            >
+              {c.featureText}
+            </Typography>
+          </Stack>
+          <Grid container spacing={2}>
+            {c.features.map((item) => (
+              <Grid size={{ xs: 12, md: 4 }} key={item.t}>
+                <FeatureCard
+                  icon={iconMap[item.k]}
+                  title={item.t}
+                  text={item.d}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-      <Box component="section" id="roles" sx={{ mb: { xs: 9, md: 14 } }}><Stack alignItems="center" textAlign="center" sx={{ maxWidth: 700, mx: "auto", mb: 5 }}><Typography variant="overline" sx={{ color: "primary.main", fontWeight: 950, letterSpacing: ".15em" }}>{c.rolesEyebrow}</Typography><Typography component="h2" sx={{ mt: 1, fontSize: { xs: "2.15rem", md: "3.3rem" }, fontWeight: 1000, letterSpacing: "-.07em" }}>{c.rolesTitle}</Typography></Stack><Grid container spacing={2}>{c.roles.map((role) => <Grid size={{ xs: 12, md: 4 }} key={role.t}><FeatureCard icon={iconMap[role.icon]} title={role.t} text={role.d} /></Grid>)}</Grid></Box>
+        <Box component="section" id="how" sx={{ mb: { xs: 9, md: 14 } }}>
+          <Grid container spacing={{ xs: 4, md: 9 }} alignItems="center">
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "primary.main",
+                  fontWeight: 950,
+                  letterSpacing: ".15em",
+                }}
+              >
+                {c.howEyebrow}
+              </Typography>
+              <Typography
+                component="h2"
+                sx={{
+                  mt: 1,
+                  fontSize: { xs: "2.15rem", md: "3.3rem" },
+                  fontWeight: 1000,
+                  letterSpacing: "-.07em",
+                  lineHeight: 1.05,
+                }}
+              >
+                {c.howTitle}
+              </Typography>
+              <Typography
+                color="text.secondary"
+                sx={{ mt: 2, lineHeight: 1.85 }}
+              >
+                {c.howText}
+              </Typography>
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant="outlined"
+                endIcon={<Arrow />}
+                sx={{ mt: 3, borderRadius: 2, fontWeight: 900 }}
+              >
+                {c.primary}
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Card
+                elevation={0}
+                sx={{
+                  p: { xs: 1.3, sm: 2 },
+                  borderRadius: 3.5,
+                  bgcolor: "#FFF8F2",
+                  color: "secondary.main",
+                  border: "1px solid rgba(244,121,32,.16)",
+                  boxShadow: "0 22px 55px rgba(23,26,47,.10)",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  sx={{
+                    px: 0.5,
+                    pb: 1.5,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "#F47920",
+                        fontWeight: 950,
+                        letterSpacing: ".08em",
+                      }}
+                    >
+                      {ar ? "رحلة التشغيل" : "THE OPERATIONS JOURNEY"}
+                    </Typography>
+                    <Typography fontWeight={950}>
+                      {ar
+                        ? "تدفق واضح من البداية للنهاية"
+                        : "A clear flow from start to finish"}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 2,
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "rgba(244,121,32,.16)",
+                      color: "#F47920",
+                    }}
+                  >
+                    <AutoGraphRoundedIcon />
+                  </Box>
+                </Stack>
+                <Box
+                  sx={{
+                    height: 4,
+                    borderRadius: 99,
+                    bgcolor: "rgba(23,26,47,.10)",
+                    mb: 1.5,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "25%",
+                      height: "100%",
+                      borderRadius: 99,
+                      bgcolor: "#F47920",
+                    }}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, minmax(0, 1fr))",
+                    },
+                    gap: 1.2,
+                    width: "100%",
+                  }}
+                >
+                  {c.steps.map((step, index) => (
+                    <Box
+                      key={step.t}
+                      sx={{
+                        p: { xs: 1.8, sm: 2 },
+                        minHeight: { xs: 140, sm: 168 },
+                        borderRadius: 2.5,
+                        bgcolor: index === 0 ? "#FFF1E8" : "#FFFFFF",
+                        color: "secondary.main",
+                        border: "1px solid",
+                        borderColor:
+                          index === 0
+                            ? "rgba(244,121,32,.25)"
+                            : "rgba(23,26,47,.08)",
+                        boxShadow: "0 8px 18px rgba(23,26,47,.04)",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "primary.main", fontWeight: 950 }}
+                      >
+                        {ar ? "الخطوة" : "STEP"} {index + 1}
+                      </Typography>
+                      <Typography fontWeight={950} sx={{ mt: 0.7 }}>
+                        {step.t}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          mt: 0.6,
+                          color: "text.secondary",
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {step.d}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
 
-      <Box component="section" sx={{ mb: { xs: 9, md: 12 }, maxWidth: 800, mx: "auto" }}><Typography component="h2" textAlign="center" sx={{ fontSize: { xs: "2rem", md: "2.8rem" }, fontWeight: 1000, letterSpacing: "-.06em", mb: 4 }}>{c.faqTitle}</Typography><Stack spacing={1}>{c.faq.map((item, index) => <Card elevation={0} key={item.q} sx={{ border: "1px solid #E8EBF0", borderRadius: 2.5, bgcolor: "#fff" }}><Button fullWidth onClick={() => setFaq(faq === index ? null : index)} sx={{ p: 2, color: "secondary.main", justifyContent: "space-between", textAlign: ar ? "right" : "left", fontWeight: 900, fontSize: { xs: ".9rem", sm: "1rem" }, "&:hover": { bgcolor: "#FAFBFC" } }}>{item.q}<ExpandMoreRoundedIcon sx={{ transform: faq === index ? "rotate(180deg)" : "none", transition: "transform .2s" }} /></Button>{faq === index && <Box sx={{ px: 2, pb: 2, color: "text.secondary", lineHeight: 1.8 }}>{item.a}</Box>}</Card>)}</Stack></Box>
+        <Box component="section" id="roles" sx={{ mb: { xs: 9, md: 14 } }}>
+          <Stack
+            sx={{
+              maxWidth: 700,
+              mx: "auto",
+              mb: 5,
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{
+                color: "primary.main",
+                fontWeight: 950,
+                letterSpacing: ".15em",
+              }}
+            >
+              {c.rolesEyebrow}
+            </Typography>
+            <Typography
+              component="h2"
+              sx={{
+                mt: 1,
+                fontSize: { xs: "2.15rem", md: "3.3rem" },
+                fontWeight: 1000,
+                letterSpacing: "-.07em",
+              }}
+            >
+              {c.rolesTitle}
+            </Typography>
+          </Stack>
+          <Grid container spacing={2}>
+            {c.roles.map((role) => (
+              <Grid size={{ xs: 12, md: 4 }} key={role.t}>
+                <FeatureCard
+                  icon={iconMap[role.icon]}
+                  title={role.t}
+                  text={role.d}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-      <Card elevation={0} sx={{ p: { xs: 2.5, md: 5 }, borderRadius: 4, bgcolor: "#FFF1E8", border: "1px solid rgba(244,121,32,.22)" }}><Grid container spacing={3} alignItems="center"><Grid size={{ xs: 12, md: 7 }}><Typography component="h2" sx={{ fontSize: { xs: "2rem", md: "3rem" }, fontWeight: 1000, letterSpacing: "-.07em", lineHeight: 1.05 }}>{c.ctaTitle}</Typography><Typography color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.8 }}>{c.ctaText}</Typography></Grid><Grid size={{ xs: 12, md: 5 }}><Stack direction="column" spacing={1.2} sx={{ width: "100%" }}><Button component={RouterLink} to="/register" fullWidth variant="contained" size="large" endIcon={<Arrow />} sx={{ py: 1.4, borderRadius: 2.2, fontWeight: 950 }}>{c.cta}</Button><Button component={RouterLink} to="/login" fullWidth variant="outlined" size="large" sx={{ py: 1.4, borderRadius: 2.2, fontWeight: 900, borderColor: "secondary.main", color: "secondary.main" }}>{c.login}</Button></Stack></Grid></Grid></Card>
+        <Box
+          component="section"
+          sx={{ mb: { xs: 9, md: 12 }, maxWidth: 800, mx: "auto" }}
+        >
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: { xs: "2rem", md: "2.8rem" },
+              fontWeight: 1000,
+              letterSpacing: "-.06em",
+              textAlign: "center",
+              mb: 4,
+            }}
+          >
+            {c.faqTitle}
+          </Typography>
+          <Stack spacing={1}>
+            {c.faq.map((item, index) => (
+              <Card
+                elevation={0}
+                key={item.q}
+                sx={{
+                  border: "1px solid #E8EBF0",
+                  borderRadius: 2.5,
+                  bgcolor: "#fff",
+                }}
+              >
+                <Button
+                  fullWidth
+                  onClick={() => setFaq(faq === index ? null : index)}
+                  sx={{
+                    p: 2,
+                    color: "secondary.main",
+                    justifyContent: "space-between",
+                    textAlign: ar ? "right" : "left",
+                    fontWeight: 900,
+                    fontSize: { xs: ".9rem", sm: "1rem" },
+                    "&:hover": { bgcolor: "#FAFBFC" },
+                  }}
+                >
+                  {item.q}
+                  <ExpandMoreRoundedIcon
+                    sx={{
+                      transform: faq === index ? "rotate(180deg)" : "none",
+                      transition: "transform .2s",
+                    }}
+                  />
+                </Button>
+                {faq === index && (
+                  <Box
+                    sx={{
+                      px: 2,
+                      pb: 2,
+                      color: "text.secondary",
+                      lineHeight: 1.8,
+                    }}
+                  >
+                    {item.a}
+                  </Box>
+                )}
+              </Card>
+            ))}
+          </Stack>
+        </Box>
 
-      <Divider sx={{ my: 4 }} /><Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} sx={{ pb: 2 }}><Brand ar={ar} /><Typography variant="body2" color="text.secondary">{c.footer}</Typography></Stack>
-    </Container><TrialNotice />
-  </Box>;
+        <Card
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 5 },
+            borderRadius: 4,
+            bgcolor: "#FFF1E8",
+            border: "1px solid rgba(244,121,32,.22)",
+          }}
+        >
+          <Grid container spacing={3} alignItems="center">
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Typography
+                component="h2"
+                sx={{
+                  fontSize: { xs: "2rem", md: "3rem" },
+                  fontWeight: 1000,
+                  letterSpacing: "-.07em",
+                  lineHeight: 1.05,
+                }}
+              >
+                {c.ctaTitle}
+              </Typography>
+              <Typography
+                color="text.secondary"
+                sx={{ mt: 1.5, lineHeight: 1.8 }}
+              >
+                {c.ctaText}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Stack direction="column" spacing={1.2} sx={{ width: "100%" }}>
+                <Button
+                  component={RouterLink}
+                  to="/register"
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  endIcon={<Arrow />}
+                  sx={{ py: 1.4, borderRadius: 2.2, fontWeight: 950 }}
+                >
+                  {c.cta}
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  sx={{
+                    py: 1.4,
+                    borderRadius: 2.2,
+                    fontWeight: 900,
+                    borderColor: "secondary.main",
+                    color: "secondary.main",
+                  }}
+                >
+                  {c.login}
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Card>
+
+        <Divider sx={{ my: 4 }} />
+        <Stack
+          direction="column"
+          justifyContent="space-between"
+          sx={{ pb: 2, alignItems: { xs: "flex-start", sm: "center" } }}
+        >
+          <Brand ar={ar} />
+          <Typography variant="body2" color="text.secondary">
+            {c.footer}
+          </Typography>
+        </Stack>
+      </Container>
+      <TrialNotice />
+    </Box>
+  );
 }
