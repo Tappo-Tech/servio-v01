@@ -17,11 +17,14 @@ import {
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
+import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import TrialNotice from "../components/TrialNotice";
 import supabase from "../supabase";
 import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import { buildMenuReturnPath } from "../utils/orderTrackingRoutes";
+import { getCustomerTrackingPath, getRecentCustomerOrdersForSlug } from "../utils/customerTracking";
 
 const POLL_INTERVAL_MS = 10_000;
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
@@ -89,6 +92,26 @@ const copy = {
 
 const statusText = (status, text) => text[status] || text.unavailableStatus;
 
+function InvoiceDetails({ order, language }) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const money = (value) => `${Number(value || 0).toFixed(2)} ${language === "ar" ? "ر.س" : "SAR"}`;
+  return (
+    <Paper elevation={0} sx={{ mt: 1.2, p: 1.5, borderRadius: 2.5, bgcolor: "#FFF8F2", border: "1px solid rgba(244,121,32,.2)" }}>
+      <Stack spacing={.75}>
+        {items.map((item, index) => (
+          <Stack key={`${item.id || item.name}-${index}`} direction="row" justifyContent="space-between" gap={1}>
+            <Typography variant="body2" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>{item.name} × {item.quantity || 1}</Typography>
+            <Typography variant="body2" fontWeight={850} whiteSpace="nowrap">{money(Number(item.price || 0) * Number(item.quantity || 1))}</Typography>
+          </Stack>
+        ))}
+        <Box sx={{ borderTop: "1px dashed rgba(23,26,47,.18)", pt: .9, mt: .35 }}>
+          <Stack direction="row" justifyContent="space-between"><Typography fontWeight={900}>{language === "ar" ? "الإجمالي" : "Total"}</Typography><Typography fontWeight={950} color="primary.main">{money(order?.total_price)}</Typography></Stack>
+        </Box>
+      </Stack>
+    </Paper>
+  );
+}
+
 function OrderTrackingPage() {
   const { slug = "", orderId = "" } = useParams();
   const location = useLocation();
@@ -103,6 +126,9 @@ function OrderTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [invalidLink, setInvalidLink] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [customerOrders, setCustomerOrders] = useState([]);
+  const [historyOrders, setHistoryOrders] = useState([]);
+  const [openInvoice, setOpenInvoice] = useState(orderId);
 
   useEffect(() => {
     let token = location.state?.trackingToken || "";
@@ -114,6 +140,25 @@ function OrderTrackingPage() {
     }
     setTrackingToken(token);
   }, [location.state?.trackingToken, storageKey]);
+
+  useEffect(() => {
+    const records = getRecentCustomerOrdersForSlug(slug);
+    setCustomerOrders(records);
+    if (!orderId && records[0]) {
+      navigate(getCustomerTrackingPath(slug, records[0]), { replace: true, state: { trackingToken: records[0].trackingToken, tableNumber: records[0].tableNumber } });
+    }
+  }, [slug, orderId, navigate]);
+
+  useEffect(() => {
+    const records = getRecentCustomerOrdersForSlug(slug);
+    let active = true;
+    if (!records.length) { setHistoryOrders([]); return () => { active = false; }; }
+    Promise.all(records.map(async (record) => {
+      const { data } = await supabase.rpc("get_public_order_tracking", { p_slug: slug, p_order_id: record.orderId, p_tracking_token: record.trackingToken });
+      return data ? { ...data, localRecord: record } : null;
+    })).then((orders) => { if (active) setHistoryOrders(orders.filter(Boolean)); }).catch(() => { if (active) setHistoryOrders([]); });
+    return () => { active = false; };
+  }, [slug, orderId]);
 
   useEffect(() => {
     if (!trackingToken) {
@@ -316,6 +361,10 @@ function OrderTrackingPage() {
                         )}
                       </Box>
                       <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ lineHeight: 1.7 }}>{text.live}</Typography>
+                      <Button variant="outlined" startIcon={<ReceiptLongRoundedIcon />} endIcon={<ExpandMoreRoundedIcon sx={{ transform: openInvoice === orderId ? "rotate(180deg)" : "none" }} />} onClick={() => setOpenInvoice(openInvoice === orderId ? null : orderId)} sx={{ borderRadius: 2.2, fontWeight: 850 }}>
+                        {language === "ar" ? "عرض فاتورة الطلب" : "View order invoice"}
+                      </Button>
+                      {openInvoice === orderId && <InvoiceDetails order={order} language={language} />}
                     </>
                   ) : null}
 
@@ -331,6 +380,26 @@ function OrderTrackingPage() {
                 </Stack>
               </CardContent>
             </Card>
+          )}
+
+          {customerOrders.length > 1 && historyOrders.filter((item) => item.order_id !== orderId).length > 0 && (
+            <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", bgcolor: "rgba(255,255,255,.82)" }}>
+              <Typography fontWeight={950} sx={{ mb: 1 }}>{language === "ar" ? "طلباتك خلال الساعة الأخيرة" : "Your orders from the last hour"}</Typography>
+              <Stack spacing={1}>
+                {historyOrders.filter((item) => item.order_id !== orderId).map((item) => {
+                  const record = item.localRecord;
+                  const isOpen = openInvoice === item.order_id;
+                  return <Box key={item.order_id} sx={{ p: 1.2, borderRadius: 2.2, border: "1px solid rgba(23,26,47,.08)" }}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                      <Box><Typography fontWeight={850}>#{String(item.order_id).slice(-6).toUpperCase()}</Typography><Typography variant="caption" color="text.secondary">{statusText(item.status, text)}</Typography></Box>
+                      <Button size="small" variant="text" onClick={() => setOpenInvoice(isOpen ? null : item.order_id)}>{language === "ar" ? "الفاتورة" : "Invoice"}</Button>
+                    </Stack>
+                    {isOpen && <InvoiceDetails order={item} language={language} />}
+                    <Button size="small" onClick={() => navigate(getCustomerTrackingPath(slug, record), { state: { trackingToken: record.trackingToken, tableNumber: record.tableNumber } })}>{language === "ar" ? "فتح التتبع" : "Open tracking"}</Button>
+                  </Box>;
+                })}
+              </Stack>
+            </Paper>
           )}
 
           <Button

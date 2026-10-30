@@ -45,6 +45,7 @@ function StoreInfoSettings() {
     address: storeInfo?.address || "",
     receipt_footer: storeInfo?.receipt_footer || "",
     logo_url: storeInfo?.logo_url || "",
+    google_maps_review_url: storeInfo?.google_maps_review_url || "",
   });
 
   const [isSlugLocked, setIsSlugLocked] = useState(true);
@@ -293,6 +294,19 @@ function StoreInfoSettings() {
             rows={2}
             size="small"
             placeholder={t("receiptExample")}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth
+            label={t("googleMapsReviewUrl") || "رابط تقييم Google Maps"}
+            name="google_maps_review_url"
+            value={formData.google_maps_review_url || ""}
+            onChange={handleInputChange}
+            size="small"
+            placeholder="https://g.page/r/.../review"
+            helperText={t("googleMapsReviewHint") || "يظهر الرابط للعميل عند الضغط على زر التقييم في المنيو."}
           />
         </Grid>
 

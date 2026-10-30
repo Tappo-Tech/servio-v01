@@ -44,6 +44,8 @@ const COPY = {
     notDetected: "غير متاحة حاليًا",
     selectHint: "اختر طابعة واحدة أو اثنتين؛ الطابعات الافتراضية الوهمية غير محددة تلقائيًا.",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع",
+    autoPrintPublic: "طباعة تذكرة طلب العميل تلقائيًا",
+    autoPrintPublicHelp: "عند وصول طلب من المنيو العامة، تُرسل تذكرة الأصناف إلى طابعة المطبخ المحددة.",
     save: "حفظ الإعدادات",
     test: "حفظ واختبار الطباعة",
     close: "إغلاق",
@@ -85,6 +87,8 @@ const COPY = {
     notDetected: "currently unavailable",
     selectHint: "Select one or two printers; virtual/default queues are not selected automatically.",
     autoPrint: "Send receipt automatically after saving a sale",
+    autoPrintPublic: "Automatically print customer orders",
+    autoPrintPublicHelp: "When a menu order arrives, send its item ticket to the selected kitchen printer.",
     save: "Save settings",
     test: "Save and test print",
     close: "Close",
@@ -338,6 +342,10 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
             </Button>
           </Stack>
           <FormControlLabel control={<Switch checked={autoPrint} onChange={onAutoPrintChange} />} label={text.autoPrint} />
+          <Box sx={{ p: 1.25, borderRadius: 2, bgcolor: "rgba(244,121,32,.07)", border: "1px solid rgba(244,121,32,.18)" }}>
+            <FormControlLabel control={<Switch checked={Boolean(settings.autoPrintPublicOrders)} onChange={(event) => setSettings((current) => ({ ...current, autoPrintPublicOrders: event.target.checked }))} />} label={text.autoPrintPublic} />
+            <Typography variant="caption" color="text.secondary" display="block">{text.autoPrintPublicHelp}</Typography>
+          </Box>
           {error && <Alert severity="error">{error}</Alert>}
           {notice && <Alert severity="success">{notice}</Alert>}
         </Stack>

@@ -18,12 +18,8 @@ import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import { useMemo, useState } from "react";
-import {
-  getWorkdayOffsetMinutes,
-  getWorkdaySchedule,
-  shiftBusinessDate,
-} from "../utils/workdayUtils";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
 import { toLocalDateKey } from "../utils/salesReportUtils";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
@@ -36,6 +32,7 @@ import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
+import { getPrinterSettings, printKitchenTicketGroups } from "../utils/qzPrinting";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -47,6 +44,7 @@ function Dashboard() {
   const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
   const [testInvoice, setTestInvoice] = useState(null);
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
+  const { newTableOrderAlert } = useOrders();
   const { storeInfo = {} } = useStore();
   const { categoriesList = [], updateCategoryPrintRoutes } = useMenu();
   const { t, language } = useLanguage();
@@ -95,6 +93,17 @@ function Dashboard() {
       return true;
     }
   });
+  const autoPrintedPublicOrders = useRef(new Set());
+
+  useEffect(() => {
+    const incoming = newTableOrderAlert;
+    if (!incoming?.id || autoPrintedPublicOrders.current.has(incoming.id)) return;
+    const settings = getPrinterSettings();
+    if (!settings.autoPrintPublicOrders) return;
+    autoPrintedPublicOrders.current.add(incoming.id);
+    printKitchenTicketGroups([{ key: incoming.id, order: incoming }], storeInfo, { settings, language })
+      .catch((error) => console.error("تعذر طباعة تذكرة طلب العميل تلقائيًا", error));
+  }, [newTableOrderAlert, storeInfo, language]);
 
   const handleAutoPrintChange = (event) => {
     const checked = Boolean(event?.target?.checked);

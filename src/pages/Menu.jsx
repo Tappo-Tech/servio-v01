@@ -9,6 +9,7 @@ import FloatingActions from "../components/menu/FloatingActions";
 import ReviewSection from "../components/menu/ReviewSection";
 import CallWaiterConfirm from "../components/menu/CallWaiterConfirm";
 import SuggestionBanner from "../components/menu/SuggestionBanner";
+import CustomerTrackingBanner from "../components/menu/CustomerTrackingBanner";
 import TrialNotice from "../components/TrialNotice";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -17,6 +18,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { useCart } from "../context/CartContext";
 import { useTables } from "../context/TablesContext";
 import { useTenant } from "../context/TenantContext";
+import { useBranch } from "../context/BranchContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useState, useEffect } from "react";
 
@@ -26,7 +28,8 @@ function Menu() {
   const [callingWaiterConfirmation, setCallingWaiterConfirmation] = useState(false);
   const { tables, loaded: tablesLoaded } = useTables();
   const { setTable } = useCart();
-  const { tableNumber, tenant, slug, loading: tenantLoading } = useTenant();
+  const { tableNumber, tenant, storeInfo, slug, loading: tenantLoading } = useTenant();
+  const { branchSlug } = useBranch();
   const { language } = useLanguage();
   const isCashierQr = new URLSearchParams(window.location.search).get("cashier") === "1";
   const orderLocation = isCashierQr ? "كاشير" : tableNumber;
@@ -44,6 +47,7 @@ function Menu() {
         </Box>
       </Box>
       <Container maxWidth="md" sx={{ pt: 1.5 }}>
+        <CustomerTrackingBanner slug={slug} branchSlug={branchSlug} />
         {slug === "mzaj-ryfy" && (
           <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
             {language === "ar"
@@ -53,7 +57,10 @@ function Menu() {
         )}
         <MenuItemsList />
       </Container>
-    <FloatingActions handleReview={() => setReviewOpen(true)} handleCallWaiter={() => setCallingWaiterConfirmation(true)} />
+    <FloatingActions handleReview={() => {
+      if (storeInfo?.google_maps_review_url) window.open(storeInfo.google_maps_review_url, "_blank", "noopener,noreferrer");
+      else setReviewOpen(true);
+    }} handleCallWaiter={() => setCallingWaiterConfirmation(true)} />
     <SuggestionBanner /><FloatingCartBar handleCartOpen={() => setCartOpen(true)} />
     <CartDrawer open={isCartOpen} close={() => setCartOpen(false)} cashierMode={isCashierQr} />
     <ReviewSection open={reviewOpen} close={() => setReviewOpen(false)} tableNumber={orderLocation} />

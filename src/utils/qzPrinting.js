@@ -7,7 +7,7 @@ const DISCOVERED_PRINTERS_KEY = "servio.qzDiscoveredPrinters.v1";
 const PAPER_WIDTHS = ["58mm", "80mm", "A4"];
 const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
 const UNPAID_INVOICE_POLICIES = new Set(["kitchen_only", "kitchen_and_cashier"]);
-const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only" };
+const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false };
 const SETTINGS_FILE_VERSION = 3;
 let securityConfigured = false;
 let connectionPromise = null;
@@ -77,6 +77,7 @@ function normalizePrinterSettings(settings) {
     kitchenPrinter,
     categoryPrinters,
     unpaidInvoicePolicy: UNPAID_INVOICE_POLICIES.has(settings?.unpaidInvoicePolicy) ? settings.unpaidInvoicePolicy : DEFAULT_SETTINGS.unpaidInvoicePolicy,
+    autoPrintPublicOrders: Boolean(settings?.autoPrintPublicOrders),
   };
 }
 
@@ -133,6 +134,7 @@ export function createPrinterSettingsFile(settings, autoPrintAfterSave = true) {
     kitchenPrinter: normalized.kitchenPrinter,
     categoryPrinters: normalized.categoryPrinters,
     unpaidInvoicePolicy: normalized.unpaidInvoicePolicy,
+    autoPrintPublicOrders: normalized.autoPrintPublicOrders,
     autoPrintAfterSave: Boolean(autoPrintAfterSave),
   }, null, 2)}\n`;
 }
@@ -158,6 +160,9 @@ export function parsePrinterSettingsFile(contents) {
   }
   if (payload.unpaidInvoicePolicy !== undefined && !UNPAID_INVOICE_POLICIES.has(payload.unpaidInvoicePolicy)) {
     throw new Error("سياسة طباعة الفاتورة غير المدفوعة في الملف غير صالحة.");
+  }
+  if (payload.autoPrintPublicOrders !== undefined && typeof payload.autoPrintPublicOrders !== "boolean") {
+    throw new Error("قيمة الطباعة التلقائية لطلبات العملاء يجب أن تكون true أو false.");
   }
   if (payload.kitchenPrinter !== undefined && typeof payload.kitchenPrinter !== "string") {
     throw new Error("اسم طابعة المطبخ في الملف غير صالح.");
@@ -264,6 +269,16 @@ export async function printReceipt(order, storeInfo, options = {}) {
     throw error;
   }
   return { printers: succeeded, paperWidth: width };
+}
+
+export async function printKitchenTicket(order, storeInfo, options = {}) {
+  const settings = options.settings || getPrinterSettings();
+  if (!settings.kitchenPrinter) {
+    const error = new Error("لم تُحدد طابعة المطبخ بعد.");
+    error.code = "QZ_NO_KITCHEN_PRINTER";
+    throw error;
+  }
+  return printReceipt(order, storeInfo, { ...options, settings, printersOverride: [settings.kitchenPrinter], receiptType: "kitchen", receiptTitle: options.receiptTitle || "تذكرة المطبخ" });
 }
 
 function copyPrintedByGroup(source) {

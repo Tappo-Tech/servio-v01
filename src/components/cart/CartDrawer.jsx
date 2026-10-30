@@ -22,6 +22,8 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useTenant } from "../../context/TenantContext";
+import { useBranch } from "../../context/BranchContext";
+import { saveCustomerOrder } from "../../utils/customerTracking";
 import { toMinorUnits } from "../../utils/taxUtils";
 import { getCartLineKey } from "../../utils/cartItemUtils";
 
@@ -29,6 +31,7 @@ function CartDrawer({ open, close, cashierMode = false }) {
   const { cartItems, tableNumber, clearCart } = useCart();
   const { addOrder } = useOrders();
   const { slug } = useTenant();
+  const { branchSlug } = useBranch();
   const navigate = useNavigate();
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
@@ -63,6 +66,7 @@ function CartDrawer({ open, close, cashierMode = false }) {
       } catch {
         // تمرير الرمز داخل حالة التنقل يبقي الصفحة الحالية قابلة للفتح إذا منع المتصفح التخزين.
       }
+      saveCustomerOrder({ slug, branchSlug, orderId, trackingToken, tableNumber: tableNumber || null, createdAt: result.data.created_at });
       clearCart();
       setNotes("");
       close();
