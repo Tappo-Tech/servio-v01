@@ -19,7 +19,6 @@ import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
-import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
@@ -38,7 +37,6 @@ const navItems = [
   { id: "reports", label: "التقارير", translationKey: "managerReports", icon: <AssessmentOutlinedIcon /> },
   { id: "shifts", label: "الورديات", translationKey: "managerShiftReports", icon: <AccessTimeRoundedIcon /> },
   { id: "settings", label: "الإعدادات", translationKey: "settings", icon: <SettingsOutlinedIcon /> },
-  { id: "feedbacks", label: "اراء العملاء", translationKey: "feedbacks", icon: <RateReviewOutlinedIcon /> },
 ];
 
 function ManagerSidebar({

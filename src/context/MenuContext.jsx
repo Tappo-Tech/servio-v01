@@ -261,6 +261,8 @@ export const MenuProvider = ({ children }) => {
 
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    const effectiveBranchId = branchId || newItem.branch_id;
+    if (!effectiveBranchId) return { error: new Error("اختر الفرع قبل حفظ الصنف") };
     const addonOptions = normalizeAddonOptions(newItem.addon_options);
     const freeAddonItemIds = normalizeAddonItemIds(newItem.free_addon_item_ids).filter((id) => id !== newItem.id);
     const maxAddons = normalizeAddonLimit(newItem.max_addons, addonOptions.length + freeAddonItemIds.length);
@@ -279,14 +281,14 @@ export const MenuProvider = ({ children }) => {
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,
       max_addons: maxAddons,
-      branch_id: branchId,
+      branch_id: effectiveBranchId,
     };
     const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
       p_item: row,
       p_ingredient_ids: ingredientIds,
     });
     const savedItem = { ...row, tenant_id: tenantId,
-      branch_id: branchId, created_at: new Date().toISOString(), image: newItem.image || null };
+      branch_id: effectiveBranchId, created_at: new Date().toISOString(), image: newItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);
       setMenuItemIngredients(nextLinks);
@@ -297,6 +299,9 @@ export const MenuProvider = ({ children }) => {
 
   const updateItem = (updatedItem) => guard(`menu:update-item:${updatedItem.id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
+    // إذا تبدل الفرع أثناء فتح النموذج، يبقى فرع الصف المفتوح هو المرجع الصحيح.
+    const effectiveBranchId = updatedItem.branch_id || branchId;
+    if (!effectiveBranchId) return { error: new Error("اختر الفرع قبل حفظ الصنف") };
     const recommendationIds = Array.isArray(updatedItem.recommendation_item_ids) ? updatedItem.recommendation_item_ids.filter((id) => id && id !== updatedItem.id) : [];
     const addonOptions = normalizeAddonOptions(updatedItem.addon_options);
     const freeAddonItemIds = normalizeAddonItemIds(updatedItem.free_addon_item_ids).filter((id) => id !== updatedItem.id);
@@ -306,7 +311,7 @@ export const MenuProvider = ({ children }) => {
       id: updatedItem.id,
       name: updatedItem.name,
       price: updatedItem.price,
-      category_id: updatedItem.category_id,
+      category_id: updatedItem.category_id || "all",
       description: updatedItem.description,
       image: updatedItem.image,
       allergens: updatedItem.allergens,
@@ -316,14 +321,14 @@ export const MenuProvider = ({ children }) => {
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,
       max_addons: maxAddons,
-      branch_id: branchId,
+      branch_id: effectiveBranchId,
     };
     const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
       p_item: row,
       p_ingredient_ids: ingredientIds,
     });
     const savedItem = { ...updatedItem, ...row, tenant_id: tenantId,
-      branch_id: branchId, image: updatedItem.image || null };
+      branch_id: effectiveBranchId, image: updatedItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);
       setMenuItemIngredients(nextLinks);

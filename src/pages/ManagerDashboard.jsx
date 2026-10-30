@@ -10,7 +10,6 @@ import MenuControl from "../components/manager-dashboard/menu-control/MenuContro
 import QRCodeGenerate from "../components/manager-dashboard/settings/QRCodesGenerate";
 import OrdersHistory from "../components/manager-dashboard/orders/OrdersHistory";
 import SettingsLayout from "../components/manager-dashboard/settings/SettingsLayout";
-import Feedbacks from "../components/manager-dashboard/Feedbacks";
 import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
 import BranchTabs from "../components/manager-dashboard/BranchTabs";
@@ -85,7 +84,6 @@ function ManagerDashboard() {
           {activeTab === "inventory" && <IngredientInventory canManage />}
           {activeTab === "settings" && <SettingsLayout />}
           {activeTab === "qrGen" && <QRCodeGenerate />}
-          {activeTab === "feedbacks" && <Feedbacks />}
         </Box>
       </Box>
     </Box>

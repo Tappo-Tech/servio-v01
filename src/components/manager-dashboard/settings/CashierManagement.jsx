@@ -33,11 +33,10 @@ function CashierManagement() {
 
   const loginLink = storeInfo?.store_slug ? `${window.location.origin}/cashier/${storeInfo.store_slug}` : "";
   const activeCashiers = cashiers.filter((cashier) => cashier.is_active);
-  const inactiveCashiers = cashiers.filter((cashier) => !cashier.is_active);
 
   const loadCashiers = useCallback(async () => {
     if (!tenantId) return;
-    let query = supabase.from("cashiers").select("id, full_name, username, branch_id, created_at, is_active").eq("tenant_id", tenantId);
+    let query = supabase.from("cashiers").select("id, full_name, username, branch_id, created_at, is_active").eq("tenant_id", tenantId).eq("is_active", true);
     const { data, error: loadError } = await query.order("created_at", { ascending: false });
     if (loadError) setError(loadError.message);
     else setCashiers(data || []);
@@ -129,21 +128,21 @@ function CashierManagement() {
     setForm({ ...emptyForm, branch_id: activeBranchId || "" });
   };
 
-  const cashierRow = (cashier, inactive = false) => (
+  const cashierRow = (cashier) => (
     <Paper key={cashier.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Avatar sx={{ bgcolor: inactive ? "action.disabledBackground" : "primary.main" }}>{(cashier.full_name || "?").trim().charAt(0)}</Avatar>
+      <Avatar sx={{ bgcolor: "primary.main" }}>{(cashier.full_name || "?").trim().charAt(0)}</Avatar>
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography sx={{ fontWeight: 700 }} noWrap>{cashier.full_name}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ direction: "ltr", textAlign: "right" }} noWrap>@{cashier.username}</Typography>
       </Box>
-      {inactive ? <Chip size="small" color="default" label={t("managerCashierInactive")} /> : <Chip size="small" label={branches.find((branch) => branch.id === cashier.branch_id)?.name || "—"} />}
+      <Chip size="small" label={branches.find((branch) => branch.id === cashier.branch_id)?.name || "—"} />
       <Tooltip title="تعديل بيانات الكاشير والفرع">
         <span><IconButton color="primary" aria-label="تعديل الكاشير" disabled={deletingId === cashier.id} onClick={() => startEdit(cashier)}><EditIcon fontSize="small" /></IconButton></span>
       </Tooltip>
       {(
-        <Tooltip title={inactive ? t("managerCashierRetryDelete") : t("managerCashierDelete")}>
+        <Tooltip title={t("managerCashierDelete")}>
           <span>
-            <IconButton color="error" aria-label={inactive ? t("managerCashierRetryDelete") : t("managerCashierDelete")} disabled={deletingId === cashier.id} onClick={() => handleDelete(cashier)}>
+            <IconButton color="error" aria-label={t("managerCashierDelete")} disabled={deletingId === cashier.id} onClick={() => handleDelete(cashier)}>
               {deletingId === cashier.id ? <AutorenewIcon fontSize="small" /> : <PersonRemoveIcon fontSize="small" />}
             </IconButton>
           </span>
@@ -186,10 +185,6 @@ function CashierManagement() {
         {activeCashiers.length === 0 && <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>{t("managerNoCashiers")}</Typography>}
       </Stack>
 
-      {inactiveCashiers.length > 0 && <>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mt: 3, mb: 1 }}>{t("managerCashierInactive")} ({inactiveCashiers.length})</Typography>
-        <Stack spacing={1}>{inactiveCashiers.map((cashier) => cashierRow(cashier, true))}</Stack>
-      </>}
     </Box>
   );
 }
