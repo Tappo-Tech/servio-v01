@@ -4,9 +4,7 @@ import LiveOrders from "../components/cashier-dashboard/orders/LiveOrders";
 import WaiterCallNotification from "../components/cashier-dashboard/orders/WaiterCallNotification";
 import CashierSalesDrawer from "../components/cashier-dashboard/orders/CashierSalesDrawer";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
-import PointOfSaleRoundedIcon from "@mui/icons-material/PointOfSaleRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
-import { Link } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -40,8 +38,6 @@ function Dashboard() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSalesHistoryOpen, setIsSalesHistoryOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
-  const [printerSetupOpen, setPrinterSetupOpen] = useState(false);
-  const [categoryRoutingOpen, setCategoryRoutingOpen] = useState(false);
   const [testInvoice, setTestInvoice] = useState(null);
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { newTableOrderAlert } = useOrders();
@@ -116,7 +112,6 @@ function Dashboard() {
   };
 
   const openPrinterTest = () => {
-    setPrinterSetupOpen(false);
     setTestInvoice({
       id: `test-${Date.now()}`,
       created_at: new Date().toISOString(),
@@ -233,19 +228,6 @@ function Dashboard() {
                 sx={{ width: { xs: "100%", sm: "auto" } }}
               >
                 <Button
-                  component={Link}
-                  to="/dashboard/pos"
-                  variant="contained"
-                  startIcon={<PointOfSaleRoundedIcon />}
-                  sx={{
-                    borderRadius: 2.5,
-                    fontWeight: 850,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {language === "ar" ? "واجهة الكاشير" : "Cashier menu"}
-                </Button>
-                <Button
                   variant="outlined"
                   startIcon={<ReceiptLongRoundedIcon />}
                   onClick={() => setIsSalesHistoryOpen(true)}
@@ -337,72 +319,24 @@ function Dashboard() {
             ) : activeTab === "inventory" ? (
               <IngredientInventory />
             ) : (
-              <Box sx={{ maxWidth: 760, mx: "auto", py: { xs: 2, md: 4 } }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: { xs: 2, sm: 3 },
-                    borderRadius: 3,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    background: "rgba(255,255,255,.82)",
-                  }}
-                >
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems={{ xs: "stretch", sm: "center" }}
-                    justifyContent="space-between"
-                  >
-                    <Box>
-                      <Typography variant="h6" fontWeight={950}>
-                        {language === "ar"
-                          ? "إعداد طابعات هذا الجهاز"
-                          : "Printer settings for this device"}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 0.6 }}
-                      >
-                        {language === "ar"
-                          ? "حدد طابعات فواتير الكاشير وتذكرة المطبخ، ومقاس الورق، والطباعة التلقائية."
-                          : "Choose cashier and kitchen printers, paper size, and automatic printing."}
-                      </Typography>
-                    </Box>
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<PrintRoundedIcon />}
-                        onClick={() => setCategoryRoutingOpen(true)}
-                        sx={{
-                          borderRadius: 2.5,
-                          fontWeight: 900,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {language === "ar"
-                          ? "طابعات التصنيفات"
-                          : "Category printers"}
-                      </Button>
-                      <Button
-                        variant="contained"
-                        startIcon={<PrintRoundedIcon />}
-                        onClick={() => setPrinterSetupOpen(true)}
-                        sx={{
-                          borderRadius: 2.5,
-                          fontWeight: 900,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {language === "ar"
-                          ? "إعدادات طباعة الجهاز"
-                          : "Device printer setup"}
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Paper>
-              </Box>
+              <Stack spacing={2.5} sx={{ maxWidth: 1100, mx: "auto", py: { xs: 1, md: 2 } }}>
+                <PrinterSetupDialog
+                  open={activeTab === "printing"}
+                  onClose={() => {}}
+                  language={language}
+                  autoPrint={autoPrintAfterSave}
+                  onAutoPrintChange={handleAutoPrintChange}
+                  onTest={openPrinterTest}
+                  inline
+                />
+                <CategoryPrintRoutingDrawer
+                  open={activeTab === "printing"}
+                  onClose={() => {}}
+                  categories={categoriesList}
+                  onUpdateCategories={updateCategoryPrintRoutes}
+                  inline
+                />
+              </Stack>
             )}
           </Paper>
 
@@ -413,20 +347,6 @@ function Dashboard() {
           <WaiterCallNotification
             open={isNotificationOpen}
             close={() => setIsNotificationOpen(false)}
-          />
-          <PrinterSetupDialog
-            open={printerSetupOpen}
-            onClose={() => setPrinterSetupOpen(false)}
-            language={language}
-            autoPrint={autoPrintAfterSave}
-            onAutoPrintChange={handleAutoPrintChange}
-            onTest={openPrinterTest}
-          />
-          <CategoryPrintRoutingDrawer
-            open={categoryRoutingOpen}
-            onClose={() => setCategoryRoutingOpen(false)}
-            categories={categoriesList}
-            onUpdateCategories={updateCategoryPrintRoutes}
           />
           <InvoiceModal
             open={Boolean(testInvoice)}

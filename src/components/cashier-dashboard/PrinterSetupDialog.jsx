@@ -1,6 +1,6 @@
 import { FullscreenDialog as Dialog } from "../common/FullscreenOverlays";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Box, Button, Checkbox, Chip, CircularProgress, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, Chip, CircularProgress, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Paper, Select, Stack, Switch, Typography } from "@mui/material";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
@@ -29,7 +29,7 @@ const COPY = {
     refreshBusy: "جارٍ الاتصال…",
     paper: "مقاس الورق",
     printers: "طابعات فواتير الكاشير",
-    cashierHelp: "تُرسل إليها فواتير الكاشير بعد السداد؛ يمكنك اختيار طابعة واحدة أو اثنتين لهذا الجهاز.",
+    cashierHelp: "تُرسل إليها فواتير الكاشير بعد السداد؛ يمكنك اختيار طابعة واحدة أو عدة طابعات لهذا الجهاز.",
     kitchenPrinter: "طابعة تذكرة المطبخ",
     kitchenHelp: "تذكرة المطبخ تعرض رقم الطلب والطاولة والأصناف والكميات والإضافات والملاحظات فقط، دون أسعار. هذا الإعداد خاص بهذا الجهاز ويمكن أن يختلف عن طابعات الكاشير.",
     unpaidPolicy: "توجيه الفواتير حسب حالة السداد",
@@ -42,7 +42,7 @@ const COPY = {
     cachedPrinters: "هذه آخر أسماء طابعات اكتُشفت على هذا الجهاز. أعد الاتصال للتحقق من توفرها الآن.",
     missingSavedPrinters: "بقيت أسماء الطابعات المحفوظة دون حذف؛ تحقق من تشغيلها أو توصيلها:",
     notDetected: "غير متاحة حاليًا",
-    selectHint: "اختر طابعة واحدة أو اثنتين؛ الطابعات الافتراضية الوهمية غير محددة تلقائيًا.",
+    selectHint: "اختر طابعة واحدة أو عدة طابعات؛ الطابعات الافتراضية الوهمية غير محددة تلقائيًا.",
     autoPrint: "إرسال الفاتورة تلقائيًا بعد حفظ البيع",
     autoPrintPublic: "طباعة تذكرة طلب العميل تلقائيًا",
     autoPrintPublicHelp: "عند وصول طلب من المنيو العامة، تُرسل تذكرة الأصناف إلى طابعة المطبخ المحددة.",
@@ -51,7 +51,7 @@ const COPY = {
     close: "إغلاق",
     connected: "متصل بـQZ Tray",
     disconnected: "غير متصل",
-    limit: "يمكن تحديد طابعتين كحد أقصى.",
+    limit: "يمكن تحديد أي عدد من الطابعات.",
     sizes: { "58mm": "لفة حرارية 58 مم", "80mm": "لفة حرارية 80 مم", A4: "ورق A4 (ليزر/مكتبي)" },
     saved: "تم حفظ إعدادات الطباعة وقائمة الطابعات محليًا على هذا الجهاز.",
     importFile: "استيراد ملف الإعداد",
@@ -72,7 +72,7 @@ const COPY = {
     refreshBusy: "Connecting…",
     paper: "Paper size",
     printers: "Cashier invoice printers",
-    cashierHelp: "Cashier invoices are sent here after payment; choose one or two printers for this device.",
+    cashierHelp: "Cashier invoices are sent here after payment; choose one or more printers for this device.",
     kitchenPrinter: "Kitchen ticket printer",
     kitchenHelp: "Kitchen tickets contain the order number, table, item names, quantities, add-ons, and notes only. This device-specific setting can be different from the cashier printers.",
     unpaidPolicy: "Route invoices by payment status",
@@ -85,7 +85,7 @@ const COPY = {
     cachedPrinters: "These are the last printer names discovered on this device. Reconnect to verify which ones are available now.",
     missingSavedPrinters: "Saved printer names were kept; check whether these queues are running or connected:",
     notDetected: "currently unavailable",
-    selectHint: "Select one or two printers; virtual/default queues are not selected automatically.",
+    selectHint: "Select one or more printers; virtual/default queues are not selected automatically.",
     autoPrint: "Send receipt automatically after saving a sale",
     autoPrintPublic: "Automatically print customer orders",
     autoPrintPublicHelp: "When a menu order arrives, send its item ticket to the selected kitchen printer.",
@@ -94,7 +94,7 @@ const COPY = {
     close: "Close",
     connected: "Connected to QZ Tray",
     disconnected: "Not connected",
-    limit: "Select up to two printers.",
+    limit: "Select any number of printers.",
     sizes: { "58mm": "58 mm thermal roll", "80mm": "80 mm thermal roll", A4: "A4 paper (laser/office)" },
     saved: "Printing settings and discovered printer names saved locally on this device.",
     importFile: "Import settings file",
@@ -105,7 +105,7 @@ const COPY = {
   },
 };
 
-export default function PrinterSetupDialog({ open, onClose, language = "ar", autoPrint, onAutoPrintChange, onTest }) {
+export default function PrinterSetupDialog({ open, onClose, language = "ar", autoPrint, onAutoPrintChange, onTest, inline = false }) {
   const text = COPY[language] || COPY.ar;
   const fileInputRef = useRef(null);
   const [settings, setSettings] = useState(() => getPrinterSettings());
@@ -163,10 +163,6 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
   const togglePrinter = (name) => {
     setError("");
     setNotice("");
-    if (!settings.printers.includes(name) && settings.printers.length >= 2) {
-      setError(text.limit);
-      return;
-    }
     setSettings((current) => {
       const selected = current.printers.includes(name);
       return { ...current, printers: selected ? current.printers.filter((printer) => printer !== name) : [...current.printers, name] };
@@ -235,8 +231,13 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
     onTest?.();
   };
 
+  const Root = inline ? Paper : Dialog;
+  const rootProps = inline
+    ? { elevation: 0, sx: { borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" } }
+    : { open, onClose, fullWidth: true, maxWidth: "sm" };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Root {...rootProps}>
       <DialogTitle dir={language === "ar" ? "rtl" : "ltr"}>{text.title}</DialogTitle>
       <DialogContent dir={language === "ar" ? "rtl" : "ltr"}>
         <Stack spacing={1.5} sx={{ pt: 0.5 }}>
@@ -357,6 +358,6 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
           <Button variant="contained" startIcon={<PrintRoundedIcon />} onClick={handleTest}>{text.test}</Button>
         </Stack>
       </DialogActions>
-    </Dialog>
+    </Root>
   );
 }

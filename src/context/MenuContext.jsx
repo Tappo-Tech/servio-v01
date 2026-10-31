@@ -259,6 +259,31 @@ export const MenuProvider = ({ children }) => {
     })),
   ];
 
+  const persistMenuItem = async (row, ingredientIds, isUpdate) => {
+    const writePayload = { ...row, tenant_id: tenantId };
+    const query = isUpdate
+      ? supabase.from("menu_items").update(writePayload).eq("id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id).select(MENU_ITEM_COLUMNS).maybeSingle()
+      : supabase.from("menu_items").insert(writePayload).select(MENU_ITEM_COLUMNS).single();
+    const { data, error: writeError } = await query;
+    if (writeError) return { data, error: writeError };
+    if (!data) return { data: null, error: new Error("لم يتم العثور على الصنف داخل الفرع المحدد") };
+
+    const { error: deleteLinksError } = await supabase.from("menu_item_ingredients")
+      .delete().eq("menu_item_id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id);
+    if (deleteLinksError) return { data, error: deleteLinksError };
+    if (ingredientIds.length) {
+      const { error: insertLinksError } = await supabase.from("menu_item_ingredients").insert(ingredientIds.map((ingredientId) => ({
+        tenant_id: tenantId,
+        branch_id: row.branch_id,
+        menu_item_id: row.id,
+        ingredient_id: ingredientId,
+        is_primary: false,
+      })));
+      if (insertLinksError) return { data, error: insertLinksError };
+    }
+    return { data, error: null };
+  };
+
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const effectiveBranchId = branchId || newItem.branch_id;
@@ -283,11 +308,8 @@ export const MenuProvider = ({ children }) => {
       max_addons: maxAddons,
       branch_id: effectiveBranchId,
     };
-    const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
-      p_item: row,
-      p_ingredient_ids: ingredientIds,
-    });
-    const savedItem = { ...row, tenant_id: tenantId,
+    const { data: persistedItem, error } = await persistMenuItem(row, ingredientIds, false);
+    const savedItem = { ...row, ...persistedItem, tenant_id: tenantId,
       branch_id: effectiveBranchId, created_at: new Date().toISOString(), image: newItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);
@@ -323,11 +345,8 @@ export const MenuProvider = ({ children }) => {
       max_addons: maxAddons,
       branch_id: effectiveBranchId,
     };
-    const { error } = await supabase.rpc("save_menu_item_with_ingredients", {
-      p_item: row,
-      p_ingredient_ids: ingredientIds,
-    });
-    const savedItem = { ...updatedItem, ...row, tenant_id: tenantId,
+    const { data: persistedItem, error } = await persistMenuItem(row, ingredientIds, true);
+    const savedItem = { ...updatedItem, ...row, ...persistedItem, tenant_id: tenantId,
       branch_id: effectiveBranchId, image: updatedItem.image || null };
     if (!error) {
       const nextLinks = linksForItem(savedItem.id, ingredientIds);

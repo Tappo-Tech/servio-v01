@@ -137,14 +137,14 @@ function InvoiceModal({
     if (cashierReceiptCount) destinations.push(language === "ar" ? "الإيصال الداخلي" : "internal receipt");
     if (destinations.length) {
       const label = destinations.join(" + ");
-      return language === "ar" ? `أُرسلت ${label} إلى: ${printers.join("، ")}` : `Sent ${label} to: ${printers.join(", ")}`;
+      return language === "ar" ? `تم تسليم ${label} إلى QZ Tray والطابعة: ${printers.join("، ")}` : `Sent ${label} to QZ Tray/printer: ${printers.join(", ")}`;
     }
     if (language === "ar") {
       const sentText = receiptCount > 1 ? `أُرسلت ${receiptCount} إيصالات` : "أُرسل الإيصال الداخلي";
-      return `${sentText} إلى: ${printers.join("، ")}`;
+      return `${sentText} إلى QZ Tray والطابعة: ${printers.join("، ")}`;
     }
     const receiptLabel = receiptCount === 1 ? "receipt" : "receipts";
-    return `${receiptCount} ${receiptLabel} sent to: ${printers.join(", ")}`;
+    return `${receiptCount} ${receiptLabel} sent to QZ Tray/printer: ${printers.join(", ")}`;
   }, [language]);
 
   const runGroupedPrint = () => {

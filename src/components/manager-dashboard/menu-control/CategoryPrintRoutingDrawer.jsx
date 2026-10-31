@@ -1,7 +1,7 @@
 // مكوّن واجهة `CategoryPrintRoutingDrawer` ضمن مجموعة `menu-control`.
 import { FullscreenDrawer as Drawer } from "../../common/FullscreenOverlays";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormControlLabel, IconButton, InputLabel, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, FormControlLabel, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Switch, Typography } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -9,7 +9,7 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import { useLanguage } from "../../../context/LanguageContext";
 import { discoverPrinters, getPrinterSettings, savePrinterSettings } from "../../../utils/qzPrinting";
 
-export default function CategoryPrintRoutingDrawer({ open, onClose, categories = [], onUpdateCategories }) {
+export default function CategoryPrintRoutingDrawer({ open, onClose, categories = [], onUpdateCategories, inline = false }) {
   const categoriesRef = useRef(categories);
   categoriesRef.current = categories;
   const { language } = useLanguage();
@@ -99,15 +99,20 @@ export default function CategoryPrintRoutingDrawer({ open, onClose, categories =
       });
       const result = await onUpdateCategories(routes);
       if (result?.error) throw result.error;
-      const saved = savePrinterSettings({ ...settings, categoryPrinters: {} });
-      setSettings((current) => ({ ...current, ...saved, categoryPrinters: { ...(current.categoryPrinters || {}) } }));
+      const saved = savePrinterSettings(settings);
+      setSettings(saved);
       setNotice(text.saved);
     } catch (cause) {
       setError(cause?.message || (isArabic ? "تعذر حفظ توجيه الطابعات." : "Could not save printer routes."));
     } finally { setSaving(false); }
   };
 
-  return <Drawer anchor={isArabic ? "right" : "left"} open={open} onClose={onClose} sx={(theme) => ({ zIndex: theme.zIndex.drawer + 3, "& .MuiDrawer-paper": { zIndex: theme.zIndex.drawer + 3, width: { xs: "100%", sm: 520 }, boxSizing: "border-box" } })}>
+  const Root = inline ? Paper : Drawer;
+  const rootProps = inline
+    ? { elevation: 0, sx: { borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" } }
+    : { anchor: isArabic ? "right" : "left", open, onClose, sx: (theme) => ({ zIndex: theme.zIndex.drawer + 3, "& .MuiDrawer-paper": { zIndex: theme.zIndex.drawer + 3, width: { xs: "100%", sm: 520 }, boxSizing: "border-box" } }) };
+
+  return <Root {...rootProps}>
     <Box dir={isArabic ? "rtl" : "ltr"} sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ p: 2.25, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
         <Stack direction="row" spacing={1.1} alignItems="flex-start"><PrintRoundedIcon color="primary" sx={{ mt: .4 }} /><Box><Typography variant="h6" fontWeight={950}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .5, lineHeight: 1.7 }}>{text.subtitle}</Typography></Box></Stack>
@@ -138,5 +143,5 @@ export default function CategoryPrintRoutingDrawer({ open, onClose, categories =
       <Divider />
       <Stack direction={{ xs: "column-reverse", sm: "row" }} spacing={1} sx={{ p: 2.25 }}><Button fullWidth variant="outlined" color="inherit" onClick={onClose}>{text.close}</Button><Button fullWidth variant="contained" startIcon={saving ? <CircularProgress size={17} color="inherit" /> : <SaveRoundedIcon />} disabled={saving || !categories.length} onClick={handleSave} sx={{ fontWeight: 900 }}>{saving ? (isArabic ? "جارٍ الحفظ…" : "Saving…") : text.save}</Button></Stack>
     </Box>
-  </Drawer>;
+  </Root>;
 }

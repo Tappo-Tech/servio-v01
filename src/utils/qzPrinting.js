@@ -71,7 +71,7 @@ function normalizePrinterSettings(settings) {
     : {};
   return {
     printers: Array.isArray(settings?.printers)
-      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()).filter((name) => name !== kitchenPrinter))].slice(0, 2)
+      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()).filter((name) => name !== kitchenPrinter))]
       : [],
     paperWidth: PAPER_WIDTHS.includes(settings?.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth,
     kitchenPrinter,
@@ -149,8 +149,8 @@ export function parsePrinterSettingsFile(contents) {
   if (!payload || payload.app !== "SERVIO" || ![1, 2, SETTINGS_FILE_VERSION].includes(payload.schemaVersion)) {
     throw new Error("هذا ليس ملف إعداد طابعة SERVIO مدعومًا.");
   }
-  if (!Array.isArray(payload.printers) || payload.printers.length > 2 || payload.printers.some((name) => typeof name !== "string" || !name.trim())) {
-    throw new Error("يجب أن يحتوي الملف أسماء صفر إلى طابعتين صحيحتين.");
+  if (!Array.isArray(payload.printers) || payload.printers.some((name) => typeof name !== "string" || !name.trim())) {
+    throw new Error("يجب أن يحتوي الملف أسماء طابعات صحيحة.");
   }
   if (!PAPER_WIDTHS.includes(payload.paperWidth)) {
     throw new Error("مقاس الورق يجب أن يكون 58mm أو 80mm أو A4.");
@@ -223,7 +223,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
   const settings = options.settings || getPrinterSettings();
   const printers = Array.isArray(options.printersOverride) ? options.printersOverride : settings.printers;
   if (!printers.length) {
-    const error = new Error("لم تُحدد طابعة بعد. افتح إعداد الطابعة واختر طابعة واحدة أو اثنتين.");
+    const error = new Error("لم تُحدد طابعة بعد. افتح إعداد الطباعة واختر طابعة واحدة أو أكثر.");
     error.code = "QZ_NO_PRINTERS_SELECTED";
     throw error;
   }
@@ -243,6 +243,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
   const printResults = await Promise.allSettled(printers.map(async (printer) => {
     const config = qz.configs.create(printer, {
       margins: 0,
+      rasterize: true,
       scaleContent: true,
       units: "mm",
       size: {
@@ -251,6 +252,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
       },
       colorType: "grayscale",
       interpolation: "bicubic",
+      jobName: `SERVIO ${options.receiptType === "kitchen" ? "Kitchen" : "Receipt"}`,
     });
     await qz.print(config, data);
     return printer;
