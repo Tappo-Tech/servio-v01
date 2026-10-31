@@ -6,7 +6,7 @@ import { useBranch } from "./BranchContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
-import { createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/paymentStatus";
+import { createPaymentMethodUpdate, createPaymentSettlementUpdate, createPaymentStatusUpdate } from "../utils/paymentStatus";
 
 const OrdersContext = createContext();
 
@@ -302,8 +302,9 @@ export const OrdersProvider = ({ children }) => {
 
     if (!tenantId) return { error: new Error("لم يكتمل تحميل النشاط بعد") };
     let paymentMethodUpdate;
+    const orderPaymentStatus = newOrder.payment_status === "paid" ? "paid" : "unpaid";
     try {
-      paymentMethodUpdate = createPaymentMethodUpdate(newOrder.payment_method);
+      paymentMethodUpdate = createPaymentMethodUpdate(orderPaymentStatus === "unpaid" ? null : newOrder.payment_method);
     } catch (error) {
       return { error };
     }
@@ -321,10 +322,10 @@ export const OrdersProvider = ({ children }) => {
         status: completedAt ? "served" : "pending",
         is_completed: Boolean(completedAt),
         completed_at: completedAt,
-        ...createPaymentStatusUpdate(newOrder.payment_status === "paid" ? "paid" : "unpaid"),
+        ...createPaymentStatusUpdate(orderPaymentStatus),
         ...paymentMethodUpdate,
-        cash_amount: newOrder.cash_amount == null ? null : Number(newOrder.cash_amount),
-        card_amount: newOrder.card_amount == null ? null : Number(newOrder.card_amount),
+        cash_amount: orderPaymentStatus === "unpaid" || newOrder.cash_amount == null ? null : Number(newOrder.cash_amount),
+        card_amount: orderPaymentStatus === "unpaid" || newOrder.card_amount == null ? null : Number(newOrder.card_amount),
       }])
       .select(ORDER_COLUMNS)
       .single();
@@ -346,8 +347,11 @@ export const OrdersProvider = ({ children }) => {
     const items = compactOrderItems(changes.items || target.items);
     if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
     let paymentMethodUpdate;
+    const nextPaymentStatus = changes.payment_status || target.payment_status || "unpaid";
     try {
-      paymentMethodUpdate = createPaymentMethodUpdate(changes.payment_method ?? target.payment_method ?? null);
+      paymentMethodUpdate = createPaymentMethodUpdate(nextPaymentStatus === "unpaid"
+        ? null
+        : changes.payment_method ?? target.payment_method ?? null);
     } catch (error) {
       return { error };
     }
@@ -356,10 +360,10 @@ export const OrdersProvider = ({ children }) => {
       total_price: Number(changes.total_price ?? target.total_price) || 0,
       table_number: String(changes.table_number ?? target.table_number ?? "غير محدد"),
       notes: changes.notes ? String(changes.notes) : null,
-      ...createPaymentStatusUpdate(changes.payment_status || target.payment_status || "unpaid"),
+      ...createPaymentStatusUpdate(nextPaymentStatus),
       ...paymentMethodUpdate,
-      cash_amount: changes.cash_amount == null ? (target.cash_amount ?? null) : Number(changes.cash_amount),
-      card_amount: changes.card_amount == null ? (target.card_amount ?? null) : Number(changes.card_amount),
+      cash_amount: nextPaymentStatus === "unpaid" ? null : (changes.cash_amount == null ? (target.cash_amount ?? null) : Number(changes.cash_amount)),
+      card_amount: nextPaymentStatus === "unpaid" ? null : (changes.card_amount == null ? (target.card_amount ?? null) : Number(changes.card_amount)),
     };
     const optimistic = formatOrder({ ...target, ...payload });
     setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
@@ -430,13 +434,21 @@ export const OrdersProvider = ({ children }) => {
     let paymentUpdate;
     try {
       paymentUpdate = createPaymentStatusUpdate(newStatus);
+      if (paymentUpdate.payment_status === "paid" && target.payment_status !== "paid" && !paymentDetails?.method) {
+        return { error: new Error("اختر طريقة الدفع قبل تسجيل الطلب كمدفوع") };
+      }
       if (paymentDetails) {
         paymentUpdate = {
           ...paymentUpdate,
-          ...createPaymentMethodUpdate(paymentDetails.method),
-          cash_amount: paymentDetails.method === "split" ? Number(paymentDetails.cashAmount) : null,
-          card_amount: paymentDetails.method === "split" ? Number(paymentDetails.cardAmount) : null,
+          ...createPaymentSettlementUpdate(paymentDetails.method, {
+            total: target.total_price,
+            cashAmount: paymentDetails.cashAmount,
+            cardAmount: paymentDetails.cardAmount,
+          }),
         };
+      }
+      if (paymentUpdate.payment_status === "paid" && target.status === "awaiting_payment") {
+        paymentUpdate = { ...paymentUpdate, status: "ready", is_completed: false, completed_at: null };
       }
     } catch (error) {
       return { error };

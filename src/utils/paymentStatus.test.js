@@ -1,7 +1,9 @@
 // اختبارات الوحدة والانحدار الخاصة بالوحدة `paymentStatus` وسلوكها المتوقع.
 import {
   createPaymentMethodUpdate,
+  createPaymentSettlementUpdate,
   createPaymentStatusUpdate,
+  isValidSplitPayment,
   normalizePaymentMethod,
   normalizePaymentStatus,
 } from "./paymentStatus";
@@ -25,7 +27,33 @@ describe("payment helpers", () => {
     expect(createPaymentStatusUpdate("unpaid")).toEqual({
       payment_status: "unpaid",
       paid_at: null,
+      payment_method: null,
+      cash_amount: null,
+      card_amount: null,
     });
+  });
+
+  test("creates database-valid amounts for cash, card, split, and non-cash settlement", () => {
+    expect(createPaymentSettlementUpdate("cash", { total: 12.5 })).toEqual({
+      payment_method: "cash", cash_amount: 12.5, card_amount: 0,
+    });
+    expect(createPaymentSettlementUpdate("card", { total: 12.5 })).toEqual({
+      payment_method: "card", cash_amount: 0, card_amount: 12.5,
+    });
+    expect(createPaymentSettlementUpdate("split", { total: 12.5, cashAmount: 2.5, cardAmount: 10 })).toEqual({
+      payment_method: "split", cash_amount: 2.5, card_amount: 10,
+    });
+    expect(createPaymentSettlementUpdate("wallet", { total: 12.5 })).toEqual({
+      payment_method: "wallet", cash_amount: 0, card_amount: 0,
+    });
+  });
+
+  test("rejects split amounts that do not match the order total", () => {
+    expect(() => createPaymentSettlementUpdate("split", { total: 12.5, cashAmount: 2, cardAmount: 10 }))
+      .toThrow("مجموع مبالغ الدفع يجب أن يساوي إجمالي الطلب");
+    expect(isValidSplitPayment(12.5, 2.5, 10)).toBe(true);
+    expect(isValidSplitPayment(12.5, 2.5, 10.01)).toBe(false);
+    expect(isValidSplitPayment(12.5, -0.01, 12.51)).toBe(false);
   });
 
   test("rejects unsupported payment states", () => {

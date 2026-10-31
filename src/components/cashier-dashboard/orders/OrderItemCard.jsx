@@ -29,6 +29,7 @@ import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 
 // HELPERS
 import { formatTimeAgo } from "../../../utils/helpers";
+import { isValidSplitPayment } from "../../../utils/paymentStatus";
 
 // CONTEXTS
 import { useOrders } from "../../../context/OrdersContext";
@@ -37,7 +38,7 @@ import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 import PaymentStatusControl from "./PaymentStatusControl";
 
 function OrderItemCard({ order }) {
-  const { updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod } = useOrders();
+  const { updateOrderStatus, updateOrderPaymentStatus } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
@@ -78,22 +79,22 @@ function OrderItemCard({ order }) {
     }
     void performStatusChange(status);
   };
-  const settleAndDeliver = () => {
+  const openPaymentConfirmation = () => {
     if (sending || paymentSaving) return;
     setPaymentError("");
     setSettlementMethod("");
     setSettlementCash("");
     setSettlementCard("");
-    setConfirmingStatus("settle_and_serve");
+    setConfirmingStatus("record_payment");
   };
   const confirmReceiptAction = async () => {
     const action = confirmingStatus;
-    if (action === "settle_and_serve") {
+    if (action === "record_payment") {
       if (!settlementMethod) return;
       const cash = Number(settlementCash) || 0;
       const card = Number(settlementCard) || 0;
       const total = Number(order.total_price) || 0;
-      if (settlementMethod === "split" && Math.abs(cash + card - total) > 0.01) return;
+      if (settlementMethod === "split" && !isValidSplitPayment(total, cash, card)) return;
       setSending(true);
       setPaymentError("");
       const paymentResult = await updateOrderPaymentStatus(order.id, "paid", {
@@ -107,7 +108,6 @@ function OrderItemCard({ order }) {
         return;
       }
       setConfirmingStatus(null);
-      await updateOrderStatus(order.id, "served");
       setSending(false);
       return;
     }
@@ -116,6 +116,10 @@ function OrderItemCard({ order }) {
   };
   const changePaymentStatus = async (status) => {
     if (paymentSaving) return;
+    if (status === "paid") {
+      openPaymentConfirmation();
+      return;
+    }
     if (isReady && status !== "paid") {
       setPaymentError(language === "ar"
         ? "لا يمكن تحويل طلب جاهز للاستلام إلى غير مدفوع. أعده إلى انتظار السداد قبل تعديل الدفع."
@@ -126,14 +130,6 @@ function OrderItemCard({ order }) {
     setPaymentError("");
     const result = await updateOrderPaymentStatus(order.id, status);
     if (result?.error) setPaymentError(language === "ar" ? "تعذر حفظ حالة الدفع. أعد المحاولة." : "Could not save payment status. Retry.");
-    setPaymentSaving(false);
-  };
-  const changePaymentMethod = async (method) => {
-    if (paymentSaving) return;
-    setPaymentSaving(true);
-    setPaymentError("");
-    const result = await updateOrderPaymentMethod(order.id, method);
-    if (result?.error) setPaymentError(language === "ar" ? "تعذر حفظ طريقة الدفع. أعد المحاولة." : "Could not save payment method. Retry.");
     setPaymentSaving(false);
   };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
@@ -209,7 +205,7 @@ function OrderItemCard({ order }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving || (isReady && isPaid)} language={language} />}
+          <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} showMethodSelector={false} disabled={paymentSaving || (isReady && isPaid)} language={language} />
           {isReady && isPaid && <Typography variant="caption" color="success.dark" sx={{ fontWeight: 800 }}>
             {language === "ar" ? "جاهز للاستلام — حالة الدفع مثبتة حتى يتم التسليم." : "Ready for pickup — payment status is locked until delivery."}
           </Typography>}
@@ -386,8 +382,8 @@ function OrderItemCard({ order }) {
               <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 800 }}>
                 {t("paymentRequired")}
               </Typography>
-              <Button color="success" variant="contained" onClick={!isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
-                {!isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
+              <Button color="success" variant="contained" onClick={!isPaid ? openPaymentConfirmation : () => changeStatus("served")} disabled={sending || paymentSaving}>
+                {!isPaid ? (language === "ar" ? "تسجيل السداد" : "Record payment") : t("markDelivered")}
               </Button>
               {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>
                 {t("printInvoice")}
@@ -398,11 +394,11 @@ function OrderItemCard({ order }) {
       </Card>
       <InvoiceModal open={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} order={order} autoPrint={order.status === "pending" ? "kitchen" : false} printMode={order.status === "pending" ? "order" : "cashier"} />
       <Dialog open={Boolean(confirmingStatus)} onClose={() => !sending && setConfirmingStatus(null)} fullWidth maxWidth="xs" language={language}>
-        <DialogTitle>{language === "ar" ? "تأكيد الاستلام" : "Confirm receipt"}</DialogTitle>
+        <DialogTitle>{confirmingStatus === "record_payment" ? (language === "ar" ? "تسجيل سداد الطلب" : "Record order payment") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</DialogTitle>
         <DialogContent>
-          {confirmingStatus === "settle_and_serve" ? (
+          {confirmingStatus === "record_payment" ? (
             <Box sx={{ display: "grid", gap: 1.5 }}>
-              <Typography>{language === "ar" ? "اختر طريقة الدفع لتسجيل السداد وتسليم الطلب. طريقة الدفع إلزامية." : "Choose a payment method to record payment and deliver the order. This field is required."}</Typography>
+              <Typography>{language === "ar" ? "اختر طريقة الدفع وسجّل السداد. لن يتغير وضع التسليم حتى تنقله يدويًا." : "Choose the payment method and record payment. The delivery state will remain unchanged until you update it."}</Typography>
               <Typography fontWeight={850}>{language === "ar" ? "إجمالي الطلب: " : "Order total: "}{Number(order.total_price || 0).toFixed(2)} {language === "ar" ? "ر.س" : "SAR"}</Typography>
               <FormControl fullWidth required size="small">
                 <InputLabel id={`settlement-method-${order.id}`}>{language === "ar" ? "طريقة الدفع *" : "Payment method *"}</InputLabel>
@@ -425,7 +421,7 @@ function OrderItemCard({ order }) {
                 <Box sx={{ display: "grid", gap: 1 }}>
                   <TextField size="small" type="number" label={language === "ar" ? "المبلغ النقدي" : "Cash amount"} value={settlementCash} onChange={(event) => setSettlementCash(event.target.value)}  required  slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
                   <TextField size="small" type="number" label={language === "ar" ? "مبلغ الشبكة" : "Card amount"} value={settlementCard} onChange={(event) => setSettlementCard(event.target.value)}  required  slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
-                  <Typography variant="caption" color={Math.abs((Number(settlementCash) || 0) + (Number(settlementCard) || 0) - (Number(order.total_price) || 0)) <= 0.01 ? "success.main" : "error.main"}>
+                  <Typography variant="caption" color={isValidSplitPayment(Number(order.total_price) || 0, Number(settlementCash) || 0, Number(settlementCard) || 0) ? "success.main" : "error.main"}>
                     {language === "ar" ? "مجموع المبلغين: " : "Combined amount: "}{((Number(settlementCash) || 0) + (Number(settlementCard) || 0)).toFixed(2)}
                   </Typography>
                 </Box>
@@ -438,7 +434,7 @@ function OrderItemCard({ order }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmingStatus(null)} disabled={sending}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
-          <Button variant="contained" color="success" onClick={confirmReceiptAction} disabled={sending || (confirmingStatus === "settle_and_serve" && (!settlementMethod || (settlementMethod === "split" && Math.abs((Number(settlementCash) || 0) + (Number(settlementCard) || 0) - (Number(order.total_price) || 0)) > 0.01)))}>{confirmingStatus === "settle_and_serve" ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</Button>
+          <Button variant="contained" color="success" onClick={confirmReceiptAction} disabled={sending || (confirmingStatus === "record_payment" && (!settlementMethod || (settlementMethod === "split" && !isValidSplitPayment(Number(order.total_price) || 0, Number(settlementCash) || 0, Number(settlementCard) || 0))))}>{confirmingStatus === "record_payment" ? (language === "ar" ? "تأكيد تسجيل السداد" : "Confirm payment") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</Button>
         </DialogActions>
       </Dialog>
     </motion.div>
