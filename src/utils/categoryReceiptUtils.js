@@ -35,7 +35,10 @@ export function buildOrderReceiptGroups(order, categories = [], menuItems = [], 
     const categoryId = item?.category_id ?? item?.categoryId ?? menuItem?.category_id;
     const category = categoryById.get(String(categoryId ?? ""));
 
-    if (!category?.separate_print) {
+    const dedicatedPrinter = String(category?.printer_name || "").trim();
+    // تعيين طابعة للتصنيف يعني تلقائيًا فصل أصنافه في تذكرة مطبخ مستقلة.
+    // الإيصال الداخلي لا يستخدم هذه المجموعات؛ يطبع الطلب كاملًا في مساره الموحد.
+    if (!category?.separate_print && !dedicatedPrinter) {
       mainItems.push(item);
       return;
     }

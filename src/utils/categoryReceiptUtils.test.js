@@ -43,6 +43,28 @@ describe("category-specific receipt groups", () => {
     expect(groups.reduce((sum, group) => sum + group.amounts.gross, 0)).toBeCloseTo(order.total_price, 2);
   });
 
+
+  test("separates a category automatically when it has a dedicated printer, even without the toggle", () => {
+    const order = {
+      id: "order-dedicated-printer",
+      order_number: "42",
+      total_price: 17,
+      items: [
+        { id: "meal", category_id: "food", name: "وجبة", price: 12, quantity: 1 },
+        { id: "drink", category_id: "drinks", name: "مشروب", price: 5, quantity: 1 },
+      ],
+    };
+    const groups = buildOrderReceiptGroups(order, [
+      { id: "food", name: "الأطعمة", separate_print: false },
+      { id: "drinks", name: "المشروبات", separate_print: false, printer_name: "Drinks TA-80U" },
+    ]);
+
+    expect(groups.map((group) => group.categoryId)).toEqual(["food", "drinks"]);
+    expect(groups[1].printerName).toBe("Drinks TA-80U");
+    expect(groups[1].order.id).toBe(order.id);
+    expect(groups[1].order.order_number).toBe(order.order_number);
+  });
+
   test("classifies older order snapshots from the current menu item id", () => {
     const order = { total_price: 9, items: [{ id: "tea", name: "شاي", price: 9, quantity: 1 }] };
     const groups = buildOrderReceiptGroups(order, categories, [{ id: "tea", category_id: "drinks" }]);
