@@ -189,7 +189,7 @@ function CartDrawer({ open, close, cashierMode = false }) {
             variant="h6"
             sx={{ fontWeight: 800, color: "primary.main" }}
           >
-            {totalPrice.toFixed(2)} ر.س
+            {String(totalPrice)} ر.س
           </Typography>
         </Box>
 
