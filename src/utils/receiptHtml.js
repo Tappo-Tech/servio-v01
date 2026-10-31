@@ -96,7 +96,7 @@ export function buildReceiptHtml({
       * { box-sizing: border-box; }
       html, body { margin: 0; padding: 0; width: ${paper.page}mm; color: #111; background: #fff; }
       body { font-family: Tahoma, Arial, "Noto Naskh Arabic", sans-serif; font-size: 12pt; line-height: 1.5; direction: ${direction}; -webkit-print-color-adjust: exact; }
-      .receipt { width: ${paper.content}mm; max-width: 100%; margin: 0 auto; overflow-wrap: anywhere; }
+      .receipt { width: ${paper.content}mm; max-width: 100%; margin: 0 auto; padding: 4mm 0; overflow-wrap: anywhere; }
       .center { text-align: center; }
       .title { font-size: 16pt; font-weight: 900; margin: 0 0 3mm; }
       .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 2mm; }
@@ -147,7 +147,7 @@ export function buildReceiptHtml({
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; width: ${paper.page}mm; color: #111; background: #fff; }
     body { font-family: Tahoma, Arial, "Noto Naskh Arabic", sans-serif; font-size: 11pt; line-height: 1.45; direction: ${direction}; -webkit-print-color-adjust: exact; }
-    .receipt { width: ${paper.content}mm; max-width: 100%; margin: 0 auto; padding: 0; overflow-wrap: anywhere; }
+    .receipt { width: ${paper.content}mm; max-width: 100%; margin: 0 auto; padding: 4mm 0; overflow-wrap: anywhere; }
     .center { text-align: center; }
     .logo { display: block; width: 20mm; height: 20mm; object-fit: contain; margin: 0 auto 2mm; }
     .store { font-size: 15pt; font-weight: 900; margin: 0 0 2mm; }

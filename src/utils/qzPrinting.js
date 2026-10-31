@@ -243,7 +243,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
   const createPrintData = () => isEscPosThermal
     ? images.flatMap((image) => [
       { type: "raw", format: "image", flavor: "base64", data: image.data, options: { language: "escpos", dotDensity: "double", imageEncoding: "gs_v_0" } },
-      { type: "raw", format: "command", flavor: "hex", data: "0A0A1D5600" },
+      { type: "raw", format: "command", flavor: "hex", data: "0A0A0A0A1D5600" },
     ])
     : images.map((image) => ({ type: "pixel", format: "image", flavor: "base64", data: image.data }));
   // الطابعات مستقلة؛ إرسال النسخ بالتوازي يمنع تأخر الطابعة الثانية بسبب الأولى.
