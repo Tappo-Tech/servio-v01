@@ -31,6 +31,7 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
 import { getPrinterSettings, printKitchenTicketGroups } from "../utils/qzPrinting";
+import { buildOrderReceiptGroups } from "../utils/categoryReceiptUtils";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -42,7 +43,7 @@ function Dashboard() {
   const { finishedOrders = [], ordersLoading, ordersLoadError } = useOrders();
   const { newTableOrderAlert } = useOrders();
   const { storeInfo = {} } = useStore();
-  const { categoriesList = [], updateCategoryPrintRoutes } = useMenu();
+  const { items = [], categoriesList = [], menuLoading, updateCategoryPrintRoutes } = useMenu();
   const { t, language } = useLanguage();
   const categoryPrinterNames = useMemo(
     () =>
@@ -96,10 +97,17 @@ function Dashboard() {
     if (!incoming?.id || autoPrintedPublicOrders.current.has(incoming.id)) return;
     const settings = getPrinterSettings();
     if (!settings.autoPrintPublicOrders) return;
+    // لا نؤكد الطباعة قبل اكتمال تحميل المنيو؛ وإلا قد تطبع التذكرة الموحدة
+    // أولًا ثم تمنع إعادة المحاولة بعد وصول إعدادات split_print.
+    if (menuLoading) return;
     autoPrintedPublicOrders.current.add(incoming.id);
-    printKitchenTicketGroups([{ key: incoming.id, order: incoming }], storeInfo, { settings, language })
+    // طلب العميل المؤكد يطبع تذاكر المطبخ حسب التصنيفات نفسها المستخدمة
+    // في التوجيه اليدوي؛ لذلك يعمل split_print حتى لو كانت كل التصنيفات
+    // على طابعة واحدة، مع بقاء إيصال العميل الموحد في مسار الفاتورة.
+    const ticketGroups = buildOrderReceiptGroups(incoming, categoriesList, items, language);
+    printKitchenTicketGroups(ticketGroups, storeInfo, { settings, language })
       .catch((error) => console.error("تعذر طباعة تذكرة طلب العميل تلقائيًا", error));
-  }, [newTableOrderAlert, storeInfo, language]);
+  }, [newTableOrderAlert, storeInfo, language, categoriesList, items, menuLoading]);
 
   const handleAutoPrintChange = (event) => {
     const checked = Boolean(event?.target?.checked);
