@@ -26,6 +26,48 @@ const theme = createTheme({
     caption: { fontWeight: 650, lineHeight: 1.45 },
   },
   shape: { borderRadius: 12 },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          minHeight: 42,
+          paddingInline: 14,
+          gap: 6,
+          whiteSpace: 'normal',
+          lineHeight: 1.25,
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: { flexShrink: 0 },
+      },
+    },
+    MuiCardActions: {
+      styleOverrides: {
+        root: { gap: 8, flexWrap: 'wrap', alignItems: 'center' },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: { gap: 8, flexWrap: 'wrap', padding: 16 },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: { gap: 12, flexWrap: 'wrap' },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: { gap: 8, alignItems: 'flex-start' },
+        message: { minWidth: 0, overflowWrap: 'anywhere' },
+      },
+    },
+    MuiFormControl: {
+      defaultProps: { margin: 'none' },
+    },
+  },
 });
 
 export default theme;

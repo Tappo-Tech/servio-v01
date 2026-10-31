@@ -6,6 +6,17 @@ body,
   direction: rtl;
 }
 
+:root {
+  --servio-space-1: 4px;
+  --servio-space-2: 8px;
+  --servio-space-3: 12px;
+  --servio-space-4: 16px;
+  --servio-space-5: 20px;
+  --servio-space-6: 24px;
+  --servio-space-8: 32px;
+  --servio-content-gutter: clamp(16px, 3vw, 40px);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -84,6 +95,50 @@ svg {
   overscroll-behavior-x: contain;
 }
 
+/* توزيع موحّد يمنع تلاصق الأزرار والنصوص عند التفاف الأشرطة أو تبدّل اللغة. */
+.MuiButtonGroup-root,
+.MuiToggleButtonGroup-root,
+.MuiTabs-flexContainer {
+  gap: var(--servio-space-2);
+  flex-wrap: wrap;
+}
+
+.MuiCardActions-root,
+.MuiDialogActions-root,
+.MuiToolbar-root {
+  column-gap: var(--servio-space-2);
+  row-gap: var(--servio-space-2);
+}
+
+.MuiCardActions-root > .MuiButton-root,
+.MuiDialogActions-root > .MuiButton-root {
+  margin: 0;
+}
+
+.MuiDialogTitle-root {
+  padding-block: var(--servio-space-5);
+  padding-inline: var(--servio-space-6);
+}
+
+.MuiDialogContent-root {
+  padding-block: var(--servio-space-2) var(--servio-space-5);
+  padding-inline: var(--servio-space-6);
+}
+
+.MuiInputBase-root,
+.MuiButton-root,
+.MuiChip-root,
+.MuiAlert-root,
+.MuiTypography-root {
+  max-width: 100%;
+}
+
+.MuiTypography-root,
+.MuiButton-root,
+.MuiChip-label {
+  overflow-wrap: anywhere;
+}
+
 .MuiDialog-paper {
   max-width: calc(100vw - 24px);
 }
@@ -118,5 +173,16 @@ code {
     width: calc(100% - 24px);
     max-width: calc(100vw - 24px);
     margin: 12px;
+  }
+
+  .MuiCardActions-root,
+  .MuiDialogActions-root,
+  .MuiToolbar-root {
+    padding-inline: var(--servio-space-3);
+  }
+
+  .MuiDialogTitle-root,
+  .MuiDialogContent-root {
+    padding-inline: var(--servio-space-4);
   }
 }
