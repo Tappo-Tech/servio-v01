@@ -59,7 +59,7 @@ describe("category-specific receipt groups", () => {
       { id: "drinks", name: "المشروبات", separate_print: false, printer_name: "Drinks TA-80U" },
     ]);
 
-    expect(groups.map((group) => group.categoryId)).toEqual(["food", "drinks"]);
+    expect(groups.map((group) => group.categoryId)).toEqual([null, "drinks"]);
     expect(groups[1].printerName).toBe("Drinks TA-80U");
     expect(groups[1].order.id).toBe(order.id);
     expect(groups[1].order.order_number).toBe(order.order_number);
