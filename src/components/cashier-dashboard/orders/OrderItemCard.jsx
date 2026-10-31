@@ -209,7 +209,7 @@ function OrderItemCard({ order }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving || isReady} language={language} />}
+          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving || (isReady && isPaid)} language={language} />}
           {isReady && <Typography variant="caption" color="success.dark" sx={{ fontWeight: 800 }}>
             {language === "ar" ? "جاهز للاستلام — حالة الدفع مثبتة حتى يتم التسليم." : "Ready for pickup — payment status is locked until delivery."}
           </Typography>}
