@@ -26,7 +26,7 @@ import LockOpenRoundedIcon from "@mui/icons-material/LockOpenRounded";
 import LanguageToggle from "../components/LanguageToggle";
 import { useLanguage } from "../context/LanguageContext";
 import supabase from "../supabase";
-import { slugifyName, withSlugSuffix } from "../utils/slug";
+import { slugifyName } from "../utils/slug";
 
 const CURRENCIES = [
   { value: "SAR", labelKey: "currencySar" },
@@ -197,43 +197,17 @@ export default function AdminRegister() {
     }
     setLoading(true);
     setErrorMsg("");
-    let slug = formData.store_slug;
-    let tenantId = null;
-    let tenantError = null;
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const result = await supabase.rpc("create_tenant_for_registration", {
-        p_name: formData.store_name,
-        p_slug: slug,
-        p_phone: formData.phone || null,
-        p_email: formData.email.trim().toLowerCase(),
-        p_currency: formData.currency || "SAR",
-      });
-      tenantId = result.data;
-      tenantError = result.error;
-      const duplicate =
-        tenantError &&
-        (tenantError.code === "23505" ||
-          String(tenantError.message).includes("duplicate"));
-      if (!duplicate || !isSlugLocked) break;
-      slug = withSlugSuffix(formData.store_slug);
-    }
-    if (tenantError) {
-      setLoading(false);
-      setErrorMsg(
-        String(tenantError.message).includes("duplicate")
-          ? t("slugName")
-          : tenantError.message,
-      );
-      return;
-    }
     const { data, error } = await supabase.auth.signUp({
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
-          tenant_id: tenantId,
           full_name: formData.full_name,
+          store_name: formData.store_name,
+          store_slug: formData.store_slug,
+          phone: formData.phone,
+          currency: formData.currency || "SAR",
           role: "admin",
         },
       },
@@ -244,8 +218,11 @@ export default function AdminRegister() {
           ? t("emailAlready")
           : error.message,
       );
-    else if (data.session) navigate("/manager");
-    else setEmailSent(true);
+    else if (data.session) {
+      const { error: provisioningError } = await supabase.rpc("ensure_profile_for_current_user");
+      if (provisioningError) setErrorMsg(provisioningError.message);
+      else navigate("/manager");
+    } else setEmailSent(true);
     setLoading(false);
   };
   const resendConfirmation = async () => {
