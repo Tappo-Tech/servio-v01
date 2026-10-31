@@ -4,6 +4,7 @@ import { useHistory } from "./HistoryContext";
 import { useLanguage } from "./LanguageContext";
 import { useStore } from "./StoreInfoContext";
 import { aggregateHourlySales, createHourlyLabels } from "../utils/analyticsUtils";
+import { getOperationalSaleDate } from "../utils/salesReportUtils";
 import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
 
 const AnalyticsContext = createContext();
@@ -16,7 +17,7 @@ const calculateGrowth = (current, previous) => {
   return Number((((current - previous) / previous) * 100).toFixed(1));
 };
 
-const getSaleDate = (order) => order.completed_at || order.created_at;
+const getSaleDate = getOperationalSaleDate;
 
 export function AnalyticsProvider({ children }) {
   const { finishedOrders = [], ordersLoading, ordersLoadError, reloadOrders } = useHistory();

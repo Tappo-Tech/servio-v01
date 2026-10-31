@@ -3,11 +3,20 @@ import {
   aggregateSalesReport,
   createCsvText,
   createSalesSeries,
+  getOperationalSaleDate,
   getPresetDateRange,
   getUtcDateBounds,
 } from "./salesReportUtils";
 
 describe("sales report calculations", () => {
+  test("uses paid_at for paid sales before completion or creation time", () => {
+    expect(getOperationalSaleDate({
+      payment_status: "paid",
+      paid_at: "2026-10-05T23:30:00Z",
+      completed_at: "2026-10-06T01:00:00Z",
+      created_at: "2026-10-05T22:00:00Z",
+    }).toISOString()).toBe("2026-10-05T23:30:00.000Z");
+  });
   test("uses Sunday-based full weeks and full calendar months", () => {
     const monday = new Date(2026, 9, 5, 12, 0, 0);
     expect(getPresetDateRange("weekly", monday)).toEqual({ from: "2026-10-04", to: "2026-10-10" });

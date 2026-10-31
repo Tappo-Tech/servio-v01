@@ -51,12 +51,16 @@ export function getUtcDateBounds(from, to, workdayStartMinutes = 0) {
   return { start: start.toISOString(), endExclusive: endExclusive.toISOString() };
 }
 
-export function getSaleDate(order) {
+export function getOperationalSaleDate(order) {
+  const paidAt = order?.payment_status === "paid" && order?.paid_at ? new Date(order.paid_at) : null;
+  if (paidAt && !Number.isNaN(paidAt.getTime())) return paidAt;
   const completedAt = order?.completed_at ? new Date(order.completed_at) : null;
   if (completedAt && !Number.isNaN(completedAt.getTime())) return completedAt;
   const createdAt = order?.created_at ? new Date(order.created_at) : null;
   return createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : null;
 }
+
+export const getSaleDate = getOperationalSaleDate;
 
 function normalizeItems(value) {
   if (Array.isArray(value)) {
