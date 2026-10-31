@@ -423,8 +423,8 @@ function OrderItemCard({ order }) {
               </FormControl>
               {settlementMethod === "split" && (
                 <Box sx={{ display: "grid", gap: 1 }}>
-                  <TextField size="small" type="number" label={language === "ar" ? "المبلغ النقدي" : "Cash amount"} value={settlementCash} onChange={(event) => setSettlementCash(event.target.value)} inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }} required />
-                  <TextField size="small" type="number" label={language === "ar" ? "مبلغ الشبكة" : "Card amount"} value={settlementCard} onChange={(event) => setSettlementCard(event.target.value)} inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }} required />
+                  <TextField size="small" type="number" label={language === "ar" ? "المبلغ النقدي" : "Cash amount"} value={settlementCash} onChange={(event) => setSettlementCash(event.target.value)}  required  slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
+                  <TextField size="small" type="number" label={language === "ar" ? "مبلغ الشبكة" : "Card amount"} value={settlementCard} onChange={(event) => setSettlementCard(event.target.value)}  required  slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
                   <Typography variant="caption" color={Math.abs((Number(settlementCash) || 0) + (Number(settlementCard) || 0) - (Number(order.total_price) || 0)) <= 0.01 ? "success.main" : "error.main"}>
                     {language === "ar" ? "مجموع المبلغين: " : "Combined amount: "}{((Number(settlementCash) || 0) + (Number(settlementCard) || 0)).toFixed(2)}
                   </Typography>

@@ -80,12 +80,12 @@ export default function ShiftReports() {
   return <Box component="main" dir={ar ? "rtl" : "ltr"} sx={{ width: "100%", minWidth: 0 }}>
     <style>{`@media print { @page { size: A4 portrait; margin: 12mm; } .shift-report-no-print { display: none !important; } .shift-report-page { background: #fff !important; padding: 0 !important; } .shift-report-row { break-inside: avoid; box-shadow: none !important; } }`}</style>
     <Stack spacing={{ xs: 2, md: 2.5 }} className="shift-report-page">
-      <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" gap={1.5}>
-        <Stack direction="row" spacing={1.25} alignItems="center"><Box sx={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "rgba(244,121,32,.10)", color: "primary.main" }}><AccessTimeRoundedIcon /></Box><Box><Typography variant="h4" component="h1" fontWeight={950} sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .3 }}>{text.subtitle}</Typography></Box></Stack>
+      <Stack direction={{ xs: "column", md: "row" }}    sx={{ alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between", gap: 1.5 }}>
+        <Stack direction="row" spacing={1.25}  sx={{ alignItems: "center" }}><Box sx={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "rgba(244,121,32,.10)", color: "primary.main" }}><AccessTimeRoundedIcon /></Box><Box><Typography variant="h4" component="h1" fontWeight={950} sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .3 }}>{text.subtitle}</Typography></Box></Stack>
         <Stack className="shift-report-no-print" direction="row" spacing={1} sx={{ width: { xs: "100%", md: "auto" } }}><Button fullWidth variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => setRefreshKey((value) => value + 1)} sx={{ flex: 1 }}>{text.refresh}</Button><Button fullWidth variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} disabled={loading || Boolean(error) || !filtered.length} onClick={printFilteredShifts} sx={{ flex: 1 }}>{text.printAll}</Button></Stack>
       </Stack>
 
-      <Stack className="shift-report-no-print" direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1.25}>
+      <Stack className="shift-report-no-print" direction={{ xs: "column", sm: "row" }}   sx={{ justifyContent: "space-between", gap: 1.25 }}>
         <ButtonGroup size="small" variant="outlined" aria-label={ar ? "الفترة" : "Date range"} sx={{ width: { xs: "100%", sm: "auto" }, "& .MuiButton-root": { minWidth: 0, flex: 1, px: { xs: .75, sm: 1.5 } } }}>
           <Button variant={range === "week" ? "contained" : "outlined"} onClick={() => setRange("week")}>{text.week}</Button>
           <Button variant={range === "month" ? "contained" : "outlined"} onClick={() => setRange("month")}>{text.month}</Button>
@@ -95,18 +95,18 @@ export default function ShiftReports() {
       </Stack>
 
       {error && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setRefreshKey((value) => value + 1)}>{text.refresh}</Button>}>{error}</Alert>}
-      {loading ? <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}><Stack direction="row" spacing={1.2} justifyContent="center" alignItems="center"><CircularProgress size={23} /><Typography color="text.secondary">{text.loading}</Typography></Stack></Paper> : !error && <>
+      {loading ? <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}><Stack direction="row" spacing={1.2}   sx={{ justifyContent: "center", alignItems: "center" }}><CircularProgress size={23} /><Typography color="text.secondary">{text.loading}</Typography></Stack></Paper> : !error && <>
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "repeat(2,minmax(0,1fr))" }, gap: { xs: .9, sm: 1.5 } }}>
           <Metric label={text.count} value={new Intl.NumberFormat(locale).format(filtered.length)} detail={`${new Intl.NumberFormat(locale).format(openCount)} ${text.open}`} />
           <Metric label={text.totalSales} value={money(recordedSales)} detail={ar ? "للورديات المغلقة ضمن الفترة" : "Closed shifts in this period"} />
         </Box>
-        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={.4} sx={{ mt: .5 }}><Typography variant="h6" fontWeight={900}>{ar ? "سجل الجلسات" : "Session history"}</Typography><Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5, overflowWrap: "anywhere" }}>{text.note}</Typography></Stack>
+        <Stack direction={{ xs: "column", sm: "row" }}    sx={{ mt: .5 , alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: .4}}><Typography variant="h6" fontWeight={900}>{ar ? "سجل الجلسات" : "Session history"}</Typography><Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5, overflowWrap: "anywhere" }}>{text.note}</Typography></Stack>
         {!filtered.length ? <Alert severity="info" sx={{ borderRadius: 3 }}>{text.empty}</Alert> : <Stack spacing={1.2}>
           {filtered.map((session) => {
             const cashierName = session.cashier_name || session.cashier_username || (ar ? "كاشير" : "Cashier");
             return <Paper key={session.id} className="shift-report-row" variant="outlined" sx={{ p: { xs: 1.35, sm: 2 }, borderRadius: 3, display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "minmax(0,1fr) auto auto" }, gap: { xs: 1.1, sm: 1.5 }, alignItems: "center", minWidth: 0 }}>
               <Box sx={{ minWidth: 0 }}>
-                <Stack direction="row" spacing={.8} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={.8}   useFlexGap sx={{ alignItems: "center", flexWrap: "wrap" }}>
                   <PointOfSaleOutlinedIcon color="primary" fontSize="small" />
                   <Typography fontWeight={900} sx={{ minWidth: 0, maxWidth: "100%", overflowWrap: "anywhere" }}>{cashierName}</Typography>
                   <Chip size="small" color={session.status === "open" ? "success" : "default"} variant="outlined" label={session.status === "open" ? text.open : text.closed} />

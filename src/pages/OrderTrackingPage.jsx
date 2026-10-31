@@ -99,13 +99,13 @@ function InvoiceDetails({ order, language }) {
     <Paper elevation={0} sx={{ mt: 1.2, p: 1.5, borderRadius: 2.5, bgcolor: "#FFF8F2", border: "1px solid rgba(244,121,32,.2)" }}>
       <Stack spacing={.75}>
         {items.map((item, index) => (
-          <Stack key={`${item.id || item.name}-${index}`} direction="row" justifyContent="space-between" gap={1}>
+          <Stack key={`${item.id || item.name}-${index}`} direction="row"   sx={{ justifyContent: "space-between", gap: 1 }}>
             <Typography variant="body2" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>{item.name} × {item.quantity || 1}</Typography>
             <Typography variant="body2" fontWeight={850} whiteSpace="nowrap">{money(Number(item.price || 0) * Number(item.quantity || 1))}</Typography>
           </Stack>
         ))}
         <Box sx={{ borderTop: "1px dashed rgba(23,26,47,.18)", pt: .9, mt: .35 }}>
-          <Stack direction="row" justifyContent="space-between"><Typography fontWeight={900}>{language === "ar" ? "الإجمالي" : "Total"}</Typography><Typography fontWeight={950} color="primary.main">{money(order?.total_price)}</Typography></Stack>
+          <Stack direction="row"  sx={{ justifyContent: "space-between" }}><Typography fontWeight={900}>{language === "ar" ? "الإجمالي" : "Total"}</Typography><Typography fontWeight={950} color="primary.main">{money(order?.total_price)}</Typography></Stack>
         </Box>
       </Stack>
     </Paper>
@@ -252,8 +252,8 @@ function OrderTrackingPage() {
     >
       <Container maxWidth="sm" sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Stack spacing={{ xs: 2, sm: 2.5 }} sx={{ width: "100%", my: "auto" }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-            <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+            <Stack direction="row"  spacing={1} sx={{ alignItems: "center" }}>
               <Box component="img" src="/logo-icon.webp" alt="SERVIO" sx={{ width: 38, height: 38, objectFit: "contain" }} />
               <Typography fontWeight={950} color="secondary.main" letterSpacing=".04em">SERVIO</Typography>
             </Stack>
@@ -288,7 +288,7 @@ function OrderTrackingPage() {
                 <Stack spacing={{ xs: 1.5, sm: 2 }}>
                   <Box sx={{ p: { xs: 1.8, sm: 2.4 }, borderRadius: 3, color: "#fff", background: "linear-gradient(125deg, #252a46 0%, #363d62 100%)", position: "relative", overflow: "hidden" }}>
                     <Box aria-hidden="true" sx={{ position: "absolute", width: 150, height: 150, borderRadius: "50%", bgcolor: "rgba(255,255,255,.06)", insetInlineEnd: -48, top: -75 }} />
-                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" gap={1.3} sx={{ position: "relative" }}>
+                    <Stack direction={{ xs: "column", sm: "row" }}    sx={{ position: "relative" , alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", gap: 1.3}}>
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="caption" sx={{ display: "block", opacity: .72, mb: .35 }}>{storeName}</Typography>
                         <Typography variant="caption" sx={{ opacity: .72 }}>{text.order}</Typography>
@@ -299,7 +299,7 @@ function OrderTrackingPage() {
                   </Box>
 
                   {loading && !order ? (
-                    <Stack alignItems="center" spacing={1.2} sx={{ py: 3 }}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Stack>
+                    <Stack  spacing={1.2} sx={{ py: 3 , alignItems: "center"}}><CircularProgress /><Typography color="text.secondary">{text.loading}</Typography></Stack>
                   ) : order ? (
                     <>
                       {order.status === "cancelled" || order.status === "unclaimed" ? (
@@ -308,7 +308,7 @@ function OrderTrackingPage() {
                         </Alert>
                       ) : (
                         <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, bgcolor: "#fbfbfd", border: "1px solid rgba(23,26,47,.07)" }}>
-                          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                          <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
                             <Box>
                               <Typography variant="caption" color="text.secondary">{text.progress}</Typography>
                               <Typography fontWeight={900} sx={{ mt: .25 }}>{statusText(order.status, text)}</Typography>
@@ -390,7 +390,7 @@ function OrderTrackingPage() {
                   const record = item.localRecord;
                   const isOpen = openInvoice === item.order_id;
                   return <Box key={item.order_id} sx={{ p: 1.2, borderRadius: 2.2, border: "1px solid rgba(23,26,47,.08)" }}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                    <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
                       <Box><Typography fontWeight={850}>#{String(item.order_id).slice(-6).toUpperCase()}</Typography><Typography variant="caption" color="text.secondary">{statusText(item.status, text)}</Typography></Box>
                       <Button size="small" variant="text" onClick={() => setOpenInvoice(isOpen ? null : item.order_id)}>{language === "ar" ? "الفاتورة" : "Invoice"}</Button>
                     </Stack>

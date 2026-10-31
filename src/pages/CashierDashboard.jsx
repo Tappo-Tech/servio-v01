@@ -203,9 +203,9 @@ function Dashboard() {
                 </Typography>
                 <Stack
                   direction="row"
-                  alignItems="baseline"
+
                   spacing={1}
-                  sx={{ mt: 0.2 }}
+                  sx={{ mt: 0.2 , alignItems: "baseline"}}
                 >
                   <Typography
                     sx={{
@@ -230,10 +230,10 @@ function Dashboard() {
               </Box>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                justifyContent="flex-end"
-                alignItems={{ xs: "stretch", sm: "center" }}
+
+
                 spacing={1}
-                sx={{ width: { xs: "100%", sm: "auto" } }}
+                sx={{ width: { xs: "100%", sm: "auto" } , justifyContent: "flex-end", alignItems: { xs: "stretch", sm: "center" }}}
               >
                 <Button
                   variant="outlined"

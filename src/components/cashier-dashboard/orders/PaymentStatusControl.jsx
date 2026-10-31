@@ -53,12 +53,12 @@ export default function PaymentStatusControl({
   return (
     <Stack
       direction="column"
-      alignItems="stretch"
+
       spacing={0.85}
       useFlexGap
-      sx={{ minWidth: 0, width: "100%" }}
+      sx={{ minWidth: 0, width: "100%" , alignItems: "stretch"}}
     >
-      <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} spacing={0.8} flexWrap="wrap" useFlexGap sx={{ minWidth: 0, width: "100%" }}>
+      <Stack direction={{ xs: "column", sm: "row" }}  spacing={0.8}  useFlexGap sx={{ minWidth: 0, width: "100%" , alignItems: { xs: "stretch", sm: "center" }, flexWrap: "wrap"}}>
         <Typography variant="caption" color="text.secondary" fontWeight={800}>
           {text.label}
         </Typography>

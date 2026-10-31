@@ -313,7 +313,7 @@ function OrdersHistory() {
                 field: { clearable: true, onClear: () => setSelectedDate(null) },
                 textField: {
                   size: "small",
-                  InputLabelProps: { shrink: true },
+                  slotProps: { inputLabel: { shrink: true } },
                   sx: {
                     width: { xs: "100%", sm: 220 },
                   },

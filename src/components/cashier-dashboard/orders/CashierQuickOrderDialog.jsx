@@ -173,7 +173,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
       <DialogContent dividers>
         <Stack spacing={2}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-            <TextField size="small" fullWidth label={ar ? "بحث عن صنف" : "Search menu items"} value={search} onChange={(event) => setSearch(event.target.value)} InputProps={{ startAdornment: <SearchRoundedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
+            <TextField size="small" fullWidth label={ar ? "بحث عن صنف" : "Search menu items"} value={search} onChange={(event) => setSearch(event.target.value)}   slotProps={{ input: { startAdornment: <SearchRoundedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> } }}/>
             <FormControl size="small" sx={{ minWidth: { sm: 210 } }}>
               <InputLabel id="cashier-order-category">{ar ? "التصنيف" : "Category"}</InputLabel>
               <Select labelId="cashier-order-category" value={categoryId} label={ar ? "التصنيف" : "Category"} onChange={(event) => setCategoryId(event.target.value)}>
@@ -221,7 +221,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
             {orderType === "dineIn" && <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth size="small" label={ar ? "رقم الطاولة (اختياري)" : "Table number (optional)"} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} /></Grid>}
             <Grid size={{ xs: 12 }}><TextField fullWidth size="small" label={ar ? "ملاحظات الطلب (اختياري)" : "Order notes (optional)"} value={notes} onChange={(event) => setNotes(event.target.value)} /></Grid>
             <Grid size={{ xs: 12 }}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}  sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
                 <Typography variant="body2" fontWeight={850}>{ar ? "حالة الدفع" : "Payment status"}</Typography>
                 <ToggleButtonGroup size="small" exclusive value={paymentStatus} onChange={(_, value) => { if (value) { setPaymentStatus(value); if (value === "unpaid") { setPaymentMethod(""); setCashAmount(""); setCardAmount(""); } } }}>
                   <ToggleButton value="paid">{ar ? "مدفوع" : "Paid"}</ToggleButton>
@@ -233,11 +233,11 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
               <FormControl fullWidth size="small" required><InputLabel id="cashier-order-payment">{ar ? "طريقة الدفع *" : "Payment method *"}</InputLabel><Select labelId="cashier-order-payment" required label={ar ? "طريقة الدفع *" : "Payment method *"} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}><MenuItem value=""><em>{ar ? "اختر طريقة الدفع" : "Select a payment method"}</em></MenuItem>{PAYMENT_METHODS[ar ? "ar" : "en"].map(([method, label]) => <MenuItem key={method} value={method}>{label}</MenuItem>)}</Select></FormControl>
             </Grid>}
             {paymentStatus === "paid" && paymentMethod === "split" && <>
-              <Grid size={{ xs: 12, sm: 3 }}><TextField fullWidth size="small" type="number" label={ar ? "المبلغ النقدي" : "Cash amount"} value={cashAmount} onChange={(event) => setCashAmount(event.target.value)} inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }} /></Grid>
-              <Grid size={{ xs: 12, sm: 3 }}><TextField fullWidth size="small" type="number" label={ar ? "مبلغ الشبكة" : "Card amount"} value={cardAmount} onChange={(event) => setCardAmount(event.target.value)} inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }} /></Grid>
+              <Grid size={{ xs: 12, sm: 3 }}><TextField fullWidth size="small" type="number" label={ar ? "المبلغ النقدي" : "Cash amount"} value={cashAmount} onChange={(event) => setCashAmount(event.target.value)}   slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/></Grid>
+              <Grid size={{ xs: 12, sm: 3 }}><TextField fullWidth size="small" type="number" label={ar ? "مبلغ الشبكة" : "Card amount"} value={cardAmount} onChange={(event) => setCardAmount(event.target.value)}   slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/></Grid>
             </>}
           </Grid>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
+          <Stack direction="row"   sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 , justifyContent: "space-between", alignItems: "center"}}>
             <Typography fontWeight={900}>{ar ? "الإجمالي" : "Total"}</Typography>
             <Chip color="primary" label={`${formatAmount(total, language)} ${currency}`} sx={{ fontWeight: 900 }} />
           </Stack>

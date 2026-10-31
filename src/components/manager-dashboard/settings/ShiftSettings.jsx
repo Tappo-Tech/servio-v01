@@ -54,13 +54,13 @@ export default function ShiftSettings() {
   };
 
   return <Box sx={{ maxWidth: 900, mx: "auto" }}>
-    <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: .5 }}><AccessTimeRoundedIcon color="primary" /><Typography variant="h6" fontWeight={950}>{ar ? "ساعات الدوام" : "Working hours"}</Typography></Stack>
+    <Stack direction="row" spacing={1.2}  sx={{ mb: .5 , alignItems: "center"}}><AccessTimeRoundedIcon color="primary" /><Typography variant="h6" fontWeight={950}>{ar ? "ساعات الدوام" : "Working hours"}</Typography></Stack>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2.25, lineHeight: 1.8 }}>{ar ? "حدد بداية ونهاية يوم العمل. ستُرتّب رسوم المبيعات والتقارير الساعية من بداية دوامك، بما في ذلك الدوام الممتد بعد منتصف الليل." : "Set the opening and closing time. Hourly sales charts and reports will follow your workday sequence, including overnight hours."}</Typography>
     <Paper component="form" onSubmit={saveHours} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "flex-end" }}>
-        <TextField type="time" label={ar ? "تبدأ الوردية" : "Workday starts"} value={form.start} onChange={(event) => setForm((current) => ({ ...current, start: event.target.value }))} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} required fullWidth />
-        <TextField type="time" label={ar ? "ينتهي الدوام" : "Workday ends"} value={form.end} onChange={(event) => setForm((current) => ({ ...current, end: event.target.value }))} InputLabelProps={{ shrink: true }} inputProps={{ dir: "ltr" }} required fullWidth />
-        <TextField label={ar ? "مدة الدوام المحسوبة" : "Calculated duration"} value={hours == null ? "—" : `${hours} ${ar ? "ساعة" : "hours"}`} InputProps={{ readOnly: true }} fullWidth />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}  sx={{ alignItems: { xs: "stretch", sm: "flex-end" } }}>
+        <TextField type="time" label={ar ? "تبدأ الوردية" : "Workday starts"} value={form.start} onChange={(event) => setForm((current) => ({ ...current, start: event.target.value }))}   required fullWidth  slotProps={{ inputLabel: { shrink: true }, htmlInput: { dir: "ltr" } }}/>
+        <TextField type="time" label={ar ? "ينتهي الدوام" : "Workday ends"} value={form.end} onChange={(event) => setForm((current) => ({ ...current, end: event.target.value }))}   required fullWidth  slotProps={{ inputLabel: { shrink: true }, htmlInput: { dir: "ltr" } }}/>
+        <TextField label={ar ? "مدة الدوام المحسوبة" : "Calculated duration"} value={hours == null ? "—" : `${hours} ${ar ? "ساعة" : "hours"}`}  fullWidth  slotProps={{ input: { readOnly: true } }}/>
         <Button type="submit" variant="contained" disabled={saving || hours == null} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <CheckCircleOutlineRoundedIcon />} sx={{ fontWeight: 900, whiteSpace: "nowrap", minHeight: 42 }}>{ar ? "حفظ الدوام" : "Save hours"}</Button>
       </Stack>
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>{ar ? "إذا كان وقت النهاية أسبق من البداية، يُحسب تلقائيًا أنه في اليوم التالي. إدخال وقت البداية والنهاية نفسيهما يعني دوامًا كاملًا (24 ساعة)." : "If the end time is earlier than the start, it is treated as the next day. Matching start and end times mean a full 24-hour day."}</Typography>

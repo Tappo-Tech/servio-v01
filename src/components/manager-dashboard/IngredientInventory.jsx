@@ -122,8 +122,8 @@ function IngredientInventory({ canManage = false }) {
     <Box sx={{ p: { xs: 0, md: 0.5 }, minWidth: 0 }}>
       <Stack spacing={2.25}>
         <Card elevation={0} sx={{ p: { xs: 2, sm: 2.75 }, borderRadius: { xs: 3, md: 4 }, border: "1px solid rgba(255,255,255,.78)", background: "linear-gradient(125deg, rgba(255,255,255,.92) 0%, rgba(255,249,242,.92) 100%)", boxShadow: "0 16px 42px rgba(23,26,47,.055)" }}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between">
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}   sx={{ alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1.5}  sx={{ minWidth: 0 , alignItems: "center"}}>
               <Avatar sx={{ width: 48, height: 48, bgcolor: "rgba(244,121,32,.12)", color: "primary.main" }}>
                 <Inventory2OutlinedIcon />
               </Avatar>
@@ -174,9 +174,9 @@ function IngredientInventory({ canManage = false }) {
           onChange={(event) => setSearch(event.target.value)}
           size="small"
           placeholder={isArabic ? "ابحث عن مادة أو صنف مرتبط بها" : "Search ingredients or linked items"}
-          InputProps={{ startAdornment: <SearchRoundedIcon sx={{ mr: 1, color: "text.secondary" }} /> }}
+
           sx={{ maxWidth: { xs: "100%", md: 480 }, "& .MuiOutlinedInput-root": { borderRadius: 2.5, backgroundColor: "rgba(255,255,255,.86)" } }}
-        />
+         slotProps={{ input: { startAdornment: <SearchRoundedIcon sx={{ mr: 1, color: "text.secondary" }} /> } }}/>
 
         {menuError && (
           <Alert
@@ -190,7 +190,7 @@ function IngredientInventory({ canManage = false }) {
 
         {menuLoading && ingredients.length === 0 ? (
           <Card elevation={0} sx={{ p: 4, border: "1px solid", borderColor: "divider", borderRadius: 3, background: "rgba(255,255,255,.7)" }}>
-            <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="center">
+            <Stack direction="row" spacing={1.25}   sx={{ alignItems: "center", justifyContent: "center" }}>
               <CircularProgress size={22} />
               <Typography color="text.secondary">{isArabic ? "جارٍ تحميل المواد…" : "Loading ingredients…"}</Typography>
             </Stack>
@@ -202,20 +202,20 @@ function IngredientInventory({ canManage = false }) {
               const isAvailable = ingredient.available === true;
               return (
                 <Card key={ingredient.id} elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: "1px solid", borderColor: isAvailable ? "divider" : "rgba(211,47,47,.26)", background: isAvailable ? "rgba(255,255,255,.86)" : "linear-gradient(120deg, rgba(255,255,255,.95), rgba(255,243,242,.95))" }}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
-                    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}   sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between" }}>
+                    <Stack direction="row" spacing={1.25}  sx={{ minWidth: 0, flex: 1 , alignItems: "center"}}>
                       <Avatar sx={{ width: 42, height: 42, bgcolor: isAvailable ? "rgba(21,154,104,.1)" : "rgba(211,47,47,.1)", color: isAvailable ? "success.main" : "error.main" }}>
                         <Inventory2OutlinedIcon fontSize="small" />
                       </Avatar>
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 900, overflowWrap: "anywhere" }}>{ingredient.name}</Typography>
-                        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.45 }}>
+                        <Stack direction="row" spacing={0.75} useFlexGap  sx={{ mt: 0.45 , flexWrap: "wrap"}}>
                           <Chip size="small" color={isAvailable ? "success" : "error"} variant={isAvailable ? "outlined" : "filled"} label={isAvailable ? (isArabic ? "متوفرة" : "Available") : (isArabic ? "نافدة" : "Out of stock")} />
                           <Chip size="small" variant="outlined" label={isArabic ? `${linkedItems.length} أصناف مرتبطة` : `${linkedItems.length} linked items`} />
                         </Stack>
                       </Box>
                     </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" spacing={1}   sx={{ alignItems: "center", justifyContent: "space-between" }}>
                       <FormControlLabel
                         sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: ".82rem", fontWeight: 800 } }}
                         control={<Switch checked={isAvailable} onChange={(event) => handleAvailabilityChange(ingredient, event.target.checked)} disabled={busyId === ingredient.id || Boolean(busyId)} color={isAvailable ? "success" : "error"} />}
@@ -233,7 +233,7 @@ function IngredientInventory({ canManage = false }) {
                     {isArabic ? (isAvailable ? "الأصناف التي تستخدم هذه المادة" : "الأصناف المتأثرة وغير المتاحة للطلب") : (isAvailable ? "Items using this ingredient" : "Affected items unavailable for ordering")}
                   </Typography>
                   {linkedItems.length ? (
-                    <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                    <Stack direction="row" spacing={0.75} useFlexGap  sx={{ flexWrap: "wrap" }}>
                       {linkedItems.map((item) => (
                         <Chip key={item.id} size="small" label={item.name} color={!isAvailable ? "error" : "default"} variant={!isAvailable ? "outlined" : "filled"} sx={{ maxWidth: "100%" }} />
                       ))}
@@ -273,13 +273,13 @@ function IngredientInventory({ canManage = false }) {
               autoFocus
               fullWidth
               required
-              inputProps={{ maxLength: 120 }}
+
               label={isArabic ? "اسم المادة" : "Ingredient name"}
               placeholder={isArabic ? "مثال: حليب، قهوة، دجاج" : "e.g. milk, coffee, chicken"}
               value={draftName}
               onChange={(event) => setDraftName(event.target.value)}
               helperText={isArabic ? "استخدم اسمًا واحدًا واضحًا؛ سيظهر في قائمة المواد والأصناف المرتبطة." : "Use one clear name; it appears in inventory and linked menu items."}
-            />
+             slotProps={{ htmlInput: { maxLength: 120 } }}/>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={closeDialog} disabled={saving} color="inherit">{isArabic ? "إلغاء" : "Cancel"}</Button>

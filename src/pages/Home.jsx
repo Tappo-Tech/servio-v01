@@ -51,7 +51,7 @@ const iconMap = {
 // LOGO SECTION
 function Brand({ ar, light = false }) {
   return (
-    <Stack direction="row" alignItems="start">
+    <Stack direction="row"  sx={{ alignItems: "start" }}>
       <Box
         component="img"
         src="/logo-icon.webp"
@@ -168,9 +168,9 @@ function ProductMock({ ar }) {
           <Box sx={{ flex: 1, minWidth: 0, p: 0.6 }}>
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 1.5 }}
+
+
+              sx={{ mb: 1.5 , justifyContent: "space-between", alignItems: "center"}}
             >
               <Box>
                 <Typography
@@ -251,7 +251,7 @@ function ProductMock({ ar }) {
                     bgcolor: "#F7F8FA",
                   }}
                 >
-                  <Stack direction="row" spacing={0.7} alignItems="center">
+                  <Stack direction="row" spacing={0.7}  sx={{ alignItems: "center" }}>
                     <Box
                       sx={{
                         width: 7,
@@ -282,14 +282,14 @@ function ProductMock({ ar }) {
           </Box>
         </Stack>
         <Divider sx={{ my: 1.5 }} />
-        <Stack direction="row" justifyContent="space-between" sx={{ px: 0.5 }}>
-          <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row"  sx={{ px: 0.5 , justifyContent: "space-between"}}>
+          <Stack direction="row" spacing={0.5}  sx={{ alignItems: "center" }}>
             <QrCode2RoundedIcon sx={{ fontSize: 16, color: "primary.main" }} />
             <Typography variant="caption" fontWeight={850}>
               QR
             </Typography>
           </Stack>
-          <Stack direction="row" spacing={0.5} alignItems="center">
+          <Stack direction="row" spacing={0.5}  sx={{ alignItems: "center" }}>
             <PointOfSaleRoundedIcon
               sx={{ fontSize: 16, color: "primary.main" }}
             />
@@ -297,7 +297,7 @@ function ProductMock({ ar }) {
               {ar ? "طلبات" : "Orders"}
             </Typography>
           </Stack>
-          <Stack direction="row" spacing={0.5} alignItems="center">
+          <Stack direction="row" spacing={0.5}  sx={{ alignItems: "center" }}>
             <InsightsRoundedIcon sx={{ fontSize: 16, color: "primary.main" }} />
             <Typography variant="caption" fontWeight={850}>
               {ar ? "تحليلات" : "Insights"}
@@ -664,9 +664,9 @@ export default function Home() {
             </Box>
             <Stack
               direction="row"
-              alignItems="center"
+
               spacing={{ xs: 0.45, sm: 1 }}
-              sx={{ direction: "ltr", flexShrink: 0 }}
+              sx={{ direction: "ltr", flexShrink: 0 , alignItems: "center"}}
             >
               <LanguageToggle compact dark />
               <Button
@@ -789,9 +789,9 @@ export default function Home() {
                 </Stack>
                 <Stack
                   direction="row"
-                  alignItems="center"
+
                   spacing={1}
-                  sx={{ mt: 3, color: "rgba(255,255,255,.54)" }}
+                  sx={{ mt: 3, color: "rgba(255,255,255,.54)" , alignItems: "center"}}
                 >
                   <CheckRoundedIcon sx={{ fontSize: 17, color: "#F47920" }} />
                   <Typography variant="body2">{c.proof}</Typography>
@@ -1263,8 +1263,8 @@ export default function Home() {
         <Divider sx={{ my: 4 }} />
         <Stack
           direction="column"
-          justifyContent="space-between"
-          sx={{ pb: 2, alignItems: { xs: "flex-start", sm: "center" } }}
+
+          sx={{ pb: 2, alignItems: { xs: "flex-start", sm: "center" } , justifyContent: "space-between"}}
         >
           <Brand ar={ar} />
           <Typography variant="body2" color="text.secondary">

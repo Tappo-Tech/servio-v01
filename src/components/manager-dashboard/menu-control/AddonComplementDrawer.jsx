@@ -82,7 +82,7 @@ export default function AddonComplementDrawer({ open, onClose, items = [], onAdd
         <Divider />
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2.25 }}>
           <Box component="form" onSubmit={handleAdd} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-            <TextField fullWidth size="small" label={text.name} placeholder={text.placeholder} value={name} onChange={(event) => setName(event.target.value.slice(0, 100))} inputProps={{ maxLength: 100 }} />
+            <TextField fullWidth size="small" label={text.name} placeholder={text.placeholder} value={name} onChange={(event) => setName(event.target.value.slice(0, 100))}   slotProps={{ htmlInput: { maxLength: 100 } }}/>
             <Button type="submit" variant="contained" disabled={busy || !name.trim()} startIcon={busy ? <CircularProgress size={17} color="inherit" /> : <AddRoundedIcon />} sx={{ minHeight: 40, whiteSpace: "nowrap", fontWeight: 850 }}>
               {text.add}
             </Button>
@@ -105,7 +105,7 @@ export default function AddonComplementDrawer({ open, onClose, items = [], onAdd
               ))}
             </List>
           ) : (
-            <Stack alignItems="center" sx={{ py: 5 }}><Typography color="text.secondary">{text.empty}</Typography></Stack>
+            <Stack  sx={{ py: 5 , alignItems: "center"}}><Typography color="text.secondary">{text.empty}</Typography></Stack>
           )}
         </Box>
         <Divider />

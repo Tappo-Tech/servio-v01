@@ -78,9 +78,9 @@ export default function PrinterBridgeStatus({ language = "ar", categoryPrinterNa
       role="status"
       aria-live="polite"
       direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "stretch", sm: "center" }}
+
       spacing={0.75}
-      sx={{ minWidth: 0, width: { xs: "100%", sm: "auto" } }}
+      sx={{ minWidth: 0, width: { xs: "100%", sm: "auto" } , alignItems: { xs: "stretch", sm: "center" }}}
     >
       <Chip
         size="small"

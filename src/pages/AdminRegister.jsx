@@ -70,11 +70,11 @@ function BrandIntro({ t, arabic }) {
         }}
       />
       <Stack
-        justifyContent="space-between"
-        sx={{ position: "relative", zIndex: 1, width: "100%" }}
+
+        sx={{ position: "relative", zIndex: 1, width: "100%" , justifyContent: "space-between"}}
       >
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.2}>
+          <Stack direction="row"  spacing={1.2} sx={{ alignItems: "center" }}>
             <Box
               component="img"
               src="/logo-icon.webp"
@@ -341,9 +341,9 @@ export default function AdminRegister() {
           <LanguageToggle />
         </Box>
         <Stack
-          alignItems="center"
+
           spacing={0.6}
-          sx={{ mb: 3, display: { xs: "flex", md: "none" } }}
+          sx={{ mb: 3, display: { xs: "flex", md: "none" } , alignItems: "center"}}
         >
           <Box
             component="img"
@@ -413,7 +413,8 @@ export default function AdminRegister() {
                     disabled={isSlugLocked}
                     required
                     sx={fieldSx}
-                    InputProps={{
+
+                   slotProps={{ input: {
                       endAdornment: (
                         <InputAdornment position="end">
                           <IconButton
@@ -431,8 +432,7 @@ export default function AdminRegister() {
                           </IconButton>
                         </InputAdornment>
                       ),
-                    }}
-                  />
+                    } }}/>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
@@ -487,14 +487,14 @@ export default function AdminRegister() {
                     value={formData.phone}
                     onChange={handleChange}
                     sx={fieldSx}
-                    InputProps={{
+
+                   slotProps={{ input: {
                       startAdornment: (
                         <InputAdornment position="start">
                           <PhoneRoundedIcon fontSize="small" />
                         </InputAdornment>
                       ),
-                    }}
-                  />
+                    } }}/>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
@@ -506,14 +506,14 @@ export default function AdminRegister() {
                     onChange={handleChange}
                     required
                     sx={fieldSx}
-                    InputProps={{
+
+                   slotProps={{ input: {
                       startAdornment: (
                         <InputAdornment position="start">
                           <EmailRoundedIcon fontSize="small" />
                         </InputAdornment>
                       ),
-                    }}
-                  />
+                    } }}/>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
@@ -525,7 +525,8 @@ export default function AdminRegister() {
                     onChange={handleChange}
                     required
                     sx={fieldSx}
-                    InputProps={{
+
+                   slotProps={{ input: {
                       startAdornment: (
                         <InputAdornment position="start">
                           <LockRoundedIcon fontSize="small" />
@@ -541,8 +542,7 @@ export default function AdminRegister() {
                           </IconButton>
                         </InputAdornment>
                       ),
-                    }}
-                  />
+                    } }}/>
                 </Grid>
               </Grid>
               <Button

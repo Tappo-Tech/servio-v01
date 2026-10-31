@@ -627,15 +627,15 @@ function CashierPOSPage() {
 
   const renderCartContents = (mobileView = false) => (
     <Box sx={{ p: mobileView ? { xs: 2, sm: 2.5 } : 0, pb: mobileView ? "calc(16px + env(safe-area-inset-bottom))" : 0 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.35 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+      <Stack direction="row"    sx={{ mb: 1.35 , alignItems: "center", justifyContent: "space-between", gap: 1}}>
+        <Stack direction="row"  spacing={1} sx={{ minWidth: 0 , alignItems: "center"}}>
           <ShoppingCartCheckoutRoundedIcon color="primary" />
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h6" fontWeight={950} sx={{ fontSize: { xs: "1.05rem", sm: "1.2rem" } }}>{text.cart}</Typography>
             {cart.length > 0 && <Typography variant="caption" color="text.secondary">{cartItemCount} {text.selectedCount}</Typography>}
           </Box>
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={.25}>
+        <Stack direction="row"  spacing={.25} sx={{ alignItems: "center" }}>
           {cart.length > 0 && (
             <>
               <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => { setCart([]); if (mobileView) setCartDrawerOpen(false); }} sx={{ display: { xs: "none", sm: "inline-flex" } }}>
@@ -664,15 +664,15 @@ function CashierPOSPage() {
                 <Box sx={{ minWidth: 0 }}>
                   <Typography fontWeight={950} sx={{ fontSize: { xs: ".9rem", sm: ".98rem" }, lineHeight: 1.25, overflowWrap: "anywhere", color: "#171A2F" }}>{item.name}</Typography>
                   {item.selected_addons?.length > 0 && (
-                    <Stack direction="row" spacing={.4} useFlexGap flexWrap="wrap" sx={{ mt: .55 }}>
+                    <Stack direction="row" spacing={.4} useFlexGap  sx={{ mt: .55 , flexWrap: "wrap"}}>
                       {item.selected_addons.map((addon, addonIndex) => <Chip key={`${lineId}-addon-${addonIndex}`} label={typeof addon === "string" ? addon : addon.name} size="small" sx={{ height: 22, fontSize: ".68rem", fontWeight: 800, bgcolor: "rgba(40,120,200,.10)", color: "#245F99", maxWidth: "100%", "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" } }} />)}
                     </Stack>
                   )}
                   <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: .55, fontWeight: 750 }}>{amount(item.price)} {language === "ar" ? "للوحدة" : "each"}</Typography>
                 </Box>
-                <Stack alignItems="flex-end" spacing={.65}>
+                <Stack  spacing={.65} sx={{ alignItems: "flex-end" }}>
                   <Typography sx={{ fontWeight: 950, color: "primary.dark", fontSize: { xs: ".9rem", sm: "1rem" }, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>{amount(lineTotal)}</Typography>
-                  <Stack direction="row" alignItems="center" sx={{ borderRadius: 1.7, bgcolor: "#171A2F", p: .25, gap: .2 }}>
+                  <Stack direction="row"  sx={{ borderRadius: 1.7, bgcolor: "#171A2F", p: .25, gap: .2 , alignItems: "center"}}>
                     <IconButton size="small" aria-label={language === "ar" ? "تقليل الكمية" : "Decrease quantity"} onClick={() => changeQuantity(lineId, -1)} sx={{ color: "#fff", width: 29, height: 29, borderRadius: 1.2, "&:hover": { bgcolor: "rgba(255,255,255,.15)" } }}><RemoveRoundedIcon fontSize="small" /></IconButton>
                     <Typography sx={{ minWidth: 25, textAlign: "center", color: "#fff", fontWeight: 950, fontSize: ".9rem", fontVariantNumeric: "tabular-nums" }}>{item.quantity}</Typography>
                     <IconButton size="small" aria-label={language === "ar" ? "زيادة الكمية" : "Increase quantity"} onClick={() => changeQuantity(lineId, 1)} sx={{ color: "#fff", width: 29, height: 29, borderRadius: 1.2, "&:hover": { bgcolor: "rgba(255,255,255,.15)" } }}><AddRoundedIcon fontSize="small" /></IconButton>
@@ -685,15 +685,15 @@ function CashierPOSPage() {
       )}
 
       <Divider sx={{ mb: 1.4 }} />
-      <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))} inputProps={{ maxLength: 500 }} />
+      <TextField fullWidth size="small" multiline minRows={2} label={text.notes} value={notes} onChange={(event) => setNotes(event.target.value.slice(0, 500))}   slotProps={{ htmlInput: { maxLength: 500 } }}/>
       <Box sx={{ mt: 1.25, p: 1.1, borderRadius: 2, bgcolor: "rgba(23,26,47,.025)", border: "1px solid", borderColor: "divider" }}>
         <PaymentStatusControl value={paymentStatus} method={paymentMethod} onChange={setPaymentStatus} onMethodChange={(method) => { setPaymentMethod(method); if (method === "split") { setCashAmount(Number(grossAmount.toFixed(2))); setCardAmount(0); } }} language={language} allowSplit />
         {paymentMethod === "split" && (
           <Box sx={{ mt: .7, p: 1, borderRadius: 2, bgcolor: "rgba(244,121,32,.08)", border: "1px solid rgba(244,121,32,.28)" }}>
             <Typography variant="caption" fontWeight={850} color="text.secondary" sx={{ display: "block", mb: .7 }}>{text.splitPaymentHint}</Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={.8}>
-              <TextField size="small" fullWidth type="number" label={text.cashAmount} value={cashAmount} onChange={(event) => setCashAmount(Math.max(0, Number(event.target.value) || 0))} inputProps={{ min: 0, step: "0.01" }} />
-              <TextField size="small" fullWidth type="number" label={text.cardAmount} value={cardAmount} onChange={(event) => setCardAmount(Math.max(0, Number(event.target.value) || 0))} inputProps={{ min: 0, step: "0.01" }} />
+              <TextField size="small" fullWidth type="number" label={text.cashAmount} value={cashAmount} onChange={(event) => setCashAmount(Math.max(0, Number(event.target.value) || 0))}   slotProps={{ htmlInput: { min: 0, step: "0.01" } }}/>
+              <TextField size="small" fullWidth type="number" label={text.cardAmount} value={cardAmount} onChange={(event) => setCardAmount(Math.max(0, Number(event.target.value) || 0))}   slotProps={{ htmlInput: { min: 0, step: "0.01" } }}/>
             </Stack>
             <Typography variant="caption" sx={{ display: "block", mt: .7, fontWeight: 900, color: Math.abs(Number(cashAmount || 0) + Number(cardAmount || 0) - grossAmount) <= .01 ? "success.main" : "error.main" }}>
               {amount(Number(cashAmount || 0) + Number(cardAmount || 0))} / {amount(grossAmount)}
@@ -705,7 +705,7 @@ function CashierPOSPage() {
       {cart.length > 0 && (
         <Box sx={{ mt: 1.25, p: 1.35, borderRadius: 2.2, bgcolor: "#f7f8fb", border: "1px solid rgba(23,26,47,.07)" }}>
           <Stack spacing={.65}>
-            <Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={950} sx={{ minWidth: 0 }}>{text.gross}</Typography><Typography fontWeight={950} color="primary.main" sx={{ whiteSpace: "nowrap" }}>{amount(grossAmount)}</Typography></Stack>
+            <Stack direction="row"   sx={{ justifyContent: "space-between", gap: 1 }}><Typography fontWeight={950} sx={{ minWidth: 0 }}>{text.gross}</Typography><Typography fontWeight={950} color="primary.main" sx={{ whiteSpace: "nowrap" }}>{amount(grossAmount)}</Typography></Stack>
           </Stack>
         </Box>
       )}
@@ -732,7 +732,7 @@ function CashierPOSPage() {
             {unpaidOrders.map((order) => (
               <Box key={order.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, p: .85, borderRadius: 1.6, bgcolor: "background.paper" }}>
                 <Box sx={{ minWidth: 0 }}><Typography variant="body2" fontWeight={850} noWrap>#{order.order_number || order.displayOrderNumber || "—"} · {order.table_number}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block" }} noWrap>{(order.items || []).map((item) => `${item.quantity}× ${item.name}`).join(language === "ar" ? "، " : ", ")}</Typography><Typography variant="caption" color="text.secondary">{amount(order.total_price)}</Typography></Box>
-                <Stack direction="row" spacing={.35} useFlexGap flexWrap="wrap" justifyContent="flex-end">
+                <Stack direction="row" spacing={.35} useFlexGap   sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {order._pendingKitchenDelta?.length > 0 && <Button size="small" variant="outlined" onClick={() => openKitchenUpdate(order)} sx={{ minWidth: 0, px: .8 }}>{text.kitchenUpdate}</Button>}
                   <Button size="small" variant="outlined" onClick={() => editUnpaidOrder(order)}>{language === "ar" ? "تعديل" : "Edit"}</Button>
                   <Button size="small" variant="contained" color="success" onClick={() => openSettlement(order)}>{language === "ar" ? "تسجيل السداد" : "Record payment"}</Button>
@@ -757,8 +757,8 @@ function CashierPOSPage() {
       <Box sx={{ maxWidth: 1540, minWidth: 0, mx: "auto" }}>
         <CashierShiftGate />
         <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2, md: 2.6 }, mb: 2, borderRadius: { xs: 2.5, md: 3.5 }, border: "1px solid rgba(255,255,255,.2)", background: "linear-gradient(120deg, #171A2F 0%, #202744 66%, #2d3555 100%)", color: "#fff", boxShadow: "0 18px 40px rgba(23,26,47,.18)", position: "relative", overflow: "hidden", "&:after": { content: '""', position: "absolute", width: 220, height: 220, borderRadius: "50%", background: "rgba(244,121,32,.18)", insetInlineEnd: -85, top: -110 } }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ minWidth: 0, position: "relative", zIndex: 1 }}>
+          <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+            <Stack direction="row"  spacing={1.2} sx={{ minWidth: 0, position: "relative", zIndex: 1 , alignItems: "center"}}>
               <Box sx={{ width: 46, height: 46, borderRadius: 2.4, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.16)", border: "1px solid rgba(244,121,32,.35)" }}><PointOfSaleRoundedIcon sx={{ fontSize: 29, color: "#FF9B57" }} /></Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h5" fontWeight={950} sx={{ fontSize: { xs: "1.08rem", sm: "1.45rem" }, lineHeight: 1.25, letterSpacing: "-.02em" }}>{text.title}</Typography>
@@ -795,7 +795,7 @@ function CashierPOSPage() {
         {/* وضع نوع الطلب قبل شبكة المنيو والسلة يضمن ظهوره دون تمرير، خصوصًا على الهاتف. */}
         <Paper elevation={0} sx={{ p: { xs: 1.35, sm: 2 }, mb: 2, borderRadius: { xs: 2.5, md: 3 }, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.94)", boxShadow: "0 8px 22px rgba(23,26,47,.045)" }}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 280px" }, gap: 1.5, alignItems: "center" }}>
-            <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} spacing={1.2}>
+            <Stack direction={{ xs: "column", sm: "row" }}  spacing={1.2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
               <Typography variant="body2" color="text.secondary" fontWeight={850} sx={{ minWidth: { sm: 82 } }}>{text.orderType}</Typography>
               <Stack direction="row" spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
                 <Button fullWidth variant={orderType === "dineIn" ? "contained" : "outlined"} aria-pressed={orderType === "dineIn"} onClick={() => setOrderType("dineIn")} sx={{ minWidth: { sm: 130 }, minHeight: 48, borderRadius: 2, fontWeight: 900 }}>
@@ -820,14 +820,14 @@ function CashierPOSPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={text.search}
-              inputProps={{ "aria-label": text.search }}
-              InputProps={{
+
+
+              sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" }, alignSelf: "start" }}
+             slotProps={{ htmlInput: { "aria-label": text.search }, input: {
                 startAdornment: <InputAdornment position="start"><SearchRoundedIcon color="action" /></InputAdornment>,
                 endAdornment: search ? <InputAdornment position="end"><IconButton size="small" aria-label={text.clearSearch} onClick={() => setSearch("")} edge="end"><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment> : null,
-              }}
-              sx={{ mb: 1.5, gridColumn: { xs: "1", md: "1 / -1" }, alignSelf: "start" }}
-            />
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: { xs: "1", md: filtersOpen ? "1" : "1 / -1" }, mb: .8, alignSelf: "start" }}>
+              } }}/>
+            <Stack direction="row"   sx={{ gridColumn: { xs: "1", md: filtersOpen ? "1" : "1 / -1" }, mb: .8, alignSelf: "start" , alignItems: "center", justifyContent: "space-between"}}>
               <Typography variant="caption" fontWeight={900} color="text.secondary">{language === "ar" ? "التصنيفات" : "Categories"}</Typography>
               <IconButton size="small" aria-label={filtersOpen ? (language === "ar" ? "إخفاء الفلاتر" : "Hide filters") : (language === "ar" ? "إظهار الفلاتر" : "Show filters")} onClick={() => setFiltersOpen((open) => !open)}><ArrowBackRoundedIcon sx={{ transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} fontSize="small" /></IconButton>
             </Stack>
@@ -899,7 +899,7 @@ function CashierPOSPage() {
                         <Typography variant="body2" fontWeight={950} sx={{ fontSize: { xs: ".86rem", sm: ".98rem" }, color: "secondary.main", lineHeight: 1.28, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere", minHeight: "2.1em" }}>{item.name}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ mt: .25, display: { xs: "none", sm: "-webkit-box" }, WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.25, minHeight: "1.25em" }}>{item.description || " "}</Typography>
                       </Box>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={.5}>
+                      <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: .5 }}>
                         <Typography variant="body2" fontWeight={950} color="primary.main" sx={{ overflowWrap: "anywhere" }}>{amount(item.price)}</Typography>
                         {normalizeAddonLimit(item.max_addons, addonChoiceCounts.get(String(item.id)) || 0) > 0 && <Chip label={text.addonBadge} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: ".58rem", fontWeight: 850, "& .MuiChip-label": { px: .7 } }} />}
                       </Stack>
@@ -930,8 +930,8 @@ function CashierPOSPage() {
       {cart.length > 0 && (
         <Box component="footer" sx={{ display: { xs: "block", sm: "none" }, position: "fixed", insetInline: 0, bottom: 0, zIndex: (theme) => theme.zIndex.appBar + 1, px: 1.25, pt: .9, pb: "calc(10px + env(safe-area-inset-bottom))", bgcolor: "rgba(246,247,249,.98)", borderTop: "1px solid rgba(23,26,47,.08)" }}>
           <Button fullWidth variant="contained" onClick={() => setCartDrawerOpen(true)} aria-label={`${text.cartReview}: ${cartItemCount} ${text.selectedCount}, ${amount(grossAmount)}`} sx={{ minHeight: 58, px: 1.6, borderRadius: 2.6, bgcolor: "secondary.main", color: "common.white", textTransform: "none", boxShadow: "0 8px 22px rgba(23,26,47,.18)", "&:hover": { bgcolor: "secondary.dark" } }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, textAlign: "start" }}>
+            <Stack direction="row"   sx={{ width: "100%" , alignItems: "center", justifyContent: "space-between"}}>
+              <Stack direction="row"  spacing={1} sx={{ minWidth: 0, textAlign: "start" , alignItems: "center"}}>
                 <ShoppingCartCheckoutRoundedIcon sx={{ color: "primary.light" }} />
                 <Box sx={{ minWidth: 0 }}>
                   <Typography variant="body2" fontWeight={900} sx={{ lineHeight: 1.2 }}>{text.cartReview}</Typography>
@@ -997,18 +997,18 @@ function CashierPOSPage() {
                   label={language === "ar" ? "المبلغ النقدي" : "Cash amount"}
                   value={settlementCashAmount}
                   onChange={(event) => setSettlementCashAmount(event.target.value)}
-                  inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }}
+
                   required
-                />
+                 slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
                 <TextField
                   fullWidth
                   type="number"
                   label={language === "ar" ? "مبلغ الشبكة" : "Card amount"}
                   value={settlementCardAmount}
                   onChange={(event) => setSettlementCardAmount(event.target.value)}
-                  inputProps={{ min: 0, step: "0.01", inputMode: "decimal" }}
+
                   required
-                />
+                 slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal" } }}/>
               </Stack>
             )}
             {settlementMethod === "split" && (
@@ -1047,7 +1047,7 @@ function CashierPOSPage() {
         <DialogTitle sx={{ fontWeight: 950 }}>{text.addonsTitle}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={1.5}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+            <Stack direction="row"    sx={{ justifyContent: "space-between", alignItems: "center", gap: 1 }}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography fontWeight={850} noWrap>{addonDialogItem?.name}</Typography>
                 <Typography variant="caption" color="text.secondary">{amount(addonDialogItem?.price)}</Typography>

@@ -120,7 +120,7 @@ export default function CategoryPrintRoutingDrawer({ open, onClose, categories =
   return <Root {...rootProps}>
     <Box dir={isArabic ? "rtl" : "ltr"} sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ p: 2.25, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
-        <Stack direction="row" spacing={1.1} alignItems="flex-start"><PrintRoundedIcon color="primary" sx={{ mt: .4 }} /><Box><Typography variant="h6" fontWeight={950}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .5, lineHeight: 1.7 }}>{text.subtitle}</Typography></Box></Stack>
+        <Stack direction="row" spacing={1.1}  sx={{ alignItems: "flex-start" }}><PrintRoundedIcon color="primary" sx={{ mt: .4 }} /><Box><Typography variant="h6" fontWeight={950}>{text.title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .5, lineHeight: 1.7 }}>{text.subtitle}</Typography></Box></Stack>
         <IconButton onClick={onClose} aria-label={text.close}><CloseRoundedIcon /></IconButton>
       </Box>
       <Divider />
@@ -136,7 +136,7 @@ export default function CategoryPrintRoutingDrawer({ open, onClose, categories =
             const separate = Boolean(separateDraft[id]);
             const split = Boolean(splitDraft[id]);
             return <Box key={category.id} sx={{ p: 1.6, borderRadius: 2.5, border: "1px solid", borderColor: separate || split ? "primary.light" : "divider", bgcolor: separate || split ? "rgba(244,121,32,.045)" : "background.paper" }}>
-              <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={1}>
+              <Stack direction={{ xs: "column", sm: "row" }}    sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 1 }}>
                 <Box sx={{ minWidth: 0 }}><Typography fontWeight={900} noWrap>{category.name}</Typography><Typography variant="caption" color="text.secondary">{separate ? text.enabled : text.disabled}</Typography></Box>
                 <FormControlLabel label={text.separate} labelPlacement="start" control={<Switch checked={separate} onChange={() => { setSeparateDraft((current) => ({ ...current, [id]: !current[id] })); setNotice(""); }} disabled={saving} color="primary" />} sx={{ m: 0, flexShrink: 0, alignSelf: { xs: "flex-start", sm: "auto" }, "& .MuiFormControlLabel-label": { fontSize: ".76rem", fontWeight: 800 } }} />
               </Stack>

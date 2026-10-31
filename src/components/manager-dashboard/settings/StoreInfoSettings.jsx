@@ -205,7 +205,8 @@ function StoreInfoSettings() {
             helperText={
               isSlugLocked ? t("managerAutoSlug") : t("managerEditSlug")
             }
-            InputProps={{
+
+           slotProps={{ input: {
               endAdornment: (
                 <IconButton
                   size="small"
@@ -221,8 +222,7 @@ function StoreInfoSettings() {
                   )}
                 </IconButton>
               ),
-            }}
-          />
+            } }}/>
         </Grid>
 
         {/* Phone Number */}

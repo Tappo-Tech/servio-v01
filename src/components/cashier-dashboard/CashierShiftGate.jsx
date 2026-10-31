@@ -25,7 +25,7 @@ function ShiftMetric({ icon, label, value }) {
         bgcolor: "rgba(255,255,255,.86)",
       }}
     >
-      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: "text.secondary" }}>
+      <Stack direction="row" spacing={0.75}  sx={{ color: "text.secondary" , alignItems: "center"}}>
         {icon}
         <Typography variant="caption" fontWeight={750} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
           {label}
@@ -89,7 +89,7 @@ function ShiftDialog({
       aria-labelledby="shift-dialog-title"
     >
       <Box sx={{ bgcolor: "secondary.main", color: "common.white" }}>
-        <Stack direction="row" alignItems="center" spacing={1.25} sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
+        <Stack direction="row"  spacing={1.25} sx={{ px: { xs: 2, sm: 2.5 }, py: 2 , alignItems: "center"}}>
           <Box
             sx={{
               width: 42,
@@ -136,7 +136,7 @@ function ShiftDialog({
 
         {schedule && (
           <Paper variant="outlined" sx={{ mb: 2, px: 1.4, py: 1.1, borderRadius: 2.5, bgcolor: "action.hover" }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row"  spacing={1} sx={{ alignItems: "center" }}>
               <AccessTimeRoundedIcon fontSize="small" color="primary" />
               <Typography variant="body2" color="text.secondary">
                 {ar ? "ساعات العمل المحددة" : "Configured working hours"}
@@ -158,12 +158,12 @@ function ShiftDialog({
             type="number"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            inputProps={{ min: 0, step: "0.01", inputMode: "decimal", dir: "ltr" }}
-            InputProps={{ startAdornment: <InputAdornment position="start">{currency}</InputAdornment> }}
+
+
             helperText={starting
               ? (ar ? "يمكن إدخال الكسور حتى منزلتين عشريتين. أدخل 0 إذا لم يوجد نقد في الدرج." : "Fractions to two decimal places are accepted. Enter 0 if no cash is in the drawer.")
               : (ar ? "يمكن إدخال الكسور حتى منزلتين عشريتين؛ أدخل الرصيد الفعلي بعد عدّ النقد." : "Fractions to two decimal places are accepted; enter the actual counted cash.")}
-          />
+           slotProps={{ htmlInput: { min: 0, step: "0.01", inputMode: "decimal", dir: "ltr" }, input: { startAdornment: <InputAdornment position="start">{currency}</InputAdornment> } }}/>
           {!starting && (
             <TextField
               fullWidth
@@ -305,7 +305,7 @@ export default function CashierShiftGate() {
 
       {loading ? (
         <Paper variant="outlined" sx={{ mb: 1.5, p: 2, borderRadius: 3, borderColor: "divider" }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5}  sx={{ alignItems: "center" }}>
             <Skeleton variant="rounded" width={48} height={48} />
             <Box sx={{ flex: 1 }}><Skeleton width="42%" /><Skeleton width="68%" /></Box>
           </Stack>
@@ -337,13 +337,13 @@ export default function CashierShiftGate() {
             },
           }}
         >
-          <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={2} sx={{ position: "relative", zIndex: 1 }}>
-            <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ minWidth: 0 }}>
+          <Stack direction={{ xs: "column", sm: "row" }}    sx={{ position: "relative", zIndex: 1 , alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 2}}>
+            <Stack direction="row" spacing={1.5}  sx={{ minWidth: 0 , alignItems: "flex-start"}}>
               <Box sx={{ width: 46, height: 46, display: "grid", placeItems: "center", flex: "0 0 auto", borderRadius: 2.7, color: "primary.light", bgcolor: "rgba(255,255,255,.10)" }}>
                 <AccessTimeRoundedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: .55 }}>
+                <Stack direction="row"  spacing={1}  useFlexGap sx={{ mb: .55 , alignItems: "center", flexWrap: "wrap"}}>
                   <Chip size="small" label={ar ? "غير نشطة" : "NOT STARTED"} sx={{ height: 23, color: "#fff", bgcolor: "rgba(244,121,32,.22)", fontWeight: 850, borderRadius: 1.5 }} />
                   {schedule && <Typography variant="caption" sx={{ color: "#fff" }}>{ar ? "الدوام" : "Hours"}: {schedule}</Typography>}
                 </Stack>
@@ -380,13 +380,13 @@ export default function CashierShiftGate() {
             boxShadow: "0 10px 28px rgba(23,26,47,.045)",
           }}
         >
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} gap={1.5}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ minWidth: 0 }}>
+          <Stack direction={{ xs: "column", sm: "row" }}    sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, gap: 1.5 }}>
+            <Stack direction="row"  spacing={1.2} sx={{ minWidth: 0 , alignItems: "center"}}>
               <Box sx={{ width: 42, height: 42, display: "grid", placeItems: "center", flex: "0 0 auto", borderRadius: 2.5, color: "success.main", bgcolor: "rgba(22,163,74,.10)" }}>
                 <CheckCircleRoundedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
+                <Stack direction="row"  spacing={1}  useFlexGap sx={{ alignItems: "center", flexWrap: "wrap" }}>
                   <Typography id="active-shift-title" fontWeight={950}>{ar ? "الوردية نشطة" : "Shift is active"}</Typography>
                   <Chip size="small" color="success" label={ar ? "مفتوحة" : "OPEN"} sx={{ height: 22, fontWeight: 850 }} />
                 </Stack>

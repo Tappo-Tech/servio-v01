@@ -245,14 +245,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           label={t("menuPriceField")}
           name="price"
           type="number"
-          inputProps={{ min: 0, step: "0.01" }}
+
           value={formData.price}
           onChange={handleChange}
           size="small"
           fullWidth
           required
           helperText={language === "ar" ? "يمكن إدخال السعر بالكسور حتى منزلتين عشريتين، مثل 12.50." : "Enter fractional prices to two decimal places, for example 12.50."}
-        />
+         slotProps={{ htmlInput: { min: 0, step: "0.01" } }}/>
 
         <TextField
           select

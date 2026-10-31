@@ -258,8 +258,8 @@ function Reports() {
     <Box component="main" dir={language === "ar" ? "rtl" : "ltr"} className="reports-print-page" sx={{ width: "100%", minWidth: 0 }}>
       <style>{`@media print { @page { size: A4 portrait; margin: 12mm; } .reports-no-print { display: none !important; } .reports-print-page { background: #fff !important; padding: 0 !important; } .reports-print-card { box-shadow: none !important; break-inside: avoid; } }`}</style>
       <Stack spacing={{ xs: 2, md: 2.5 }}>
-        <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" gap={1.5}>
-          <Stack direction="row" alignItems="center" spacing={1.2}>
+        <Stack direction={{ xs: "column", md: "row" }}    sx={{ alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between", gap: 1.5 }}>
+          <Stack direction="row"  spacing={1.2} sx={{ alignItems: "center" }}>
             <Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "12px", bgcolor: "rgba(244,121,32,.10)", color: "primary.main", flexShrink: 0 }}>
               <AssessmentOutlinedIcon sx={{ fontSize: 26 }} />
             </Box>
@@ -271,7 +271,7 @@ function Reports() {
           <Chip label={`${text.range}: ${rangeLabel}`} variant="outlined" sx={{ alignSelf: { xs: "flex-start", md: "center" }, fontWeight: 700, maxWidth: "100%", bgcolor: "background.paper", borderColor: "divider", color: "text.secondary" }} />
         </Stack>
 
-        <Stack className="reports-no-print" direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" gap={1.2}>
+        <Stack className="reports-no-print" direction={{ xs: "column", sm: "row" }}    sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 1.2 }}>
           <ToggleButtonGroup
             exclusive
             value={period}
@@ -284,7 +284,7 @@ function Reports() {
             <ToggleButton value="weekly">{text.weekly}</ToggleButton>
             <ToggleButton value="monthly">{text.monthly}</ToggleButton>
           </ToggleButtonGroup>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={1}  useFlexGap sx={{ flexWrap: "wrap" }}>
             <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={refreshReport} disabled={loading} sx={{ fontWeight: 700, borderRadius: "10px" }}>
               {text.refresh}
             </Button>
@@ -304,7 +304,7 @@ function Reports() {
         {error && <Alert severity="error" action={<Button color="inherit" size="small" onClick={refreshReport}>{text.refresh}</Button>}>{error}</Alert>}
         {loading ? (
           <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
-            <CardContent><Stack direction="row" alignItems="center" justifyContent="center" spacing={1.2} sx={{ py: 4 }}><CircularProgress size={24} /><Typography color="text.secondary">{text.loading}</Typography></Stack></CardContent>
+            <CardContent><Stack direction="row"   spacing={1.2} sx={{ py: 4 , alignItems: "center", justifyContent: "center"}}><CircularProgress size={24} /><Typography color="text.secondary">{text.loading}</Typography></Stack></CardContent>
           </Card>
         ) : !error && report.orderCount === 0 ? (
           <Alert severity="info" className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider" }}>{text.noData}</Alert>
@@ -316,7 +316,7 @@ function Reports() {
 
             <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
                   <Typography variant="h6" fontWeight={800} color="text.primary">{period === "daily" ? text.dailyTrend : text.periodTrend}</Typography>
                   <Typography variant="caption" color="text.secondary">{currency}</Typography>
                 </Stack>
@@ -353,7 +353,7 @@ function Reports() {
 
             <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.2 }}>
+                <Stack direction="row"    sx={{ mb: 1.2 , alignItems: "center", justifyContent: "space-between", gap: 1}}>
                   <Typography variant="h6" fontWeight={800} color="text.primary">{text.topItems}</Typography>
                   <Chip size="small" label={report.topItems.length} variant="outlined" />
                 </Stack>

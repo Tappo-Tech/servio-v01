@@ -273,7 +273,7 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
               </Button>
             </Stack>
           </Box>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+          <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
             <Chip size="small" color={connected ? "success" : "default"} label={connected ? text.connected : text.disconnected} />
             <Button variant="outlined" startIcon={busy ? <CircularProgress size={16} /> : <RefreshRoundedIcon />} disabled={busy} onClick={refreshPrinters}>
               {busy ? text.refreshBusy : text.refresh}

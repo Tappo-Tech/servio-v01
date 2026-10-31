@@ -99,25 +99,25 @@ function UserProfileSettings() {
       {isCashier && <Alert severity="info" sx={{ mb: 2 }}>{t("managerCashierProfileHint")}</Alert>}
       <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField fullWidth label={t("managerFullName")} name="full_name" value={formData.full_name} onChange={handleInputChange} disabled={isCashier || saving} required size="small" helperText={isCashier ? t("managerManagerOnly") : ""} InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon fontSize="small" /></InputAdornment> }} />
+          <TextField fullWidth label={t("managerFullName")} name="full_name" value={formData.full_name} onChange={handleInputChange} disabled={isCashier || saving} required size="small" helperText={isCashier ? t("managerManagerOnly") : ""}   slotProps={{ input: { startAdornment: <InputAdornment position="start"><PersonIcon fontSize="small" /></InputAdornment> } }}/>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField fullWidth label={t("email")} name="email" type="email" value={formData.email} onChange={handleInputChange} disabled={isCashier || saving} required size="small" InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon fontSize="small" /></InputAdornment> }} />
+          <TextField fullWidth label={t("email")} name="email" type="email" value={formData.email} onChange={handleInputChange} disabled={isCashier || saving} required size="small"   slotProps={{ input: { startAdornment: <InputAdornment position="start"><EmailIcon fontSize="small" /></InputAdornment> } }}/>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField fullWidth label={t("managerPhone")} name="phone" value={formData.phone} onChange={handleInputChange} disabled={isCashier || saving} size="small" InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon fontSize="small" /></InputAdornment> }} />
+          <TextField fullWidth label={t("managerPhone")} name="phone" value={formData.phone} onChange={handleInputChange} disabled={isCashier || saving} size="small"   slotProps={{ input: { startAdornment: <InputAdornment position="start"><PhoneIcon fontSize="small" /></InputAdornment> } }}/>
         </Grid>
 
         {!isCashier && <>
           <Grid size={{ xs: 12 }}><Alert severity="info">{t("managerSensitiveChangeHint")}</Alert></Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth type={showCurrentPassword ? "text" : "password"} label={t("managerCurrentPassword")} name="current_password" value={formData.current_password} onChange={handleInputChange} disabled={saving} size="small" InputProps={{ startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment>, endAdornment: passwordAdornment(showCurrentPassword, () => setShowCurrentPassword((value) => !value)) }} />
+            <TextField fullWidth type={showCurrentPassword ? "text" : "password"} label={t("managerCurrentPassword")} name="current_password" value={formData.current_password} onChange={handleInputChange} disabled={saving} size="small"   slotProps={{ input: { startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment>, endAdornment: passwordAdornment(showCurrentPassword, () => setShowCurrentPassword((value) => !value)) } }}/>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth type={showNewPassword ? "text" : "password"} label={t("managerNewPassword")} name="new_password" value={formData.new_password} onChange={handleInputChange} disabled={saving} size="small" inputProps={{ minLength: 6, autoComplete: "new-password" }} InputProps={{ startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment>, endAdornment: passwordAdornment(showNewPassword, () => setShowNewPassword((value) => !value)) }} />
+            <TextField fullWidth type={showNewPassword ? "text" : "password"} label={t("managerNewPassword")} name="new_password" value={formData.new_password} onChange={handleInputChange} disabled={saving} size="small"    slotProps={{ htmlInput: { minLength: 6, autoComplete: "new-password" }, input: { startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment>, endAdornment: passwordAdornment(showNewPassword, () => setShowNewPassword((value) => !value)) } }}/>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth type={showNewPassword ? "text" : "password"} label={t("managerConfirmPassword")} name="confirm_password" value={formData.confirm_password} onChange={handleInputChange} disabled={saving} size="small" inputProps={{ autoComplete: "new-password" }} InputProps={{ startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment> }} />
+            <TextField fullWidth type={showNewPassword ? "text" : "password"} label={t("managerConfirmPassword")} name="confirm_password" value={formData.confirm_password} onChange={handleInputChange} disabled={saving} size="small"    slotProps={{ htmlInput: { autoComplete: "new-password" }, input: { startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment> } }}/>
           </Grid>
         </>}
 

@@ -45,8 +45,8 @@ export default function NewTableOrderAlert() {
       >
         <Stack spacing={.65} sx={{ pr: .5 }}>
           <Typography sx={{ fontWeight: 950, fontSize: { xs: "1rem", sm: "1.15rem" } }}>{language === "ar" ? "طلب جديد من الطاولة" : "New table order"}</Typography>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Stack direction="row" spacing={.45} alignItems="center"><TableRestaurantRoundedIcon sx={{ fontSize: 19, color: "#D96210" }} /><Typography variant="body2" fontWeight={900}>{language === "ar" ? `طاولة ${table}` : `Table ${table}`}</Typography></Stack>
+          <Stack direction="row" spacing={1}   useFlexGap sx={{ alignItems: "center", flexWrap: "wrap" }}>
+            <Stack direction="row" spacing={.45}  sx={{ alignItems: "center" }}><TableRestaurantRoundedIcon sx={{ fontSize: 19, color: "#D96210" }} /><Typography variant="body2" fontWeight={900}>{language === "ar" ? `طاولة ${table}` : `Table ${table}`}</Typography></Stack>
             <Typography variant="body2" fontWeight={900}>{language === "ar" ? `طلب #${orderNumber}` : `Order #${orderNumber}`}</Typography>
           </Stack>
           <Button size="small" variant="contained" endIcon={<ArrowBackRoundedIcon />} onClick={goToLiveOrders} sx={{ alignSelf: "flex-start", mt: .35, minHeight: 38, borderRadius: 2, bgcolor: "#171A2F", color: "#fff", fontWeight: 900, "&:hover": { bgcolor: "#0B0D1A" } }}>
