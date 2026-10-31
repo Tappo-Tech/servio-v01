@@ -440,14 +440,14 @@ export const MenuProvider = ({ children }) => {
 
   const addCategory = (newCategory) => guard("menu:add-category", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, separate_print: Boolean(newCategory.separate_print), tenant_id: tenantId, branch_id: branchId }]).select("*").single();
+    const { data, error } = await supabase.from("categories").insert([{ name: newCategory.name, separate_print: Boolean(newCategory.separate_print), split_print: Boolean(newCategory.split_print), tenant_id: tenantId, branch_id: branchId }]).select("*").single();
     if (!error && data) setCategoriesList((prev) => [data, ...prev.filter((entry) => entry.id !== data.id)]);
     return { data, error };
   });
 
   const updateCategory = (cat) => guard(`menu:update-category:${cat.id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { data, error } = await supabase.from("categories").update({ name: cat.name, separate_print: Boolean(cat.separate_print) }).eq("id", cat.id).eq("tenant_id", tenantId).eq("branch_id", branchId).select("*").maybeSingle();
+    const { data, error } = await supabase.from("categories").update({ name: cat.name, separate_print: Boolean(cat.separate_print), split_print: Boolean(cat.split_print) }).eq("id", cat.id).eq("tenant_id", tenantId).eq("branch_id", branchId).select("*").maybeSingle();
     if (!error && data) setCategoriesList((prev) => prev.map((entry) => entry.id === cat.id ? data : entry));
     return { data, error: error || (!data ? new Error("التصنيف غير موجود") : null) };
   });
@@ -457,6 +457,7 @@ export const MenuProvider = ({ children }) => {
     const { data, error } = await supabase.rpc("save_category_print_route", {
       p_category_id: cat.id,
       p_separate_print: Boolean(cat.separate_print),
+      p_split_print: Boolean(cat.split_print),
       p_printer_name: String(cat.printer_name || "").trim() || null,
       p_branch_id: branchId,
     });
@@ -469,6 +470,7 @@ export const MenuProvider = ({ children }) => {
     const payload = routes.map((route) => ({
       category_id: String(route.category_id || route.id || ""),
       separate_print: Boolean(route.separate_print),
+      split_print: Boolean(route.split_print),
       printer_name: String(route.printer_name || "").trim() || null,
     }));
     const { data, error } = await supabase.rpc("save_category_print_routes", { p_routes: payload, p_branch_id: branchId });
@@ -476,7 +478,7 @@ export const MenuProvider = ({ children }) => {
       const routesById = new Map(payload.map((route) => [route.category_id, route]));
       setCategoriesList((current) => current.map((category) => {
         const route = routesById.get(String(category.id));
-        return route ? { ...category, separate_print: route.separate_print, printer_name: route.printer_name } : category;
+        return route ? { ...category, separate_print: route.separate_print, split_print: route.split_print, printer_name: route.printer_name } : category;
       }));
     }
     return { data, error };

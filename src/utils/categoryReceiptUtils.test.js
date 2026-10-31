@@ -65,6 +65,26 @@ describe("category-specific receipt groups", () => {
     expect(groups[1].order.order_number).toBe(order.order_number);
   });
 
+  test("splits a category into its own ticket even when it uses the shared printer", () => {
+    const order = {
+      id: "order-same-printer-split",
+      total_price: 17,
+      items: [
+        { id: "meal", category_id: "food", name: "وجبة", price: 12, quantity: 1 },
+        { id: "drink", category_id: "drinks", name: "مشروب", price: 5, quantity: 1 },
+      ],
+    };
+    const groups = buildOrderReceiptGroups(order, [
+      { id: "food", name: "الأطعمة", separate_print: false, split_print: false },
+      { id: "drinks", name: "المشروبات", separate_print: false, split_print: true },
+    ]);
+
+    expect(groups.map((group) => group.categoryId)).toEqual([null, "drinks"]);
+    expect(groups[1].isSeparate).toBe(true);
+    expect(groups[1].printerName).toBe("");
+    expect(groups.reduce((sum, group) => sum + group.order.total_price, 0)).toBe(17);
+  });
+
   test("classifies older order snapshots from the current menu item id", () => {
     const order = { total_price: 9, items: [{ id: "tea", name: "شاي", price: 9, quantity: 1 }] };
     const groups = buildOrderReceiptGroups(order, categories, [{ id: "tea", category_id: "drinks" }]);
