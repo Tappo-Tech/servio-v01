@@ -1,6 +1,7 @@
 // اختبارات الوحدة والانحدار الخاصة بالوحدة `paymentStatus` وسلوكها المتوقع.
 import {
   createPaymentMethodUpdate,
+  createOrderPaymentStatusUpdate,
   createPaymentSettlementUpdate,
   createPaymentStatusUpdate,
   isValidSplitPayment,
@@ -27,10 +28,20 @@ describe("payment helpers", () => {
     expect(createPaymentStatusUpdate("unpaid")).toEqual({
       payment_status: "unpaid",
       paid_at: null,
-      payment_method: null,
-      cash_amount: null,
-      card_amount: null,
     });
+  });
+
+  test("clears method and amounts only when an existing order is switched to unpaid", () => {
+    expect(createOrderPaymentStatusUpdate("unpaid", {
+      payment_status: "paid", payment_method: "cash", cash_amount: 12.5, card_amount: 0,
+    })).toEqual({
+      payment_status: "unpaid", paid_at: null, payment_method: null, cash_amount: null, card_amount: null,
+    });
+  });
+
+  test("requires a payment method when an unpaid order is switched to paid", () => {
+    expect(() => createOrderPaymentStatusUpdate("paid", { payment_status: "unpaid", total_price: 12.5 }))
+      .toThrow("اختر طريقة الدفع قبل تسجيل الطلب كمدفوع");
   });
 
   test("creates database-valid amounts for cash, card, split, and non-cash settlement", () => {

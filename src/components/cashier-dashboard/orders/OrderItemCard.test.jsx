@@ -32,11 +32,11 @@ beforeEach(() => {
   updateOrderStatus.mockResolvedValue({ data: { id: "order-1" }, error: null });
 });
 
-test("يسمح بتسجيل السداد من قائمة انتظار الدفع دون تسليم الطلب تلقائيًا", async () => {
-  render(<OrderItemCard order={makeOrder()} />);
+test("يسجل الدفع من مرحلة الطلب الحالية دون تغيير مرحلة الطلب", async () => {
+  render(<OrderItemCard order={makeOrder({ status: "preparing" })} />);
 
   fireEvent.click(screen.getByRole("button", { name: "مدفوع" }));
-  await screen.findByText("اختر طريقة الدفع وسجّل السداد. لن يتغير وضع التسليم حتى تنقله يدويًا.");
+  await screen.findByText("اختر طريقة الدفع لتسجيل السداد. لن تتغير مرحلة الطلب.");
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "طريقة الدفع *" }));
   fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
   fireEvent.click(screen.getByRole("button", { name: "تأكيد تسجيل السداد" }));
@@ -47,7 +47,21 @@ test("يسمح بتسجيل السداد من قائمة انتظار الدفع
   expect(updateOrderStatus).not.toHaveBeenCalled();
 });
 
-test("يسمح بتغيير الدفع إلى غير مدفوع ويعتمد مسح بيانات الطريقة والمبالغ في سياق الطلبات", async () => {
+test("يحافظ على التدفق السابق: طلب انتظار الدفع يسدد ثم يسلّم", async () => {
+  render(<OrderItemCard order={makeOrder()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد والتسليم" }));
+  fireEvent.mouseDown(screen.getByRole("combobox", { name: "طريقة الدفع *" }));
+  fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
+  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد والتسليم" }));
+
+  await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", {
+    method: "cash", cashAmount: 0, cardAmount: 0,
+  }));
+  await waitFor(() => expect(updateOrderStatus).toHaveBeenCalledWith("order-1", "served"));
+});
+
+test("يسمح بتغيير الدفع إلى غير مدفوع", async () => {
   render(<OrderItemCard order={makeOrder({
     status: "preparing",
     payment_status: "paid",

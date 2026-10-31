@@ -40,7 +40,6 @@ export default function PaymentStatusControl({
   disabled = false,
   language = "ar",
   allowSplit = false,
-  showMethodSelector = true,
 }) {
   const isArabic = language !== "en";
   const methodFieldId = useId();
@@ -84,7 +83,7 @@ export default function PaymentStatusControl({
         </ToggleButtonGroup>
         {!status && <Chip size="small" variant="outlined" label={text.unknown} />}
       </Stack>
-      {showMethodSelector && <FormControl size="small" disabled={disabled} sx={{ minWidth: 0, width: "100%", maxWidth: "100%", flex: "none" }}>
+      <FormControl size="small" disabled={disabled} sx={{ minWidth: 0, width: "100%", maxWidth: "100%", flex: "none" }}>
         <InputLabel id={`${methodFieldId}-label`}>{text.method}</InputLabel>
         <Select
           labelId={`${methodFieldId}-label`}
@@ -98,7 +97,7 @@ export default function PaymentStatusControl({
             <MenuItem key={methodValue} value={methodValue}>{label}</MenuItem>
           ))}
         </Select>
-      </FormControl>}
+      </FormControl>
     </Stack>
   );
 }

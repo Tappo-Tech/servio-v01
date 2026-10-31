@@ -17,18 +17,10 @@ export function createPaymentStatusUpdate(status, now = () => new Date()) {
   const normalized = normalizePaymentStatus(status);
   if (!normalized) throw new Error("حالة الدفع غير صالحة");
 
-  const update = {
+  return {
     payment_status: normalized,
     paid_at: normalized === "paid" ? now().toISOString() : null,
   };
-
-  // يجب أن تتحول بيانات الدفع كوحدة واحدة؛ لا يحتفظ الطلب غير المدفوع
-  // بطريقة دفع أو مبالغ كانت مسجلة في عملية سداد سابقة.
-  if (normalized === "unpaid") {
-    return { ...update, payment_method: null, cash_amount: null, card_amount: null };
-  }
-
-  return update;
 }
 
 export function createPaymentMethodUpdate(method) {
@@ -73,4 +65,25 @@ export function createPaymentSettlementUpdate(method, { total, cashAmount, cardA
     return { ...methodUpdate, cash_amount: roundedCash, card_amount: roundedCard };
   }
   return { ...methodUpdate, cash_amount: 0, card_amount: 0 };
+}
+
+export function createOrderPaymentStatusUpdate(status, order, paymentDetails = null, now = () => new Date()) {
+  let update = createPaymentStatusUpdate(status, now);
+  if (update.payment_status === "unpaid") {
+    return { ...update, payment_method: null, cash_amount: null, card_amount: null };
+  }
+  if (order?.payment_status !== "paid" && !paymentDetails?.method) {
+    throw new Error("اختر طريقة الدفع قبل تسجيل الطلب كمدفوع");
+  }
+  if (paymentDetails) {
+    update = {
+      ...update,
+      ...createPaymentSettlementUpdate(paymentDetails.method, {
+        total: order?.total_price,
+        cashAmount: paymentDetails.cashAmount,
+        cardAmount: paymentDetails.cardAmount,
+      }),
+    };
+  }
+  return update;
 }
