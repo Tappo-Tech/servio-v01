@@ -453,7 +453,8 @@ function CashierPOSPage() {
     setCheckoutError("");
     setSavedMessage("");
     setInvoiceIsTest(true);
-    setInvoiceAutoPrint(autoPrintAfterSave);
+    // اختبار الطابعة يجب أن يرسل أمرًا فعليًا فورًا، بغض النظر عن تفضيل الطباعة التلقائية للمبيعات.
+    setInvoiceAutoPrint(true);
     setInvoiceIsEditMode(false);
     setInvoiceKitchenUpdateItems([]);
     setInvoicePrintMode("order");

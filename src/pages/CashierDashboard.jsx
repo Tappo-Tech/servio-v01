@@ -353,6 +353,7 @@ function Dashboard() {
             onClose={() => setTestInvoice(null)}
             order={testInvoice}
             isTest
+            autoPrint
           />
         </Stack>
       </Container>
