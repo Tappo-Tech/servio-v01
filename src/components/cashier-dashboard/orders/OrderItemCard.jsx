@@ -50,6 +50,7 @@ function OrderItemCard({ order }) {
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
   const isAwaitingPayment = order.status === "awaiting_payment";
+  const isReady = order.status === "ready";
   const statusVisual = order.status === "pending"
     ? { accent: "#F47920", soft: "rgba(244,121,32,.10)", label: language === "ar" ? "جديد" : "New" }
     : order.status === "preparing"
@@ -115,6 +116,12 @@ function OrderItemCard({ order }) {
   };
   const changePaymentStatus = async (status) => {
     if (paymentSaving) return;
+    if (isReady && status !== "paid") {
+      setPaymentError(language === "ar"
+        ? "لا يمكن تحويل طلب جاهز للاستلام إلى غير مدفوع. أعده إلى انتظار السداد قبل تعديل الدفع."
+        : "A ready-for-pickup order cannot be changed to unpaid. Move it to the payment queue first.");
+      return;
+    }
     setPaymentSaving(true);
     setPaymentError("");
     const result = await updateOrderPaymentStatus(order.id, status);
@@ -202,7 +209,10 @@ function OrderItemCard({ order }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving} language={language} />}
+          {!isAwaitingPayment && <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={paymentSaving || isReady} language={language} />}
+          {isReady && <Typography variant="caption" color="success.dark" sx={{ fontWeight: 800 }}>
+            {language === "ar" ? "جاهز للاستلام — حالة الدفع مثبتة حتى يتم التسليم." : "Ready for pickup — payment status is locked until delivery."}
+          </Typography>}
           {paymentError && <Typography variant="caption" color="error" sx={{ px: 0.25, overflowWrap: "anywhere" }}>{paymentError}</Typography>}
         </Box>
 

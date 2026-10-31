@@ -154,11 +154,20 @@ function InvoiceModal({
     if (printMode === "kitchen-update") return runKitchenPrint();
     if (isTest) return printReceiptGroups(receiptGroups, storeInfo, { language, currency, isTest, settings });
     if (printMode === "cashier" || isInternalReceipt) {
+      const cashierPrinters = settings.printers.filter((printer) => printer !== settings.kitchenPrinter);
       return printReceipt(order, storeInfo, {
         language,
         currency,
         settings,
-        printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter),
+        // الإيصال اليدوي في «جاهز للاستلام» لا يطبع تذكرة مطبخ.
+        // عند وجود طابعة واحدة فقط، نستخدمها كطابعة إيصال بدل فشل الطباعة.
+        printersOverride: cashierPrinters.length
+          ? cashierPrinters
+          : settings.printers.length
+            ? settings.printers
+            : settings.kitchenPrinter
+              ? [settings.kitchenPrinter]
+              : [],
       });
     }
     return printOrderByPaymentStatus(order, receiptGroups, storeInfo, { language, currency, settings });
@@ -189,7 +198,22 @@ function InvoiceModal({
       autoPrintedOrderRef.current = order.id;
       setPrinting(true);
       (printMode === "cashier"
-        ? (() => { const settings = getPrinterSettings(); return printReceipt(order, storeInfo, { language, currency, settings, printersOverride: settings.printers.filter((printer) => printer !== settings.kitchenPrinter) }); })()
+        ? (() => {
+          const settings = getPrinterSettings();
+          const cashierPrinters = settings.printers.filter((printer) => printer !== settings.kitchenPrinter);
+          return printReceipt(order, storeInfo, {
+            language,
+            currency,
+            settings,
+            printersOverride: cashierPrinters.length
+              ? cashierPrinters
+              : settings.printers.length
+                ? settings.printers
+                : settings.kitchenPrinter
+                  ? [settings.kitchenPrinter]
+                  : [],
+          });
+        })()
         : autoPrint === "kitchen"
           ? printKitchenTicketGroups(receiptGroups, storeInfo, { language, currency, settings: getPrinterSettings() })
         : isTest
