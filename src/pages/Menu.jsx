@@ -47,7 +47,7 @@ function Menu() {
         </Box>
       </Box>
       <Container maxWidth="md" sx={{ pt: 1.5 }}>
-        <CustomerTrackingBanner slug={slug} branchSlug={branchSlug} />
+        <CustomerTrackingBanner slug={slug} branchSlug={branchSlug} tableNumber={tableNumber} />
         {slug === "mzaj-ryfy" && (
           <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
             {language === "ar"

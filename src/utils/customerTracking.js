@@ -2,6 +2,11 @@ const STORAGE_PREFIX = "servio.customerTracking.v1";
 const MAX_AGE_MS = 60 * 60 * 1000;
 const MAX_RECORDS = 12;
 
+function normalizeTableNumber(tableNumber) {
+  const value = String(tableNumber ?? "").trim();
+  return value && value !== "غير محدد" ? value.toLowerCase() : "";
+}
+
 function storageKey(slug, branchSlug = "") {
   return `${STORAGE_PREFIX}.${String(slug || "").trim().toLowerCase()}.${String(branchSlug || "main").trim().toLowerCase()}`;
 }
@@ -24,8 +29,10 @@ function createToken() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function getCustomerDeviceToken(slug, branchSlug = "") {
-  const key = `${storageKey(slug, branchSlug)}.device`;
+export function getCustomerDeviceToken(slug, branchSlug = "", tableNumber = "") {
+  const tableKey = normalizeTableNumber(tableNumber);
+  if (!tableKey) return "";
+  const key = `${storageKey(slug, branchSlug)}.table.${encodeURIComponent(tableKey)}.device`;
   try {
     const existing = window.localStorage.getItem(key);
     if (existing) return existing;
@@ -37,9 +44,12 @@ export function getCustomerDeviceToken(slug, branchSlug = "") {
   }
 }
 
-export function getRecentCustomerOrders(slug, branchSlug = "", now = Date.now()) {
+export function getRecentCustomerOrders(slug, branchSlug = "", now = Date.now(), tableNumber = "") {
+  const tableKey = normalizeTableNumber(tableNumber);
+  if (!tableKey) return [];
   return safeRead(storageKey(slug, branchSlug))
     .filter((record) => record?.orderId && record?.trackingToken)
+    .filter((record) => normalizeTableNumber(record.tableNumber) === tableKey)
     .filter((record) => now - new Date(record.createdAt || 0).getTime() <= MAX_AGE_MS)
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 }
@@ -58,18 +68,19 @@ export function getRecentCustomerOrdersForSlug(slug, now = Date.now()) {
     return [];
   }
   return records
-    .filter((record) => record?.orderId && record?.trackingToken)
+    .filter((record) => record?.orderId && record?.trackingToken && normalizeTableNumber(record.tableNumber))
     .filter((record) => now - new Date(record.createdAt || 0).getTime() <= MAX_AGE_MS)
     .filter((record, index, list) => list.findIndex((item) => item.orderId === record.orderId) === index)
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 }
 
 export function saveCustomerOrder({ slug, branchSlug = "", orderId, trackingToken, tableNumber, createdAt = new Date().toISOString() }) {
-  if (!slug || !orderId || !trackingToken) return [];
+  const tableKey = normalizeTableNumber(tableNumber);
+  if (!slug || !orderId || !trackingToken || !tableKey) return [];
   const key = storageKey(slug, branchSlug);
   const next = [
-    { orderId: String(orderId), trackingToken: String(trackingToken), tableNumber: tableNumber || null, createdAt, deviceToken: getCustomerDeviceToken(slug, branchSlug) },
-    ...getRecentCustomerOrders(slug, branchSlug),
+    { orderId: String(orderId), trackingToken: String(trackingToken), tableNumber: tableNumber || null, createdAt, deviceToken: getCustomerDeviceToken(slug, branchSlug, tableNumber) },
+    ...getRecentCustomerOrders(slug, branchSlug, Date.now(), tableNumber),
   ].filter((record, index, records) => records.findIndex((item) => item.orderId === record.orderId) === index).slice(0, MAX_RECORDS);
   try { window.localStorage.setItem(key, JSON.stringify(next)); } catch { /* التخزين المحلي اختياري */ }
   return next;

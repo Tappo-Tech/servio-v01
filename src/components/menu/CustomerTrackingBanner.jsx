@@ -6,10 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../context/LanguageContext";
 import { getCustomerTrackingPath, getRecentCustomerOrders } from "../../utils/customerTracking";
 
-export default function CustomerTrackingBanner({ slug, branchSlug = "" }) {
+export default function CustomerTrackingBanner({ slug, branchSlug = "", tableNumber = "" }) {
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const records = useMemo(() => getRecentCustomerOrders(slug, branchSlug), [slug, branchSlug]);
+  const records = useMemo(() => getRecentCustomerOrders(slug, branchSlug, Date.now(), tableNumber), [slug, branchSlug, tableNumber]);
   if (!records.length) return null;
   const latest = records[0];
   return (

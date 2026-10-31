@@ -26,7 +26,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { buildMenuReturnPath } from "../utils/orderTrackingRoutes";
 import { getCustomerTrackingPath, getRecentCustomerOrdersForSlug } from "../utils/customerTracking";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 1_000;
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TRACKING_STORAGE_PREFIX = "servio.orderTracking.";
@@ -55,7 +55,7 @@ const copy = {
     invalidBody: "رابط التتبع غير صالح أو لا يخص هذا الطلب. افتح صفحة التتبع من الجهاز الذي أرسل منه الطلب.",
     back: "العودة إلى منيو الطاولة",
     retry: "إعادة المحاولة",
-    live: "تحديث تلقائي كل 10 ثوانٍ ما دامت الصفحة مفتوحة",
+    live: "تحديث تلقائي كل ثانية ما دامت الصفحة مفتوحة",
     storeFallback: "طلبك لدى",
     statusLabel: "الحالة الحالية",
     unavailableStatus: "حالة الطلب",
@@ -83,7 +83,7 @@ const copy = {
     invalidBody: "This tracking link is invalid or does not belong to this order. Open tracking on the device used to place the order.",
     back: "Back to this table's menu",
     retry: "Try again",
-    live: "Automatically refreshes every 10 seconds while this page is open",
+    live: "Automatically refreshes every second while this page is open",
     storeFallback: "Your order at",
     statusLabel: "Current status",
     unavailableStatus: "Order status",
