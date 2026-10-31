@@ -452,7 +452,7 @@ export const OrdersProvider = ({ children }) => {
           .update(paymentUpdate)
           .eq("id", orderId)
           .eq("tenant_id", tenantId).eq("branch_id", branchId)
-          .select("id,payment_status,paid_at,payment_method,cash_amount,card_amount")
+          .select("id,status,is_completed,completed_at,payment_status,paid_at,payment_method,cash_amount,card_amount")
           .maybeSingle();
       } catch (networkError) {
         result = { data: null, error: networkError };

@@ -514,7 +514,8 @@ function CashierPOSPage() {
         payment_method: paymentMethod,
         cash_amount: paymentMethod === "split" ? Number(cashAmount || 0) : paymentMethod === "cash" ? grossAmount : 0,
         card_amount: paymentMethod === "split" ? Number(cardAmount || 0) : paymentMethod === "card" ? grossAmount : 0,
-        completeImmediately: true,
+        // لا يُغلق الطلب محاسبيًا قبل تسجيل السداد.
+        completeImmediately: paymentStatus === "paid",
       };
       const result = isEditing
         ? await updateOrder(editingOrderId, orderInput)

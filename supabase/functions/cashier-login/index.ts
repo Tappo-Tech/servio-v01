@@ -31,7 +31,7 @@ Deno.serve(async (req: Request) => {
     const username = String(body?.username || "").trim().toLowerCase();
     const pin = String(body?.pin || "");
     const ip = (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown").split(",")[0].trim();
-    if (!slug || !branchSlug || !username || !pin) return json({ error: genericError }, 401, headers);
+    if (!slug || !branchSlug || !username || !/^\d{4,6}$/.test(pin)) return json({ error: genericError }, 401, headers);
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const rate = await supabase.rpc("check_cashier_login_rate_limit", {
