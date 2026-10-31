@@ -433,10 +433,12 @@ export async function printOrderByPaymentStatus(order, groups, storeInfo, option
   if (plan.cashier) {
     try {
       const cashierPrinters = settings.printers.filter((printer) => printer !== settings.kitchenPrinter);
+      // عند وجود طابعة واحدة فقط، تُستخدم لطباعة تذكرة المطبخ والفاتورة معًا.
+      const cashierTargets = cashierPrinters.length ? cashierPrinters : settings.printers.length ? settings.printers : [settings.kitchenPrinter].filter(Boolean);
       cashierResult = await printReceipt(order, storeInfo, {
         ...options,
         settings,
-        printersOverride: cashierPrinters,
+        printersOverride: cashierTargets,
         receiptTitle: null,
       });
     } catch (error) {

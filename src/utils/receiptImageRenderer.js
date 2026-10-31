@@ -3,6 +3,7 @@ const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
 const A4_PAGE_HEIGHT_MM = 297;
 const CSS_PX_PER_MM = 96 / 25.4;
 const RENDER_SCALE = 3;
+const THERMAL_TARGET_DOTS = { "58mm": 384, "80mm": 576 };
 
 function canvasToBase64(canvas) {
   const value = canvas.toDataURL("image/png");
@@ -87,9 +88,11 @@ export async function renderReceiptHtmlToImages(html, paperWidth = "80mm") {
 
     const module = await import("html2canvas");
     const html2canvas = module.default || module;
+    const thermalTargetDots = THERMAL_TARGET_DOTS[paperWidth];
+    const renderScale = thermalTargetDots ? thermalTargetDots / Math.max(1, width) : RENDER_SCALE;
     const canvas = await html2canvas(receipt, {
       backgroundColor: "#ffffff",
-      scale: RENDER_SCALE,
+      scale: renderScale,
       useCORS: true,
       logging: false,
       width,
