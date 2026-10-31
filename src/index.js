@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import theme from "./theme/Theme";
+import { createAppTheme } from "./theme/Theme";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { TenantProvider } from "./context/TenantContext";
 import { MenuProvider } from "./context/MenuContext";
@@ -19,10 +19,21 @@ import { FeedbacksProvider } from "./context/FeedbackContext";
 import { WaiterCallsProvider } from "./context/WaiterCallsContext";
 import { SuggestionsProvider } from "./context/SuggestionsContext";
 import { BranchProvider } from "./context/BranchContext";
-import { LanguageProvider } from "./context/LanguageContext";
+import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 autoRoot();
+
+function DirectionalTheme({ children }) {
+  const { language } = useLanguage();
+  const direction = language === "ar" ? "rtl" : "ltr";
+  return (
+    <ThemeProvider theme={createAppTheme(direction)}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
+}
 
 function autoRoot() {
   const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -46,10 +57,9 @@ function autoRoot() {
                           <FeedbacksProvider>
                             <WaiterCallsProvider>
                               <SuggestionsProvider>
-                                <ThemeProvider theme={theme}>
-                                  <CssBaseline />
+                                <DirectionalTheme>
                                   <App />
-                                </ThemeProvider>
+                                </DirectionalTheme>
                               </SuggestionsProvider>
                             </WaiterCallsProvider>
                           </FeedbacksProvider>

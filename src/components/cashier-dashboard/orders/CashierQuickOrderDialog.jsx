@@ -141,6 +141,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
       const result = await addOrder({
         items: cart,
         total_price: total,
+        cashier_session_id: currentShift?.id || null,
         table_number: orderType === "takeaway"
           ? (ar ? "سفري" : "Takeaway")
           : tableNumber.trim() ? `${ar ? "محلي" : "Dine-in"} - ${tableNumber.trim()}` : (ar ? "محلي" : "Dine-in"),

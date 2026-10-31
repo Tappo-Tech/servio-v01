@@ -22,6 +22,7 @@ import { useMenu } from "../context/MenuContext";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
 import { useTenant } from "../context/TenantContext";
+import { useBranch } from "../context/BranchContext";
 import { useLanguage } from "../context/LanguageContext";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
@@ -172,12 +173,14 @@ function CashierPOSPage() {
   const { addOrder, updateOrder, updateOrderPaymentStatus, deleteOrder } = useOrders();
   const { storeInfo = {} } = useStore();
   const { tenantId, loading: tenantLoading } = useTenant();
+  const { selectedBranchId: branchId } = useBranch();
   const { language } = useLanguage();
   const { currentShift } = useShift();
   const { user } = useUser();
   const shiftRequired = user?.role === "cashier";
   const text = copy[language] || copy.ar;
   const currency = storeInfo.currency || (language === "ar" ? "ر.س" : "SAR");
+  const unpaidStorageKey = `servio.pos.unpaidOrders.${tenantId || "none"}.${branchId || "none"}.${user?.id || "anon"}.${currentShift?.id || "no-shift"}`;
 
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -248,17 +251,25 @@ function CashierPOSPage() {
   useEffect(() => {
     if (!tenantId) return;
     try {
-      const stored = JSON.parse(window.localStorage.getItem(`servio.pos.unpaidOrders.${tenantId}`) || "[]");
-      setUnpaidOrders(Array.isArray(stored) ? stored : []);
+      const stored = JSON.parse(window.localStorage.getItem(unpaidStorageKey) || "[]");
+      const now = Date.now();
+      const valid = Array.isArray(stored)
+        ? stored.filter((row) => !row?._localExpiresAt || Number(row._localExpiresAt) > now)
+        : [];
+      setUnpaidOrders(valid);
     } catch {
       setUnpaidOrders([]);
     }
-  }, [tenantId]);
+  }, [unpaidStorageKey]);
 
   useEffect(() => {
-    if (!tenantId) return;
-    try { window.localStorage.setItem(`servio.pos.unpaidOrders.${tenantId}`, JSON.stringify(unpaidOrders)); } catch { /* storage is optional */ }
-  }, [tenantId, unpaidOrders]);
+    if (!tenantId || !branchId || !user?.id || !currentShift?.id) return;
+    try {
+      const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
+      const persisted = unpaidOrders.map((row) => ({ ...row, _localExpiresAt: row._localExpiresAt || expiresAt }));
+      window.localStorage.setItem(unpaidStorageKey, JSON.stringify(persisted));
+    } catch { /* storage is optional */ }
+  }, [tenantId, branchId, user?.id, currentShift?.id, unpaidOrders, unpaidStorageKey]);
 
   useEffect(() => {
     if (!tenantId) { setCategoryOrderReady(false); return; }

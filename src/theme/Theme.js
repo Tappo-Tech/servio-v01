@@ -1,8 +1,8 @@
 // إعداد مظهر الواجهة واتجاهاتها عبر `Theme`.
 import { createTheme } from '@mui/material/styles';
 
-const theme = createTheme({
-  direction: 'rtl',
+export const createAppTheme = (direction = 'rtl') => createTheme({
+  direction,
   palette: {
     primary: { main: '#F47920', light: '#F79952', dark: '#D96210', contrastText: '#FFFFFF' },
     secondary: { main: '#171A2F', light: '#2E3250', dark: '#0B0D1A', contrastText: '#FFFFFF' },
@@ -70,4 +70,4 @@ const theme = createTheme({
   },
 });
 
-export default theme;
+export default createAppTheme('rtl');
