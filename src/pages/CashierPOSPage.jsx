@@ -32,7 +32,7 @@ import CategoryPrintRoutingDrawer from "../components/manager-dashboard/menu-con
 import { useShift } from "../context/ShiftContext";
 import { useUser } from "../context/UserContext";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
-import { roundMoney, toMinorUnits } from "../utils/taxUtils";
+import { toMinorUnits } from "../utils/taxUtils";
 import { buildKitchenOrderDelta } from "../utils/orderKitchenDelta";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../utils/cartItemUtils";
@@ -343,12 +343,11 @@ function CashierPOSPage() {
   const normalizedAddonDraft = normalizeSelectedAddons(addonDraft, addonDialogChoices, addonDialogLimit);
   const selectedAddonKeys = new Set(normalizedAddonDraft.map((addon) => addon.id ? `item:${addon.id}` : `text:${addon.name.toLocaleLowerCase()}`));
 
-  // اجمع الأسعار بوحدة الهللة نفسها المستخدمة في شاشة المنيو العامة والفاتورة.
-  const grossMinorUnits = cart.reduce(
-    (sum, item) => sum + toMinorUnits(item.price) * item.quantity,
+  // احفظ الدقة الكاملة التي يحددها المدير؛ التقريب يقتصر على العرض فقط.
+  const grossAmount = cart.reduce(
+    (sum, item) => sum + (Number(item.price) || 0) * Number(item.quantity || 0),
     0,
   );
-  const grossAmount = grossMinorUnits / 100;
   const cartItemCount = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const amount = (value) => `${formatAmount(value, language)} ${currency}`;
 
@@ -366,7 +365,7 @@ function CashierPOSPage() {
       category_id: menuItem.category_id || null,
       cartItemId: uuidV4(),
       name: menuItem.name,
-      price: roundMoney(menuItem.price),
+      price: Number(menuItem.price) || 0,
       quantity: 1,
       addon_options: addonOptions,
       free_addon_item_ids: freeAddonItemIds,

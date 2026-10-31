@@ -19,7 +19,6 @@ import { useTenant } from "../../../context/TenantContext";
 import { useShift } from "../../../context/ShiftContext";
 import { useUser } from "../../../context/UserContext";
 import { useLanguage } from "../../../context/LanguageContext";
-import { roundMoney, toMinorUnits } from "../../../utils/taxUtils";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../../../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../../../utils/cartItemUtils";
 
@@ -75,8 +74,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
       && (!query || `${item.name || ""} ${item.description || ""}`.toLocaleLowerCase().includes(query))
     ));
   }, [availableItems, categoryId, search]);
-  const totalMinor = cart.reduce((sum, item) => sum + toMinorUnits(item.price) * Number(item.quantity || 0), 0);
-  const total = totalMinor / 100;
+  const total = cart.reduce((sum, item) => sum + (Number(item.price) || 0) * Number(item.quantity || 0), 0);
   const addonChoices = addonItem ? buildAddonChoices(addonItem, availableItems) : [];
   const addonLimit = addonItem ? normalizeAddonLimit(addonItem.max_addons, addonChoices) : 0;
 
@@ -88,7 +86,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
       category_id: menuItem.category_id || null,
       cartItemId: newCartItemId(),
       name: menuItem.name,
-      price: roundMoney(menuItem.price),
+      price: Number(menuItem.price) || 0,
       quantity: 1,
       addon_options: normalizeAddonOptions(menuItem.addon_options),
       free_addon_item_ids: normalizeAddonItemIds(menuItem.free_addon_item_ids),
