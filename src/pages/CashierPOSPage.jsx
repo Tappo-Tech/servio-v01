@@ -744,30 +744,34 @@ function CashierPOSPage() {
   return (
     <Box className="cashier-pos-page" dir={language === "ar" ? "rtl" : "ltr"} sx={{ minHeight: "100vh", minWidth: 0, background: "radial-gradient(circle at 84% 4%, rgba(244,121,32,.14), transparent 23%), linear-gradient(135deg, #fff8f1 0%, #f7f8fb 46%, #eef1f7 100%)", py: { xs: 1.25, md: 3 }, pb: { xs: cart.length ? 12 : 1.25, md: 3 }, px: { xs: 1.25, sm: 2.5, lg: 4 }, "& .MuiPaper-root, & .MuiCard-root": { backdropFilter: "none", WebkitBackdropFilter: "none", boxShadow: "0 5px 16px rgba(23,26,47,.045)" } }}>
       <NewTableOrderAlert />
-      <Box sx={{ maxWidth: 1500, minWidth: 0, mx: "auto" }}>
+      <Box sx={{ maxWidth: 1540, minWidth: 0, mx: "auto" }}>
         <CashierShiftGate />
-        <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>
+        <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2, md: 2.6 }, mb: 2, borderRadius: { xs: 2.5, md: 3.5 }, border: "1px solid rgba(255,255,255,.2)", background: "linear-gradient(120deg, #171A2F 0%, #202744 66%, #2d3555 100%)", color: "#fff", boxShadow: "0 18px 40px rgba(23,26,47,.18)", position: "relative", overflow: "hidden", "&:after": { content: '""', position: "absolute", width: 220, height: 220, borderRadius: "50%", background: "rgba(244,121,32,.18)", insetInlineEnd: -85, top: -110 } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-              <PointOfSaleRoundedIcon color="primary" sx={{ fontSize: 34 }} />
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ minWidth: 0, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 46, height: 46, borderRadius: 2.4, display: "grid", placeItems: "center", bgcolor: "rgba(244,121,32,.16)", border: "1px solid rgba(244,121,32,.35)" }}><PointOfSaleRoundedIcon sx={{ fontSize: 29, color: "#FF9B57" }} /></Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="h5" fontWeight={950} sx={{ fontSize: { xs: "1.12rem", sm: "1.5rem" }, lineHeight: 1.25 }}>{text.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: "none", sm: "block" }, mt: .25 }}>{text.subtitle}</Typography>
+                <Typography variant="h5" fontWeight={950} sx={{ fontSize: { xs: "1.08rem", sm: "1.45rem" }, lineHeight: 1.25, letterSpacing: "-.02em" }}>{text.title}</Typography>
+                <Typography variant="body2" sx={{ display: { xs: "none", sm: "block" }, mt: .35, color: "rgba(255,255,255,.68)" }}>{text.subtitle}</Typography>
+                <Stack direction="row" spacing={.7} sx={{ mt: .8 }}>
+                  <Chip size="small" label={currentShift ? (language === "ar" ? "الوردية مفتوحة" : "Shift open") : (language === "ar" ? "لا توجد وردية" : "No shift")} sx={{ height: 25, color: "#fff", bgcolor: currentShift ? "rgba(21,154,104,.28)" : "rgba(244,121,32,.2)", border: "1px solid rgba(255,255,255,.14)", fontWeight: 850 }} />
+                  <Chip size="small" label={`${cartItemCount} ${text.selectedCount}`} sx={{ display: { xs: "none", sm: "inline-flex" }, height: 25, color: "rgba(255,255,255,.82)", bgcolor: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.12)", fontWeight: 800 }} />
+                </Stack>
               </Box>
             </Stack>
-            <Stack direction="row" spacing={0.5} sx={{ display: { xs: "flex", sm: "none" }, flex: "0 0 auto" }}>
-              <IconButton aria-label={text.categoryPrinters} title={text.categoryPrinters} onClick={() => setCategoryRoutingOpen(true)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><CategoryOutlinedIcon fontSize="small" /></IconButton>
-              <IconButton aria-label={text.printerSetup} title={text.printerSetup} onClick={() => setPrinterSetupOpen(true)} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><PrintRoundedIcon fontSize="small" /></IconButton>
-              <IconButton aria-label={text.back} title={text.back} onClick={() => navigate("/dashboard")} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}><ArrowBackRoundedIcon fontSize="small" /></IconButton>
+            <Stack direction="row" spacing={0.5} sx={{ display: { xs: "flex", sm: "none" }, flex: "0 0 auto", position: "relative", zIndex: 1 }}>
+              <IconButton aria-label={text.categoryPrinters} title={text.categoryPrinters} onClick={() => setCategoryRoutingOpen(true)} sx={{ color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 2 }}><CategoryOutlinedIcon fontSize="small" /></IconButton>
+              <IconButton aria-label={text.printerSetup} title={text.printerSetup} onClick={() => setPrinterSetupOpen(true)} sx={{ color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 2 }}><PrintRoundedIcon fontSize="small" /></IconButton>
+              <IconButton aria-label={text.back} title={text.back} onClick={() => navigate("/dashboard")} sx={{ color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 2 }}><ArrowBackRoundedIcon fontSize="small" /></IconButton>
             </Stack>
-            <Stack direction="row" spacing={1} sx={{ display: { xs: "none", sm: "flex" } }}>
-              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setCategoryRoutingOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+            <Stack direction="row" spacing={1} sx={{ display: { xs: "none", sm: "flex" }, position: "relative", zIndex: 1 }}>
+              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setCategoryRoutingOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap", color: "#fff", borderColor: "rgba(255,255,255,.28)", "&:hover": { borderColor: "#FF9B57", bgcolor: "rgba(255,255,255,.06)" } }}>
                 {text.categoryPrinters}
               </Button>
-              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+              <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setPrinterSetupOpen(true)} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap", color: "#fff", borderColor: "rgba(255,255,255,.28)", "&:hover": { borderColor: "#FF9B57", bgcolor: "rgba(255,255,255,.06)" } }}>
                 {text.printerSetup}
               </Button>
-              <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate("/dashboard")} sx={{ borderRadius: 2.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+              <Button variant="contained" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate("/dashboard")} sx={{ borderRadius: 2.5, fontWeight: 850, whiteSpace: "nowrap", bgcolor: "#F47920", "&:hover": { bgcolor: "#D96210" } }}>
                 {text.back}
               </Button>
             </Stack>
@@ -779,7 +783,7 @@ function CashierPOSPage() {
         </Box>
 
         {/* وضع نوع الطلب قبل شبكة المنيو والسلة يضمن ظهوره دون تمرير، خصوصًا على الهاتف. */}
-        <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.2, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.92)" }}>
+        <Paper elevation={0} sx={{ p: { xs: 1.35, sm: 2 }, mb: 2, borderRadius: { xs: 2.5, md: 3 }, border: "1px solid rgba(23,26,47,.08)", background: "rgba(255,255,255,.94)", boxShadow: "0 8px 22px rgba(23,26,47,.045)" }}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 280px" }, gap: 1.5, alignItems: "center" }}>
             <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} spacing={1.2}>
               <Typography variant="body2" color="text.secondary" fontWeight={850} sx={{ minWidth: { sm: 82 } }}>{text.orderType}</Typography>
@@ -798,8 +802,8 @@ function CashierPOSPage() {
           </Box>
         </Paper>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(300px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
-          <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2.2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, gridTemplateRows: "auto auto auto auto", columnGap: { md: 1.8 }, alignItems: "start" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.2fr) minmax(265px, .8fr)", lg: "minmax(0, 1.55fr) minmax(320px, .75fr)" }, gap: { xs: 1.25, md: 2 }, alignItems: "start" }}>
+          <Paper elevation={0} sx={{ p: { xs: 1.35, sm: 2.1 }, borderRadius: { xs: 2.5, md: 3.5 }, border: "1px solid rgba(23,26,47,.08)", minWidth: 0, display: "grid", gridTemplateColumns: { xs: "1fr", md: filtersOpen ? "156px minmax(0,1fr)" : "minmax(0,1fr)" }, gridTemplateRows: "auto auto auto auto", columnGap: { md: 1.8 }, alignItems: "start", boxShadow: "0 10px 26px rgba(23,26,47,.045)" }}>
             <TextField
               fullWidth
               size="small"
@@ -898,7 +902,7 @@ function CashierPOSPage() {
             </Box>
           </Paper>
 
-          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, position: { sm: "sticky" }, top: { sm: 12 }, alignSelf: "start", maxHeight: { sm: "calc(100dvh - 24px)" }, overflowY: { sm: "auto" }, overscrollBehaviorY: "auto", p: { sm: 1.6, md: 2 }, borderRadius: 3, border: "1px solid rgba(23,26,47,.08)", minWidth: 0 }}>
+          <Paper elevation={0} sx={{ display: { xs: "none", sm: "block" }, position: { sm: "sticky" }, top: { sm: 12 }, alignSelf: "start", maxHeight: { sm: "calc(100dvh - 24px)" }, overflowY: { sm: "auto" }, overscrollBehaviorY: "auto", p: { sm: 1.5, md: 1.9 }, borderRadius: { sm: 2.5, md: 3.5 }, border: "1px solid rgba(23,26,47,.1)", minWidth: 0, background: "linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,248,251,.96))", boxShadow: "0 14px 34px rgba(23,26,47,.08)" }}>
             {renderCartContents(false)}
           </Paper>
         </Box>
