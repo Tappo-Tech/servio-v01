@@ -35,7 +35,7 @@ const PAYMENT_METHODS = {
 
 const formatAmount = (value, language) => new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
   minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 20,
 }).format(Number(value) || 0);
 
 const newCartItemId = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);

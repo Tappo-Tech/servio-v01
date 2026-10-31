@@ -159,7 +159,7 @@ const copy = {
 
 const formatAmount = (value, language) => new Intl.NumberFormat(
   language === "ar" ? "ar-SA" : "en-SA",
-  { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+  { minimumFractionDigits: 2, maximumFractionDigits: 20 },
 ).format(Number(value) || 0);
 
 /**
