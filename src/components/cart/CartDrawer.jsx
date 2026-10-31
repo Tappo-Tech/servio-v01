@@ -24,7 +24,6 @@ import { useOrders } from "../../context/OrdersContext";
 import { useTenant } from "../../context/TenantContext";
 import { useBranch } from "../../context/BranchContext";
 import { saveCustomerOrder } from "../../utils/customerTracking";
-import { toMinorUnits } from "../../utils/taxUtils";
 import { getCartLineKey } from "../../utils/cartItemUtils";
 
 function CartDrawer({ open, close, cashierMode = false }) {
@@ -37,11 +36,10 @@ function CartDrawer({ open, close, cashierMode = false }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
 
-  const totalMinorUnits = cartItems.reduce(
-    (acc, item) => acc + toMinorUnits(item.price) * Number(item.quantity || 0),
+  const totalPrice = cartItems.reduce(
+    (acc, item) => acc + (Number(item.price) || 0) * Number(item.quantity || 0),
     0,
   );
-  const totalPrice = totalMinorUnits / 100;
   const itemCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
   const handleConfirmOrder = async () => {
