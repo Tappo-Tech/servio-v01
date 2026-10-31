@@ -224,10 +224,13 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
   const handleTest = () => {
     const saved = save();
     if (!saved) return;
-    if (!saved.printers.length) {
+    if (!saved.printers.length && !saved.kitchenPrinter) {
       setError(language === "en" ? "Select at least one printer first." : "اختر طابعة واحدة على الأقل أولًا.");
       return;
     }
+    // إذا اختار المدير طابعة المطبخ فقط، استخدمها أيضًا لاختبار الاتصال بدل رفض الاختبار.
+    const testSettings = saved.printers.length ? saved : savePrinterSettings({ ...saved, printers: [saved.kitchenPrinter] });
+    setSettings(testSettings);
     onTest?.();
   };
 

@@ -71,7 +71,7 @@ function normalizePrinterSettings(settings) {
     : {};
   return {
     printers: Array.isArray(settings?.printers)
-      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()).filter((name) => name !== kitchenPrinter))]
+      ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()))]
       : [],
     paperWidth: PAPER_WIDTHS.includes(settings?.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth,
     kitchenPrinter,
