@@ -93,9 +93,10 @@ describe("QZ Tray printer integration", () => {
     expect(qz.print).toHaveBeenCalledTimes(2);
     expect(qz.print.mock.calls.map(([config]) => config.printer)).toEqual(saved.printers);
     for (const [, data] of qz.print.mock.calls) {
-      expect(data[0]).toEqual({ type: "pixel", format: "image", flavor: "base64", data: "UE5H" });
+      expect(data[0]).toEqual({ type: "raw", format: "image", flavor: "base64", data: "UE5H", options: { language: "escpos", dotDensity: "double", imageEncoding: "gs_v_0" } });
+      expect(data[1]).toEqual({ type: "raw", format: "command", flavor: "hex", data: "0A0A1D5600" });
     }
-    expect(qz.configs.create.mock.calls[0][1]).toMatchObject({ units: "mm", size: { width: 58, height: 116 }, colorType: "grayscale" });
+    expect(qz.configs.create.mock.calls[0][1]).toMatchObject({ units: "mm", rasterize: false, scaleContent: false });
     expect(renderReceiptHtmlToImages.mock.calls[0][0]).toContain('dir="ltr"');
     expect(windowPrintSpy).not.toHaveBeenCalled();
   });

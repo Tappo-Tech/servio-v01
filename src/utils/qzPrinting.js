@@ -237,24 +237,26 @@ export async function printReceipt(order, storeInfo, options = {}) {
   const succeeded = [];
   const failed = [];
   const pageWidth = PAPER_WIDTH_MM[width];
-  const data = images.map((image) => ({ type: "pixel", format: "image", flavor: "base64", data: image.data }));
-  // يُرسل PNG بدل نص HTML: المتصفح يشكّل العربية أولًا، ثم تطبع QZ الصورة دون نافذة حوار.
+  const isEscPosThermal = width !== "A4";
+  // TA-80U وأغلب طابعات الإيصالات الحرارية تحتاج تحويل الصورة إلى أوامر ESC/POS
+  // بدل إرسال PNG إلى تعريف Windows. هذا المسار يرسل البيانات مباشرة إلى طابور ESC/POS.
+  const createPrintData = () => isEscPosThermal
+    ? images.flatMap((image) => [
+      { type: "raw", format: "image", flavor: "base64", data: image.data, options: { language: "escpos", dotDensity: "double", imageEncoding: "gs_v_0" } },
+      { type: "raw", format: "command", flavor: "hex", data: "0A0A1D5600" },
+    ])
+    : images.map((image) => ({ type: "pixel", format: "image", flavor: "base64", data: image.data }));
   // الطابعات مستقلة؛ إرسال النسخ بالتوازي يمنع تأخر الطابعة الثانية بسبب الأولى.
   const printResults = await Promise.allSettled(printers.map(async (printer) => {
     const config = qz.configs.create(printer, {
       margins: 0,
-      rasterize: true,
-      scaleContent: true,
+      rasterize: !isEscPosThermal,
+      scaleContent: !isEscPosThermal,
       units: "mm",
-      size: {
-        width: pageWidth,
-        height: width === "A4" ? 297 : pageWidth * images[0].height / images[0].width,
-      },
-      colorType: "grayscale",
-      interpolation: "bicubic",
+      ...(isEscPosThermal ? {} : { size: { width: pageWidth, height: 297 }, colorType: "grayscale", interpolation: "bicubic" }),
       jobName: `SERVIO ${options.receiptType === "kitchen" ? "Kitchen" : "Receipt"}`,
     });
-    await qz.print(config, data);
+    await qz.print(config, createPrintData());
     return printer;
   }));
   printResults.forEach((result, index) => {
