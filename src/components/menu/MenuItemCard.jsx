@@ -4,11 +4,12 @@ import { useState } from "react";
 
 // COMPONENTS
 import ItemDetailsDrawer from "./ItemDetailsDrawer";
+import MenuItemImage from "./MenuItemImage";
+import { useMenu } from "../../context/MenuContext";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
-import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
@@ -21,8 +22,9 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useCart } from "../../context/CartContext";
 import { useLanguage } from "../../context/LanguageContext";
 
-function MenuItemCard({ itemDetails }) {
+function MenuItemCard({ itemDetails, priority = false }) {
   const { addToCart } = useCart();
+  const { loadItemImage } = useMenu();
   const { language } = useLanguage();
   const isArabic = language !== "en";
 
@@ -140,16 +142,16 @@ function MenuItemCard({ itemDetails }) {
             alignItems: "flex-start",
           }}
         >
-          <CardMedia
-            component="img"
-            image={itemDetails.image}
+          <MenuItemImage
+            src={itemDetails.image}
             alt={itemDetails.name}
-            sx={{
-              width: 95,
-              height: 95,
-              borderRadius: "12px",
-              objectFit: "cover",
-            }}
+            imageLoading={itemDetails.imageLoading}
+            imageError={itemDetails.imageError}
+            loadImage={() => loadItemImage(itemDetails.id)}
+            priority={priority}
+            width={95}
+            height={95}
+            borderRadius="12px"
           />
 
           {hasAllergy && (

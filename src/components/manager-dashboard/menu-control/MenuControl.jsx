@@ -7,6 +7,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import AddItemDrawer from "./AddItemDrawer";
 import CategoryPrintRoutingDrawer from "./CategoryPrintRoutingDrawer";
 import AddonComplementDrawer from "./AddonComplementDrawer";
+import MenuItemImage from "../../menu/MenuItemImage";
 
 // MUI COMPONENTS
 import Box from "@mui/material/Box";
@@ -17,7 +18,6 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import Card from "@mui/material/Card";
-import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import Switch from "@mui/material/Switch";
@@ -76,6 +76,7 @@ function MenuControl() {
     menuRefreshing,
     menuError,
     refreshMenu,
+    loadItemImage,
   } = useMenu();
 
   // يرجع MenuProvider بيانات قديمة بعد إعادة فتح التبويب؛ أعد المزامنة عند دخول الإدارة.
@@ -229,7 +230,7 @@ function MenuControl() {
 
       {/* CARDS GRID */}
       <Grid container spacing={2}>
-        {filteredMenu.map((product) => (
+        {filteredMenu.map((product, index) => (
           <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <Card
               sx={{
@@ -244,13 +245,14 @@ function MenuControl() {
                 transition: "opacity 0.2s ease-in-out",
               }}
             >
-              <CardMedia
-                component="img"
-                loading="lazy"
-                decoding="async"
-                height="140"
-                image={product.image || "/logo-icon.webp"}
+              <MenuItemImage
+                src={product.image}
                 alt={product.name}
+                imageLoading={product.imageLoading}
+                imageError={product.imageError}
+                loadImage={() => loadItemImage(product.id)}
+                priority={index < 2}
+                height={140}
               />
 
               <CardContent sx={{ p: 2, flexGrow: 1 }}>

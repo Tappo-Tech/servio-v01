@@ -1,6 +1,7 @@
 // مكوّن واجهة `ItemDetailsDrawer` ضمن مجموعة `menu`.
 import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../common/FullscreenOverlays";
 import { useState } from "react";
+import MenuItemImage from "./MenuItemImage";
 
 // MUI COMPONENTS
 
@@ -20,12 +21,14 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useCart } from "../../context/CartContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTenant } from "../../context/TenantContext";
+import { useMenu } from "../../context/MenuContext";
 
 function ItemDetailsDrawer({ open, onClose, itemDetails }) {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const { language } = useLanguage();
   const { slug } = useTenant();
+  const { loadItemImage } = useMenu();
 
   const handleIncrease = () => setQuantity((prev) => prev + 1);
   const handleDecrease = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
@@ -91,17 +94,13 @@ function ItemDetailsDrawer({ open, onClose, itemDetails }) {
           <CloseIcon />
         </IconButton>
 
-        <Box
-          component="img"
+        <MenuItemImage
           src={itemDetails?.image}
-          loading="lazy"
-          decoding="async"
           alt={itemDetails?.name}
-          sx={{
-            width: "100%",
-            height: 250,
-            objectFit: "cover",
-          }}
+          imageLoading={itemDetails?.imageLoading}
+          imageError={itemDetails?.imageError}
+          loadImage={() => loadItemImage(itemDetails?.id)}
+          height={250}
         />
 
         <Box sx={{ p: 2.5, pb: 3 }}>

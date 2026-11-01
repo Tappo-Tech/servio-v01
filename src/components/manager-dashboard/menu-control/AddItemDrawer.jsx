@@ -79,6 +79,7 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const { language, t } = useLanguage();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [freeAddonDrawerOpen, setFreeAddonDrawerOpen] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
 
   useEffect(() => {
     if (!open) setFreeAddonDrawerOpen(false);
@@ -142,11 +143,15 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageProcessing(true);
     try {
-      const image = await compressImage(file);
+      const image = await compressImage(file, { maxWidth: 768, maxHeight: 768, quality: 0.68, maxBytes: 180 * 1024 });
       setFormData((prev) => ({ ...prev, image }));
     } catch (error) {
       console.error("تعذر ضغط الصورة:", error);
+    } finally {
+      setImageProcessing(false);
+      e.target.value = "";
     }
   };
 
@@ -306,11 +311,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
             startIcon={<CloudUploadIcon />}
             fullWidth
           >
-            {formData.image ? t("menuChangeImage") : t("menuChooseImage")}
+            {imageProcessing
+              ? (language === "ar" ? "جارٍ تجهيز الصورة…" : "Preparing image…")
+              : formData.image ? t("menuChangeImage") : t("menuChooseImage")}
             <VisuallyHiddenInput
               type="file"
               accept="image/*"
               onChange={handleImageChange}
+              disabled={imageProcessing}
             />
           </Button>
 

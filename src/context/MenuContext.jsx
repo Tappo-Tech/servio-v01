@@ -26,6 +26,7 @@ export const MenuProvider = ({ children }) => {
   const guard = useRef(createRequestGuard()).current;
   const reloadRef = useRef(null);
   const itemsRef = useRef(items);
+  const imageRequestsRef = useRef(new Map());
 
   useEffect(() => { itemsRef.current = items; }, [items]);
 
@@ -113,7 +114,7 @@ export const MenuProvider = ({ children }) => {
         let ingredientLinksResult = null;
         if (isPublic) {
           [itemsResult, categoriesResult] = await Promise.all([
-            supabase.rpc("get_public_menu_items", { p_slug: slug, p_branch_slug: branchSlug }),
+            supabase.rpc("get_public_menu_item_details", { p_slug: slug, p_branch_slug: branchSlug }),
             supabase.rpc("get_public_categories", { p_slug: slug, p_branch_slug: branchSlug }),
           ]);
         } else {
@@ -132,8 +133,9 @@ export const MenuProvider = ({ children }) => {
         if (ingredientLinksResult?.error) throw ingredientLinksResult.error;
 
         if (isPublic) {
-          // المنيو العام يحتاج صورة الصنف لعرض بطاقة العميل.
-          setItems(itemsResult.data || []);
+          // اعرض بيانات الأصناف النصية أولًا؛ الصور تُحمّل في طلب منفصل كي لا تحجب المنيو.
+          const publicItems = itemsResult.data || [];
+          setItems(publicItems.map((item) => ({ ...item, image: null, imageLoading: true })));
           setIngredients([]);
           setMenuItemIngredients([]);
         } else {
@@ -143,24 +145,10 @@ export const MenuProvider = ({ children }) => {
           const nextIngredients = ingredientsResult.data || [];
           const nextIngredientLinks = ingredientLinksResult.data || [];
           const nextItems = withIngredientAvailability(itemsResult.data || [], nextIngredients, nextIngredientLinks)
-            .map((item) => ({ ...item, image: previousImages.get(item.id) || null }));
+            .map((item) => ({ ...item, image: previousImages.get(item.id) || null, imageLoading: !previousImages.has(item.id) }));
           setIngredients(nextIngredients);
           setMenuItemIngredients(nextIngredientLinks);
           setItems(nextItems);
-          const currentItemIds = new Set(nextItems.map((item) => item.id));
-
-          // طلب الصور منفصل وغير حاجب؛ حتى لو كان بعضها data URL بمئات الكيلوبايت.
-          void supabase.from("menu_items").select("id,image").eq("tenant_id", tenantId).eq("branch_id", branchId).then(({ data: imageRows, error: imageError }) => {
-            if (!active) return;
-            if (imageError) {
-              console.warn("تعذر تحميل صور أصناف المنيو:", imageError.message);
-              return;
-            }
-            const imagesById = new Map((imageRows || []).filter((row) => currentItemIds.has(row.id)).map((row) => [row.id, row.image]));
-            setItems((currentItems) => currentItems.map((item) => imagesById.has(item.id) ? { ...item, image: imagesById.get(item.id) } : item));
-          }).catch((imageError) => {
-            if (active) console.warn("تعذر تحميل صور أصناف المنيو:", imageError?.message || imageError);
-          });
         }
         setCategoriesList(categoriesResult.data || []);
         if (isPublic) {
@@ -247,6 +235,42 @@ export const MenuProvider = ({ children }) => {
     setMenuError(null);
     return reloadRef.current?.();
   }, []);
+
+  const loadItemImage = useCallback((itemId) => {
+    if (!itemId) return Promise.resolve();
+    if (imageRequestsRef.current.has(itemId)) return imageRequestsRef.current.get(itemId);
+    const request = (async () => {
+      try {
+        let image;
+        if (isPublic) {
+          const { data, error } = await supabase.rpc("get_public_menu_item_images", {
+            p_slug: slug,
+            p_branch_slug: branchSlug,
+            p_item_ids: [itemId],
+          });
+          if (error) throw error;
+          image = data?.[0]?.image || null;
+        } else {
+          const { data, error } = await supabase.from("menu_items").select("image")
+            .eq("id", itemId).eq("tenant_id", tenantId).eq("branch_id", branchId).maybeSingle();
+          if (error) throw error;
+          image = data?.image || null;
+        }
+        setItems((currentItems) => currentItems.map((item) => item.id === itemId
+          ? { ...item, image, imageLoading: false, imageError: false }
+          : item));
+      } catch (error) {
+        console.warn("تعذر تحميل صورة الصنف:", error?.message || error);
+        setItems((currentItems) => currentItems.map((item) => item.id === itemId
+          ? { ...item, imageLoading: false, imageError: true }
+          : item));
+      } finally {
+        imageRequestsRef.current.delete(itemId);
+      }
+    })();
+    imageRequestsRef.current.set(itemId, request);
+    return request;
+  }, [isPublic, slug, branchSlug, tenantId, branchId]);
 
   const linksForItem = (itemId, ingredientIds) => [
     ...menuItemIngredients.filter((link) => String(link.menu_item_id) !== String(itemId)),
@@ -495,7 +519,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.isAvailableForSale ?? item.available), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.isAvailableForSale ?? item.available), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu, loadItemImage }}>
       {children}
     </MenuContext.Provider>
   );
