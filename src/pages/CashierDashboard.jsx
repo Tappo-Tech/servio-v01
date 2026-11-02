@@ -30,6 +30,7 @@ import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
+import CashierItemAvailability from "../components/cashier-dashboard/CashierItemAvailability";
 import { getPrinterSettings, printKitchenTicketGroups } from "../utils/qzPrinting";
 import { buildOrderReceiptGroups } from "../utils/categoryReceiptUtils";
 
@@ -306,6 +307,12 @@ function Dashboard() {
                 label={language === "ar" ? "إدارة المخزون" : "Inventory"}
               />
               <Tab
+                value="availability"
+                icon={<Inventory2OutlinedIcon />}
+                iconPosition="start"
+                label={language === "ar" ? "توفر الأصناف" : "Item availability"}
+              />
+              <Tab
                 value="printing"
                 icon={<PrintRoundedIcon />}
                 iconPosition="start"
@@ -326,6 +333,8 @@ function Dashboard() {
               <ShiftReports />
             ) : activeTab === "inventory" ? (
               <IngredientInventory />
+            ) : activeTab === "availability" ? (
+              <CashierItemAvailability />
             ) : (
               <Stack spacing={2.5} sx={{ maxWidth: 1100, mx: "auto", py: { xs: 1, md: 2 } }}>
                 <PrinterSetupDialog

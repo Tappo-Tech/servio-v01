@@ -286,28 +286,14 @@ export const MenuProvider = ({ children }) => {
   ];
 
   const persistMenuItem = async (row, ingredientIds, isUpdate) => {
-    const writePayload = { ...row, tenant_id: tenantId };
-    const query = isUpdate
-      ? supabase.from("menu_items").update(writePayload).eq("id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id).select(MENU_ITEM_COLUMNS).maybeSingle()
-      : supabase.from("menu_items").insert(writePayload).select(MENU_ITEM_COLUMNS).single();
-    const { data, error: writeError } = await query;
-    if (writeError) return { data, error: writeError };
-    if (!data) return { data: null, error: new Error("لم يتم العثور على الصنف داخل الفرع المحدد") };
-
-    const { error: deleteLinksError } = await supabase.from("menu_item_ingredients")
-      .delete().eq("menu_item_id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id);
-    if (deleteLinksError) return { data, error: deleteLinksError };
-    if (ingredientIds.length) {
-      const { error: insertLinksError } = await supabase.from("menu_item_ingredients").insert(ingredientIds.map((ingredientId) => ({
-        tenant_id: tenantId,
-        branch_id: row.branch_id,
-        menu_item_id: row.id,
-        ingredient_id: ingredientId,
-        is_primary: false,
-      })));
-      if (insertLinksError) return { data, error: insertLinksError };
-    }
-    return { data, error: null };
+    const { error: writeError } = await supabase.rpc("save_menu_item_with_ingredients", {
+      p_item: { ...row, tenant_id: tenantId },
+      p_ingredient_ids: ingredientIds,
+    });
+    if (writeError) return { data: null, error: writeError };
+    const { data, error: readError } = await supabase.from("menu_items")
+      .select(MENU_ITEM_COLUMNS).eq("id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id).maybeSingle();
+    return { data, error: readError || (!data ? new Error("لم يتم العثور على الصنف داخل الفرع المحدد") : null) };
   };
 
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
@@ -447,7 +433,7 @@ export const MenuProvider = ({ children }) => {
 
   const deleteItem = (id) => guard(`menu:delete-item:${id}`, async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
-    const { error } = await supabase.from("menu_items").delete().eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
+    const { error } = await supabase.rpc("delete_menu_item", { p_item_id: id, p_branch_id: branchId });
     if (!error) {
       setItems((prev) => prev.filter((item) => item.id !== id));
       setMenuItemIngredients((prev) => prev.filter((link) => String(link.menu_item_id) !== String(id)));
@@ -459,7 +445,11 @@ export const MenuProvider = ({ children }) => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const item = items.find((entry) => entry.id === id);
     if (!item) return { error: new Error("الصنف غير موجود") };
-    const { error } = await supabase.from("menu_items").update({ available: !item.available }).eq("id", id).eq("tenant_id", tenantId).eq("branch_id", branchId);
+    const { error } = await supabase.rpc("set_menu_item_availability", {
+      p_item_id: id,
+      p_available: !item.available,
+      p_branch_id: branchId,
+    });
     if (!error) setItems((prev) => withIngredientAvailability(prev.map((entry) => entry.id === id ? { ...entry, available: !item.available } : entry), ingredients, menuItemIngredients));
     return { error };
   });
