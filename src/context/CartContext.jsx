@@ -1,38 +1,62 @@
-// سياق React لإدارة حالة `CartContext` ومشاركتها بين أجزاء التطبيق.
-import { createContext, useCallback, useContext, useState, useEffect } from "react";
+// إدارة سلة مستقلة لكل مطعم وفرع، مع إبقاء عناصر السلة خارج طلب الشبكة.
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { v4 as uuidV4 } from "uuid";
 import { toggleSelectedAddon } from "../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey, splitCartLine, splitCartLineIntoUnits } from "../utils/cartItemUtils";
+import { getCartStorageKey } from "../utils/cartStorage";
+import { useTenant } from "./TenantContext";
+import { useBranch } from "./BranchContext";
 
 const CartContext = createContext();
 
-export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const savedCart = localStorage.getItem("app_cart");
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error("فشل في تحميل عناصر السلة من localStorage", error);
-      return [];
-    }
-  });
+function readCart(storageKey) {
+  try {
+    const savedCart = window.localStorage.getItem(storageKey);
+    const parsed = savedCart ? JSON.parse(savedCart) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("فشل في تحميل عناصر السلة من localStorage", error);
+    return [];
+  }
+}
 
-  const [tableNumber, setTableNumber] = useState(null);
+export const CartProvider = ({ children }) => {
+  const { slug } = useTenant();
+  const { branchSlug, publicBranchSlug } = useBranch();
+  const storageKey = useMemo(() => getCartStorageKey(slug, branchSlug, publicBranchSlug), [slug, branchSlug, publicBranchSlug]);
+
+  const [cartState, setCartState] = useState({ storageKey: null, items: [] });
+  const cartItems = cartState.storageKey === storageKey ? cartState.items : [];
+  const [tableState, setTableState] = useState({ storageKey: null, value: null });
+  const tableNumber = tableState.storageKey === storageKey ? tableState.value : null;
 
   useEffect(() => {
+    setCartState({ storageKey, items: readCart(storageKey) });
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (cartState.storageKey !== storageKey) return;
     try {
-      localStorage.setItem("app_cart", JSON.stringify(cartItems));
+      window.localStorage.setItem(storageKey, JSON.stringify(cartState.items));
     } catch (error) {
       console.error("فشل في حفظ السلة في localStorage", error);
     }
-  }, [cartItems]);
+  }, [cartState, storageKey]);
+
+  const updateCartItems = useCallback((updater) => {
+    setCartState((previous) => {
+      const previousItems = previous.storageKey === storageKey ? previous.items : [];
+      const nextItems = typeof updater === "function" ? updater(previousItems) : updater;
+      return { storageKey, items: nextItems };
+    });
+  }, [storageKey]);
 
   const setTable = useCallback((number) => {
-    setTableNumber(number);
-  }, []);
+    setTableState({ storageKey, value: number });
+  }, [storageKey]);
 
   const addToCart = (item, quantityToAdd = 1) => {
-    setCartItems((previousItems) => {
+    updateCartItems((previousItems) => {
       const signature = getAddonSelectionSignature(item.selected_addons);
       const existingIndex = previousItems.findIndex((cartItem) => (
         cartItem.id === item.id && getAddonSelectionSignature(cartItem.selected_addons) === signature
@@ -58,7 +82,7 @@ export const CartProvider = ({ children }) => {
 
   // Split one unit out of a multi-quantity row; with one unit, add another independently configurable unit.
   const addSeparateCartItem = (lineId) => {
-    setCartItems((previousItems) => splitCartLine(previousItems, lineId, uuidV4()));
+    updateCartItems((previousItems) => splitCartLine(previousItems, lineId, uuidV4()));
   };
 
   const separateCartLineIntoUnits = (lineId) => {
@@ -67,11 +91,11 @@ export const CartProvider = ({ children }) => {
     if (quantity <= 1) return;
 
     const newLineIds = Array.from({ length: quantity - 1 }, () => uuidV4());
-    setCartItems((previousItems) => splitCartLineIntoUnits(previousItems, lineId, newLineIds));
+    updateCartItems((previousItems) => splitCartLineIntoUnits(previousItems, lineId, newLineIds));
   };
 
   const removeFromCart = (lineId) => {
-    setCartItems((previousItems) => previousItems.filter((item) => getCartLineKey(item) !== String(lineId)));
+    updateCartItems((previousItems) => previousItems.filter((item) => getCartLineKey(item) !== String(lineId)));
   };
 
   const updatedQuantity = (lineId, currentQuantity) => {
@@ -80,13 +104,13 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    setCartItems((previousItems) => previousItems.map((item) => (
+    updateCartItems((previousItems) => previousItems.map((item) => (
       getCartLineKey(item) === String(lineId) ? { ...item, quantity: currentQuantity } : item
     )));
   };
 
   const toggleCartItemAddon = (lineId, choice, choices) => {
-    setCartItems((previousItems) => previousItems.map((item) => {
+    updateCartItems((previousItems) => previousItems.map((item) => {
       if (getCartLineKey(item) !== String(lineId)) return item;
       return {
         ...item,
@@ -96,8 +120,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem("app_cart");
+    updateCartItems([]);
+    try { window.localStorage.removeItem(storageKey); } catch { /* التخزين المحلي اختياري */ }
   };
 
   return (

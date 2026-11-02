@@ -1,4 +1,4 @@
-// اختبارات الوحدة والانحدار الخاصة بالوحدة `orderItemPayload` وسلوكها المتوقع.
+// اختبارات الانحدار لحمولة طلب العميل؛ الصور والحقول الكبيرة لا تُرسل إلى قاعدة البيانات.
 import { compactOrderItems, parseOrderItems } from "./orderItemPayload";
 
 describe("order item payload", () => {
@@ -28,6 +28,7 @@ describe("order item payload", () => {
       selected_addons: [{ id: null, name: "عسل" }],
     });
     expect(payload[0]).not.toHaveProperty("image");
+    expect(JSON.stringify(payload)).not.toContain("data:image");
     expect(payload[0]).not.toHaveProperty("addon_options");
   });
 

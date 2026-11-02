@@ -86,7 +86,7 @@ export default function ShiftReports() {
       </Stack>
 
       <Stack className="shift-report-no-print" direction={{ xs: "column", sm: "row" }}   sx={{ justifyContent: "space-between", gap: 1.25 }}>
-        <ButtonGroup size="small" variant="outlined" aria-label={ar ? "الفترة" : "Date range"} sx={{ width: { xs: "100%", sm: "auto" }, "& .MuiButton-root": { minWidth: 0, flex: 1, px: { xs: .75, sm: 1.5 } } }}>
+        <ButtonGroup dir={ar ? "rtl" : "ltr"} size="small" variant="outlined" aria-label={ar ? "الفترة" : "Date range"} sx={{ width: { xs: "100%", sm: "auto" }, flexDirection: ar ? "row-reverse" : "row", "& .MuiButtonGroup-grouped": { minWidth: 0, flex: 1, px: { xs: .75, sm: 1.5 }, whiteSpace: "nowrap" } }}>
           <Button variant={range === "week" ? "contained" : "outlined"} onClick={() => setRange("week")}>{text.week}</Button>
           <Button variant={range === "month" ? "contained" : "outlined"} onClick={() => setRange("month")}>{text.month}</Button>
           <Button variant={range === "all" ? "contained" : "outlined"} onClick={() => setRange("all")}>{text.all}</Button>

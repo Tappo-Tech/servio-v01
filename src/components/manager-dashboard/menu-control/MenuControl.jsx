@@ -47,6 +47,7 @@ function MenuControl() {
   const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
+  const [imageEditError, setImageEditError] = useState("");
 
   // حالات إدارة التصنيفات/الفلاتر
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -89,8 +90,20 @@ function MenuControl() {
     setIsOpen(true);
   };
 
-  const handleOpenEdit = (product) => {
-    setItemToEdit(product);
+  const handleOpenEdit = async (product) => {
+    setImageEditError("");
+    let editProduct = product;
+    if (product.imageLoading || product.imageError) {
+      const imageResult = await loadItemImage(product.id);
+      if (!imageResult || imageResult.error) {
+        setImageEditError(language === "ar"
+          ? "تعذر تحميل صورة الصنف. أعد المحاولة قبل تعديل بياناته حتى لا تُستبدل الصورة الحالية."
+          : "Could not load the current item image. Retry before editing so the existing photo is not replaced.");
+        return;
+      }
+      editProduct = { ...product, image: imageResult.image, imageLoading: false, imageError: false };
+    }
+    setItemToEdit(editProduct);
     setIsOpen(true);
   };
 
@@ -214,6 +227,8 @@ function MenuControl() {
           {language === "ar" ? "تعذر تحميل المنيو أو مزامنته. تحقق من الاتصال ثم أعد المحاولة." : "The menu could not be loaded or synced. Check the connection and retry."}
         </Alert>
       )}
+
+      {imageEditError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{imageEditError}</Alert>}
 
       {menuRefreshing && <CircularProgress size={18} aria-label={language === "ar" ? "جارٍ تحديث المنيو" : "Refreshing menu"} sx={{ mb: 1 }} />}
 

@@ -3,6 +3,8 @@ import { FullscreenSwipeableDrawer as SwipeableDrawer } from "../../common/Fulls
 import { useState, useEffect } from "react";
 import { useMenu } from "../../../context/MenuContext";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useTenant } from "../../../context/TenantContext";
+import { useBranch } from "../../../context/BranchContext";
 
 // MUI COMPONENTS
 import { styled } from "@mui/material/styles";
@@ -23,6 +25,7 @@ import AddIcon from "@mui/icons-material/Add";
 // OTHERS
 import { v4 as uuidV4 } from "uuid";
 import { compressImage } from "../../../utils/compressImage";
+import { uploadMenuItemImage } from "../../../utils/menuItemImageStorage";
 import FreeAddonItemsDrawer from "./FreeAddonItemsDrawer";
 import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../../../utils/menuItemOptions";
 
@@ -77,6 +80,8 @@ const INITIAL_FORM_STATE = {
 function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const { addNewItem, updateItem, categoriesList = [], items = [], ingredients = [], addonComplements = [] } = useMenu();
   const { language, t } = useLanguage();
+  const { tenantId } = useTenant();
+  const { selectedBranchId } = useBranch();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [freeAddonDrawerOpen, setFreeAddonDrawerOpen] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
@@ -143,12 +148,14 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setSubmitError("");
     setImageProcessing(true);
     try {
       const image = await compressImage(file, { maxWidth: 768, maxHeight: 768, quality: 0.68, maxBytes: 180 * 1024 });
       setFormData((prev) => ({ ...prev, image }));
     } catch (error) {
       console.error("تعذر ضغط الصورة:", error);
+      setSubmitError(error?.message || (language === "ar" ? "تعذر تجهيز الصورة" : "Could not prepare the image"));
     } finally {
       setImageProcessing(false);
       e.target.value = "";
@@ -165,35 +172,46 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
     setSubmitError("");
     setSaving(true);
 
-    const payload = {
-      name: formData.name,
-      price: parseFloat(formData.price),
-      category_id: formData.category_id || (categoriesList[0]?.id ?? "all"),
-      description: formData.description,
-      image: formData.image || "/logo-icon.webp",
-      allergens: formData.allergens,
-      tags: formData.tags,
-      recommendation_item_ids: formData.recommendation_item_ids,
-      ingredient_ids: formData.ingredient_ids,
-      addon_options: normalizeAddonOptions(formData.addon_options),
-      free_addon_item_ids: normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id),
-      max_addons: normalizeAddonLimit(
-        formData.max_addons,
-        normalizeAddonOptions(formData.addon_options).length + normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id).length,
-      ),
-      available: formData.available,
-    };
+    const itemId = itemToEdit?.id || uuidV4();
+    try {
+      const image = await uploadMenuItemImage(formData.image || "/logo-icon.webp", {
+        tenantId,
+        branchId: itemToEdit?.branch_id || selectedBranchId,
+        itemId,
+      });
+      const payload = {
+        name: formData.name,
+        price: parseFloat(formData.price),
+        category_id: formData.category_id || (categoriesList[0]?.id ?? "all"),
+        description: formData.description,
+        image: image || "/logo-icon.webp",
+        allergens: formData.allergens,
+        tags: formData.tags,
+        recommendation_item_ids: formData.recommendation_item_ids,
+        ingredient_ids: formData.ingredient_ids,
+        addon_options: normalizeAddonOptions(formData.addon_options),
+        free_addon_item_ids: normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id),
+        max_addons: normalizeAddonLimit(
+          formData.max_addons,
+          normalizeAddonOptions(formData.addon_options).length + normalizeAddonItemIds(formData.free_addon_item_ids).filter((id) => id !== itemToEdit?.id).length,
+        ),
+        available: formData.available,
+      };
 
-    const result = itemToEdit
-      ? await updateItem({ ...itemToEdit, ...payload })
-      : await addNewItem({ id: uuidV4(), ...payload });
-    if (result?.error) {
-      setSubmitError(result.error.message || "تعذر حفظ الصنف");
+      const result = itemToEdit
+        ? await updateItem({ ...itemToEdit, ...payload })
+        : await addNewItem({ id: itemId, ...payload });
+      if (result?.error) {
+        setSubmitError(result.error.message || "تعذر حفظ الصنف");
+        return;
+      }
+      onClose();
+    } catch (error) {
+      console.error("تعذر حفظ صورة أو بيانات الصنف:", error?.message || error);
+      setSubmitError(error?.message || (language === "ar" ? "تعذر رفع الصورة إلى التخزين" : "Could not upload the image"));
+    } finally {
       setSaving(false);
-      return;
     }
-    setSaving(false);
-    onClose();
   };
 
   const addonChoiceCount = formData.addon_options.length + formData.free_addon_item_ids.length;
@@ -512,11 +530,11 @@ function AddItemDrawer({ open, onClose, itemToEdit = null }) {
           <Button
             type="submit"
             variant="contained"
-            disabled={saving}
+            disabled={saving || imageProcessing}
             fullWidth
             sx={{ bgcolor: "primary.main", fontWeight: 700 }}
           >
-{saving ? "جاري الإرسال..." : (itemToEdit ? t("menuSaveChanges") : t("menuSaveItem"))}
+{saving ? (language === "ar" ? "جارٍ رفع الصورة وحفظ الصنف…" : "Uploading image and saving…") : (itemToEdit ? t("menuSaveChanges") : t("menuSaveItem"))}
           </Button>
           <Button
             variant="outlined"

@@ -259,11 +259,13 @@ export const MenuProvider = ({ children }) => {
         setItems((currentItems) => currentItems.map((item) => item.id === itemId
           ? { ...item, image, imageLoading: false, imageError: false }
           : item));
+        return { image, error: false };
       } catch (error) {
         console.warn("تعذر تحميل صورة الصنف:", error?.message || error);
         setItems((currentItems) => currentItems.map((item) => item.id === itemId
           ? { ...item, imageLoading: false, imageError: true }
           : item));
+        return { image: null, error: true };
       } finally {
         imageRequestsRef.current.delete(itemId);
       }

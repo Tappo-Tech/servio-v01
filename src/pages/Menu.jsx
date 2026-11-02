@@ -34,7 +34,7 @@ function Menu() {
   const isCashierQr = new URLSearchParams(window.location.search).get("cashier") === "1";
   const orderLocation = isCashierQr ? "كاشير" : tableNumber;
   const isValidTable = isCashierQr || (tableNumber ? tables.some((table) => String(table.table_number) === String(tableNumber)) : true);
-  useEffect(() => { if (isValidTable && tableNumber) setTable(tableNumber); }, [tableNumber, isValidTable, setTable]);
+  useEffect(() => { setTable(isValidTable && tableNumber ? tableNumber : null); }, [tableNumber, isValidTable, setTable]);
   if (tenantLoading || (tenant && tableNumber && !isCashierQr && !tablesLoaded)) return <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><CircularProgress /></Box>;
   if (!tenant) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="الكافيه غير موجود" message="تعذّر العثور على الكافيه من خلال هذا الرابط." /></Container>;
   if (!isValidTable) return <Container maxWidth="sm" sx={{ py: 6 }}><NotFound title="رقم الطاولة غير صالح" message="تحقّق من رابط المنيو أو اطلب المساعدة من الموظف." /></Container>;
