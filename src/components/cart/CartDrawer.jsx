@@ -23,8 +23,10 @@ import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
 import { useTenant } from "../../context/TenantContext";
 import { useBranch } from "../../context/BranchContext";
+import supabase from "../../supabase";
 import { saveCustomerOrder } from "../../utils/customerTracking";
 import { getCartLineKey } from "../../utils/cartItemUtils";
+import { getUnavailableCartItemNames, isUnavailableMenuOrderError } from "../../utils/publicOrderErrors";
 
 function CartDrawer({ open, close, cashierMode = false }) {
   const { cartItems, tableNumber, clearCart } = useCart();
@@ -72,9 +74,30 @@ function CartDrawer({ open, close, cashierMode = false }) {
       navigate(`/track/${encodeURIComponent(slug)}/${orderId}`, { state: { trackingToken, tableNumber: tableNumber || null } });
     } catch (error) {
       console.error("تعذر إرسال الطلب العام:", { code: error?.code, status: error?.status, message: error?.message });
-      setSendError(String(error?.message || "").includes("MENU_ITEM_UNAVAILABLE")
-        ? "تغير توفر صنف في المنيو؛ حدّث الصفحة وأزل الصنف غير المتاح قبل الإرسال. ستبقى أصنافك في السلة."
-        : "تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
+      const errorMessage = String(error?.message || "");
+      if (isUnavailableMenuOrderError(error)) {
+        let unavailableNames = [];
+        try {
+          if (slug && branchSlug) {
+            const { data, error: menuError } = await supabase.rpc("get_public_menu_item_details", {
+              p_slug: slug,
+              p_branch_slug: branchSlug,
+            });
+            if (!menuError) unavailableNames = getUnavailableCartItemNames(cartItems, data || []);
+          }
+        } catch {
+          // رسالة السبب تبقى مفهومة حتى عند تعذر تحديث المنيو وقت الخطأ.
+        }
+        const names = unavailableNames.slice(0, 3).map((name) => `«${name.slice(0, 80)}»`).join("، ");
+        const additional = unavailableNames.length > 3 ? "، وأصناف أخرى" : "";
+        setSendError(names
+          ? `تعذر إرسال الطلب: ${names}${additional} غير متاح حاليًا؛ أوقفه المدير أو نفد أحد مكوناته. أزل الصنف من السلة ثم حاول مجددًا. ستبقى أصنافك في السلة.`
+          : "تعذر إرسال الطلب لأن صنفًا أو أكثر لم يعد متاحًا (أوقفه المدير أو نفد أحد مكوناته). حدّث المنيو وأزل الصنف غير المتاح. ستبقى أصنافك في السلة.");
+      } else if (/ORDER_ITEM_PRICE_MISMATCH|ORDER_TOTAL_MISMATCH/.test(errorMessage)) {
+        setSendError("تغيّر سعر صنف أو إجمالي الطلب منذ فتح المنيو. حدّث الصفحة وراجع الأسعار ثم حاول مجددًا؛ ستبقى أصنافك في السلة.");
+      } else {
+        setSendError("تعذر إرسال الطلب الآن. تحقق من الاتصال ثم حاول مرة أخرى؛ ستبقى أصنافك في السلة.");
+      }
     } finally {
       setSending(false);
     }

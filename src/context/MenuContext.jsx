@@ -35,6 +35,7 @@ export const MenuProvider = ({ children }) => {
     let requestRunning = false;
     let reloadQueued = false;
     let reloadTimer = null;
+    let availabilityTimer = null;
     let channel = null;
     const hasLoadedRef = { current: false };
 
@@ -134,8 +135,17 @@ export const MenuProvider = ({ children }) => {
 
         if (isPublic) {
           // اعرض بيانات الأصناف النصية أولًا؛ الصور تُحمّل في طلب منفصل كي لا تحجب المنيو.
-          const publicItems = itemsResult.data || [];
-          setItems(publicItems.map((item) => ({ ...item, image: null, imageLoading: true })));
+          const previousItems = new Map(itemsRef.current.map((item) => [item.id, item]));
+          const publicItems = (itemsResult.data || []).filter((item) => item.available === true);
+          setItems(publicItems.map((item) => {
+            const previous = previousItems.get(item.id);
+            return {
+              ...item,
+              image: previous?.image ?? null,
+              imageLoading: previous?.imageLoading ?? true,
+              imageError: previous?.imageError ?? false,
+            };
+          }));
           setIngredients([]);
           setMenuItemIngredients([]);
         } else {
@@ -206,6 +216,12 @@ export const MenuProvider = ({ children }) => {
     window.addEventListener("focus", handleFocus);
     window.addEventListener("online", handleOnline);
     document.addEventListener("visibilitychange", handleVisibility);
+    // العميل قد يبقي المنيو مفتوحًا أثناء تغيير المخزون؛ حدّث التوفر دوريًا، لكن لا تُحمّل بالخلفية.
+    if (isPublic) {
+      availabilityTimer = window.setInterval(() => {
+        if (document.visibilityState === "visible") scheduleReload();
+      }, 30_000);
+    }
 
     // بث خاص بمستأجر واحد يرسل معرف الصف فقط، لا صورة الصنف المخزنة كـBase64.
     if (!isPublic && tenantId) {
@@ -222,6 +238,7 @@ export const MenuProvider = ({ children }) => {
     return () => {
       active = false;
       if (reloadTimer) clearTimeout(reloadTimer);
+      if (availabilityTimer) clearInterval(availabilityTimer);
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("online", handleOnline);
       document.removeEventListener("visibilitychange", handleVisibility);
