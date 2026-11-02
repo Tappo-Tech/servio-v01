@@ -28,3 +28,20 @@ test("يفرض بدء الوردية بفتح نافذة مقفلة قبل إظ�
   expect(screen.queryByRole("button", { name: "إلغاء" })).toBeNull();
   expect(screen.queryByRole("button", { name: "إغلاق النافذة" })).toBeNull();
 });
+
+test("does not show the start-shift gate until the initial status check completes", () => {
+  useShift.mockReturnValue({ currentShift: null, loading: true, error: "", openShift: jest.fn(), closeShift: jest.fn(), loadCurrentShift: jest.fn() });
+  render(<CashierShiftGate />);
+
+  expect(screen.queryByText("ابدأ ورديتك لتسجيل المبيعات")).toBeNull();
+  expect(screen.queryByRole("button", { name: "بدء الوردية" })).toBeNull();
+  expect(screen.queryByText("بدء وردية جديدة")).toBeNull();
+});
+
+test("keeps a verified closed-shift gate visible during a background recheck", () => {
+  useShift.mockReturnValue({ currentShift: null, loading: true, statusReady: true, error: "", openShift: jest.fn(), closeShift: jest.fn(), loadCurrentShift: jest.fn() });
+  render(<CashierShiftGate />);
+
+  expect(screen.getByText("ابدأ ورديتك لتسجيل المبيعات")).toBeTruthy();
+  expect(screen.getByRole("dialog")).toBeTruthy();
+});

@@ -213,7 +213,9 @@ export default function CashierShiftGate() {
   const { user } = useUser();
   const { language } = useLanguage();
   const { storeInfo = {} } = useStore();
-  const { currentShift, loading, error, openShift, closeShift } = useShift();
+  const shiftState = useShift();
+  const { currentShift, loading, error, openShift, closeShift, loadCurrentShift } = shiftState;
+  const statusReady = shiftState.statusReady ?? !loading;
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [openCash, setOpenCash] = useState("0");
@@ -230,7 +232,7 @@ export default function CashierShiftGate() {
     ? `${String(storeInfo.workday_start).slice(0, 5)} – ${String(storeInfo.workday_end).slice(0, 5)}`
     : null;
   const openedAt = currentShift?.opened_at;
-  const mandatoryStart = user?.role === "cashier" && !loading && !currentShift?.id;
+  const mandatoryStart = user?.role === "cashier" && statusReady && !currentShift?.id;
 
   useEffect(() => {
     if (!openedAt) return undefined;
@@ -301,9 +303,17 @@ export default function CashierShiftGate() {
 
   return (
     <>
-      {error && <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2.5 }}>{error}</Alert>}
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 1.5, borderRadius: 2.5 }}
+          action={<Button color="inherit" size="small" onClick={() => void loadCurrentShift()}>{ar ? "إعادة المحاولة" : "Retry"}</Button>}
+        >
+          {error}
+        </Alert>
+      )}
 
-      {loading ? (
+      {loading && !statusReady ? (
         <Paper variant="outlined" sx={{ mb: 1.5, p: 2, borderRadius: 3, borderColor: "divider" }}>
           <Stack direction="row" spacing={1.5}  sx={{ alignItems: "center" }}>
             <Skeleton variant="rounded" width={48} height={48} />
