@@ -1,5 +1,5 @@
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "./taxUtils";
-import { createWorkdayHourBuckets, getWorkdayOffsetMinutes, shiftBusinessDate } from "./workdayUtils";
+import { createWorkdayScheduleHourBuckets, getWorkdayScheduleBucketIndex, isWithinWorkdayShifts, shiftBusinessDate } from "./workdayUtils";
 
 const SALES_STATUSES = new Set(["served", "unclaimed"]);
 const pad = (value) => String(value).padStart(2, "0");
@@ -80,8 +80,7 @@ function normalizeItems(value) {
 }
 
 function isInWorkday(date, schedule) {
-  if (!date) return false;
-  return getWorkdayOffsetMinutes(date, schedule.startMinutes) < schedule.durationMinutes;
+  return Boolean(date) && isWithinWorkdayShifts(date, schedule);
 }
 
 export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, durationMinutes: 1440 }) {
@@ -139,12 +138,10 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
 export function createSalesSeries(orders, from, to, period, locale = "ar-SA", schedule = { startMinutes: 0, durationMinutes: 1440 }) {
   const validOrders = (orders || []).filter((order) => SALES_STATUSES.has(order?.status) && isInWorkday(getSaleDate(order), schedule));
   if (period === "daily") {
-    const buckets = createWorkdayHourBuckets(schedule.startMinutes, schedule.durationMinutes).map((bucket) => ({ label: bucket.label, total: 0 }));
+    const buckets = createWorkdayScheduleHourBuckets(schedule).map((bucket) => ({ label: bucket.label, total: 0 }));
     validOrders.forEach((order) => {
-      const offset = getWorkdayOffsetMinutes(getSaleDate(order), schedule.startMinutes);
-      if (offset == null || offset >= schedule.durationMinutes) return;
-      const index = Math.floor(offset / 60);
-      if (buckets[index]) buckets[index].total += Number(order.total_price) || 0;
+      const index = getWorkdayScheduleBucketIndex(getSaleDate(order), schedule);
+      if (index != null && buckets[index]) buckets[index].total += Number(order.total_price) || 0;
     });
     return buckets.map((bucket, index) => ({ ...bucket, key: index, total: roundMoney(bucket.total) }));
   }

@@ -228,9 +228,14 @@ export default function CashierShiftGate() {
 
   const ar = language !== "en";
   const currency = storeInfo.currency || (ar ? "ر.س" : "SAR");
-  const schedule = storeInfo.workday_start && storeInfo.workday_end
-    ? `${String(storeInfo.workday_start).slice(0, 5)} – ${String(storeInfo.workday_end).slice(0, 5)}`
-    : null;
+  const configuredShifts = Array.isArray(storeInfo.workday_shifts)
+    ? storeInfo.workday_shifts.filter((shift) => shift?.start && shift?.end)
+    : [];
+  const schedule = configuredShifts.length
+    ? configuredShifts.map((shift) => `${String(shift.start).slice(0, 5)} – ${String(shift.end).slice(0, 5)}`).join(" · ")
+    : storeInfo.workday_start && storeInfo.workday_end
+      ? `${String(storeInfo.workday_start).slice(0, 5)} – ${String(storeInfo.workday_end).slice(0, 5)}`
+      : null;
   const openedAt = currentShift?.opened_at;
   const mandatoryStart = user?.role === "cashier" && statusReady && !currentShift?.id;
 

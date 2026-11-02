@@ -1,5 +1,6 @@
 // اختبارات الوحدة والانحدار الخاصة بالوحدة `analyticsUtils` وسلوكها المتوقع.
 import { aggregateHourlySales, createHourlyLabels } from "./analyticsUtils";
+import { getWorkdaySchedule } from "./workdayUtils";
 
 describe("24-hour sales trend", () => {
   test("creates one readable bucket for each hour from midnight through 23:00", () => {
@@ -43,5 +44,26 @@ describe("24-hour sales trend", () => {
     expect(sales[0]).toBe(10);
     expect(sales[6]).toBe(12);
     expect(sales.reduce((sum, value) => sum + value, 0)).toBe(22);
+  });
+
+  test("shows active shift buckets without break hours and ignores break-time sales", () => {
+    const schedule = getWorkdaySchedule({
+      workday_start: "08:00:00",
+      workday_end: "17:00:00",
+      workday_hours: 8,
+      workday_shifts: [{ start: "08:00", end: "12:00" }, { start: "13:00", end: "17:00" }],
+    });
+    const labels = createHourlyLabels(schedule);
+    const sales = aggregateHourlySales([
+      { completed_at: new Date(2026, 9, 5, 9, 10).toISOString(), total_price: 10 },
+      { completed_at: new Date(2026, 9, 5, 12, 30).toISOString(), total_price: 40 },
+      { completed_at: new Date(2026, 9, 5, 14, 30).toISOString(), total_price: 20 },
+    ], schedule);
+
+    expect(labels).toEqual(["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]);
+    expect(sales).toHaveLength(8);
+    expect(sales[1]).toBe(10);
+    expect(sales[5]).toBe(20);
+    expect(sales.reduce((sum, value) => sum + value, 0)).toBe(30);
   });
 });

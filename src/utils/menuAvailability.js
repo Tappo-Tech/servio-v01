@@ -28,3 +28,7 @@ export const withIngredientAvailability = (items = [], ingredients = [], ingredi
     };
   });
 };
+
+export const getCustomerMenuItems = (items = []) => (
+  (items || []).filter((item) => (item?.isAvailableForSale ?? item?.available) === true)
+);

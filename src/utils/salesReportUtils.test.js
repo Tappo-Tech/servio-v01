@@ -7,6 +7,7 @@ import {
   getPresetDateRange,
   getUtcDateBounds,
 } from "./salesReportUtils";
+import { getWorkdaySchedule } from "./workdayUtils";
 
 describe("sales report calculations", () => {
   test("uses paid_at for paid sales before completion or creation time", () => {
@@ -82,6 +83,28 @@ describe("sales report calculations", () => {
     expect(series[0].label).toBe("18:00");
     expect(series[6].label).toBe("00:00");
     expect(series[8].total).toBe(15);
+    expect(series.reduce((sum, point) => sum + point.total, 0)).toBe(35);
+    expect(aggregateSalesReport(orders, schedule).gross).toBe(35);
+  });
+
+  test("reports only scheduled shift hours and excludes sales recorded during a break", () => {
+    const schedule = getWorkdaySchedule({
+      workday_start: "08:00:00",
+      workday_end: "17:00:00",
+      workday_hours: 8,
+      workday_shifts: [{ start: "08:00", end: "12:00" }, { start: "13:00", end: "17:00" }],
+    });
+    const orders = [
+      { status: "served", total_price: 20, completed_at: new Date(2026, 9, 5, 9, 10).toISOString() },
+      { status: "served", total_price: 99, completed_at: new Date(2026, 9, 5, 12, 30).toISOString() },
+      { status: "served", total_price: 15, completed_at: new Date(2026, 9, 5, 14, 20).toISOString() },
+      { status: "served", total_price: 100, completed_at: new Date(2026, 9, 5, 18, 0).toISOString() },
+    ];
+
+    const series = createSalesSeries(orders, "2026-10-05", "2026-10-05", "daily", "en-US", schedule);
+    expect(series.map((point) => point.label)).toEqual(["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]);
+    expect(series[1].total).toBe(20);
+    expect(series[5].total).toBe(15);
     expect(series.reduce((sum, point) => sum + point.total, 0)).toBe(35);
     expect(aggregateSalesReport(orders, schedule).gross).toBe(35);
   });

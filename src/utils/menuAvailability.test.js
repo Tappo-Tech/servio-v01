@@ -1,5 +1,5 @@
 // اختبارات الوحدة والانحدار الخاصة بالوحدة `menuAvailability` وسلوكها المتوقع.
-import { withIngredientAvailability } from "./menuAvailability";
+import { getCustomerMenuItems, withIngredientAvailability } from "./menuAvailability";
 
 describe("withIngredientAvailability", () => {
   const items = [
@@ -47,5 +47,18 @@ describe("withIngredientAvailability", () => {
 
     expect(dish.isAvailableForSale).toBe(true);
     expect(dish.ingredient_ids).toEqual([]);
+  });
+
+  it("hides manually disabled items and items affected by an out-of-stock ingredient from the customer menu", () => {
+    const enriched = withIngredientAvailability(items, ingredients, links);
+
+    expect(getCustomerMenuItems(enriched).map((item) => item.id)).toEqual(["dish-2"]);
+  });
+
+  it("supports public RPC rows that only include the item's available flag", () => {
+    expect(getCustomerMenuItems([
+      { id: "available", available: true },
+      { id: "disabled", available: false },
+    ]).map((item) => item.id)).toEqual(["available"]);
   });
 });

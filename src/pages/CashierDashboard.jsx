@@ -17,7 +17,7 @@ import Paper from "@mui/material/Paper";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
+import { getWorkdaySchedule, isWithinWorkdayShifts, shiftBusinessDate } from "../utils/workdayUtils";
 import { toLocalDateKey } from "../utils/salesReportUtils";
 import PrinterSetupDialog from "../components/cashier-dashboard/PrinterSetupDialog";
 import InvoiceModal from "../components/manager-dashboard/orders/OrderPill";
@@ -65,10 +65,10 @@ function Dashboard() {
           Number.isFinite(
             new Date(order.completed_at || order.created_at).getTime(),
           ) &&
-          getWorkdayOffsetMinutes(
+          isWithinWorkdayShifts(
             new Date(order.completed_at || order.created_at),
-            schedule.startMinutes,
-          ) < schedule.durationMinutes &&
+            schedule,
+          ) &&
           toLocalDateKey(
             shiftBusinessDate(
               new Date(order.completed_at || order.created_at),

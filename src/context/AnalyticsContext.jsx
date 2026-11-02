@@ -5,7 +5,7 @@ import { useLanguage } from "./LanguageContext";
 import { useStore } from "./StoreInfoContext";
 import { aggregateHourlySales, createHourlyLabels } from "../utils/analyticsUtils";
 import { getOperationalSaleDate } from "../utils/salesReportUtils";
-import { getWorkdayOffsetMinutes, getWorkdaySchedule, shiftBusinessDate } from "../utils/workdayUtils";
+import { getWorkdaySchedule, isWithinWorkdayShifts, shiftBusinessDate } from "../utils/workdayUtils";
 
 const AnalyticsContext = createContext();
 
@@ -39,7 +39,7 @@ export function AnalyticsProvider({ children }) {
     ));
     const businessKey = (order) => {
       const saleDate = new Date(getSaleDate(order));
-      return getWorkdayOffsetMinutes(saleDate, schedule.startMinutes) < schedule.durationMinutes
+      return isWithinWorkdayShifts(saleDate, schedule)
         ? dateKey(shiftBusinessDate(saleDate, schedule.startMinutes))
         : null;
     };
@@ -67,7 +67,7 @@ export function AnalyticsProvider({ children }) {
         .reduce((sum, order) => sum + Number(order.total_price || 0), 0);
     });
 
-    const hourlyLabels = createHourlyLabels(schedule.startMinutes, schedule.durationMinutes);
+    const hourlyLabels = createHourlyLabels(schedule);
     const hourlySales = aggregateHourlySales(todaysOrders, schedule);
 
     const itemSalesMap = {};

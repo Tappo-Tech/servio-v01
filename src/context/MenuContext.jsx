@@ -4,7 +4,7 @@ import { useTenant } from "./TenantContext";
 import { useBranch } from "./BranchContext";
 import { createRequestGuard } from "../utils/requestGuard";
 import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../utils/menuItemOptions";
-import { withIngredientAvailability } from "../utils/menuAvailability";
+import { getCustomerMenuItems, withIngredientAvailability } from "../utils/menuAvailability";
 
 const MenuContext = createContext();
 const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,branch_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
@@ -528,7 +528,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: filteredMenu.filter((item) => item.isAvailableForSale ?? item.available), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu, loadItemImage }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: getCustomerMenuItems(filteredMenu), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu, loadItemImage }}>
       {children}
     </MenuContext.Provider>
   );
