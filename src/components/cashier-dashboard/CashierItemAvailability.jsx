@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -14,7 +14,7 @@ import { useMenu } from "../../context/MenuContext";
 import { useLanguage } from "../../context/LanguageContext";
 
 export default function CashierItemAvailability() {
-  const { items = [], categoriesList = [], menuLoading, toggleAvailable } = useMenu();
+  const { items = [], categoriesList = [], menuLoading, toggleAvailable, loadItemImage } = useMenu();
   const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const [savingId, setSavingId] = useState(null);
@@ -23,6 +23,15 @@ export default function CashierItemAvailability() {
     const needle = query.trim().toLocaleLowerCase();
     return items.filter((item) => !needle || `${item.name} ${item.description || ""}`.toLocaleLowerCase().includes(needle));
   }, [items, query]);
+
+  // صور المنيو الكبيرة تُحمّل بشكل lazy في MenuContext؛ اطلبها عند فتح
+  // هذا التبويب بدل الاعتماد على قائمة الأصناف النصية المختصرة.
+  useEffect(() => {
+    if (menuLoading || typeof loadItemImage !== "function") return;
+    items.forEach((item) => {
+      if (!item.image && !item.imageError) void loadItemImage(item.id);
+    });
+  }, [items, menuLoading, loadItemImage]);
 
   const changeAvailability = async (item) => {
     if (savingId) return;
@@ -64,7 +73,7 @@ export default function CashierItemAvailability() {
             const available = item.isAvailableForSale ?? item.available;
             return (
               <Card key={item.id} elevation={0} sx={{ display: "grid", gridTemplateColumns: "96px minmax(0,1fr)", overflow: "hidden", border: "1px solid", borderColor: available ? "divider" : "warning.light", borderRadius: 3, opacity: available ? 1 : 0.78 }}>
-                {item.image ? <CardMedia component="img" image={item.image} alt={item.name} sx={{ width: 96, height: "100%", minHeight: 132, objectFit: "cover" }} /> : <Box sx={{ width: 96, minHeight: 132, display: "grid", placeItems: "center", bgcolor: "grey.100" }}><Inventory2OutlinedIcon color="disabled" /></Box>}
+                {item.image ? <CardMedia component="img" image={item.image} alt={item.name} sx={{ width: 96, height: "100%", minHeight: 132, objectFit: "cover" }} /> : <Box sx={{ width: 96, minHeight: 132, display: "grid", placeItems: "center", bgcolor: "grey.100" }}>{item.imageLoading ? <CircularProgress size={24} /> : <Inventory2OutlinedIcon color="disabled" />}</Box>}
                 <CardContent sx={{ p: 1.35, minWidth: 0, "&:last-child": { pb: 1.35 } }}>
                   <Typography sx={{ fontWeight: 900, overflowWrap: "anywhere" }}>{item.name}</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>{Number(item.price || 0).toFixed(2)}</Typography>
