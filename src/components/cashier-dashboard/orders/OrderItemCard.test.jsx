@@ -47,18 +47,18 @@ test("يسجل الدفع من مرحلة الطلب الحالية دون تغ�
   expect(updateOrderStatus).not.toHaveBeenCalled();
 });
 
-test("يحافظ على التدفق السابق: طلب انتظار الدفع يسدد ثم يسلّم", async () => {
+test("يسجل سداد طلب انتظار الدفع وينقله إلى جاهز دون اعتباره مستلمًا", async () => {
   render(<OrderItemCard order={makeOrder()} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد والتسليم" }));
+  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد" }));
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "طريقة الدفع *" }));
   fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
-  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد والتسليم" }));
+  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد" }));
 
   await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", {
     method: "cash", cashAmount: 0, cardAmount: 0,
   }));
-  await waitFor(() => expect(updateOrderStatus).toHaveBeenCalledWith("order-1", "served"));
+  expect(updateOrderStatus).not.toHaveBeenCalled();
 });
 
 test("يسمح بتغيير الدفع إلى غير مدفوع", async () => {

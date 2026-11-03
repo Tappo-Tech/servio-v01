@@ -27,7 +27,7 @@ import { buildMenuReturnPath } from "../utils/orderTrackingRoutes";
 import { getCustomerTrackingPath, getRecentCustomerOrdersForSlug } from "../utils/customerTracking";
 
 const POLL_INTERVAL_MS = 1_000;
-const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
+const FINISHED_STATUSES = new Set(["awaiting_payment", "ready", "served", "unclaimed", "cancelled"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TRACKING_STORAGE_PREFIX = "servio.orderTracking.";
 
@@ -46,7 +46,7 @@ const copy = {
     served: "تم التسليم",
     cancelled: "تم إلغاء الطلب",
     unclaimed: "لم يُستلم الطلب",
-    steps: ["استلام الطلب", "التحضير", "جاهز", "التسليم"],
+    steps: ["استلام الطلب", "التحضير", "جاهز"],
     cancelledText: "تم إلغاء هذا الطلب. يرجى مراجعة فريق المتجر للمساعدة.",
     unclaimedText: "تم تسجيل الطلب على أنه لم يُستلم.",
     loading: "جارٍ تحميل حالة الطلب…",
@@ -74,7 +74,7 @@ const copy = {
     served: "Delivered",
     cancelled: "Order cancelled",
     unclaimed: "Not collected",
-    steps: ["Received", "Preparing", "Ready", "Delivered"],
+    steps: ["Received", "Preparing", "Ready"],
     cancelledText: "This order was cancelled. Please contact the store team for help.",
     unclaimedText: "This order was marked as not collected.",
     loading: "Loading order status…",
@@ -225,7 +225,9 @@ function OrderTrackingPage() {
   }, [trackingToken, slug, orderId, order?.status, invalidLink, text.unavailable]);
 
   const steps = text.steps;
-  const currentStep = Math.max(0, ["pending", "preparing", "ready", "served"].indexOf(order?.status));
+  // انتظار السداد والجاهز نقطتان نهائيتان للعميل؛ لا نعرض مرحلة تم التسليم.
+  const trackingStatus = order?.status === "awaiting_payment" || order?.status === "served" ? "ready" : order?.status;
+  const currentStep = Math.max(0, ["pending", "preparing", "ready"].indexOf(trackingStatus));
   const orderReference = orderId ? orderId.slice(-6).toUpperCase() : "—";
   const createdAt = order?.created_at
     ? new Intl.DateTimeFormat(language === "ar" ? "ar-SA" : "en-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.created_at))
@@ -234,8 +236,8 @@ function OrderTrackingPage() {
   const returnTable = order?.table_number || location.state?.tableNumber || "";
   const menuReturnPath = buildMenuReturnPath(slug, returnTable);
   const storeName = storeInfo?.store_name || storeInfo?.name || tenant?.name || "SERVIO";
-  const orderStatusColor = order?.status === "cancelled" ? "error" : order?.status === "unclaimed" ? "warning" : order?.status === "served" ? "success" : "primary";
-  const progressValue = order?.status === "served" ? 100 : Math.max(8, (currentStep / (steps.length - 1)) * 100);
+  const orderStatusColor = order?.status === "cancelled" ? "error" : order?.status === "unclaimed" ? "warning" : trackingStatus === "ready" ? "success" : "primary";
+  const progressValue = trackingStatus === "ready" ? 100 : Math.max(8, (currentStep / (steps.length - 1)) * 100);
 
   return (
     <Box
@@ -294,7 +296,7 @@ function OrderTrackingPage() {
                         <Typography variant="caption" sx={{ opacity: .72 }}>{text.order}</Typography>
                         <Typography variant="h4" fontWeight={950} sx={{ lineHeight: 1.1, mt: .2, letterSpacing: ".03em" }}>#{orderReference}</Typography>
                       </Box>
-                      {order && <Chip color={orderStatusColor} label={statusText(order.status, text)} sx={{ fontWeight: 850, maxWidth: "100%" }} />}
+                      {order && <Chip color={orderStatusColor} label={statusText(trackingStatus, text)} sx={{ fontWeight: 850, maxWidth: "100%" }} />}
                     </Stack>
                   </Box>
 
@@ -311,7 +313,7 @@ function OrderTrackingPage() {
                           <Stack direction="row"    sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
                             <Box>
                               <Typography variant="caption" color="text.secondary">{text.progress}</Typography>
-                              <Typography fontWeight={900} sx={{ mt: .25 }}>{statusText(order.status, text)}</Typography>
+                              <Typography fontWeight={900} sx={{ mt: .25 }}>{statusText(trackingStatus, text)}</Typography>
                             </Box>
                             <Chip size="small" color="success" variant="outlined" label="LIVE" sx={{ fontWeight: 900, letterSpacing: ".06em" }} />
                           </Stack>
@@ -320,9 +322,9 @@ function OrderTrackingPage() {
                             value={progressValue}
                             sx={{ mt: 1.5, mb: 2, height: 7, borderRadius: 8, bgcolor: "rgba(244,121,32,.12)", "& .MuiLinearProgress-bar": { borderRadius: 8 } }}
                           />
-                          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: .5 }}>
+                          <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))`, gap: .5 }}>
                             {steps.map((label, index) => {
-                              const complete = index < currentStep || (order.status === "served" && index === 3);
+                              const complete = index < currentStep;
                               const active = index === currentStep;
                               return (
                                 <Box key={label} sx={{ minWidth: 0, textAlign: "center" }}>

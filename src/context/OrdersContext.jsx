@@ -15,6 +15,7 @@ const ORDER_COLUMNS = "id,items,total_price,table_number,notes,status,is_complet
 const UPDATE_COLUMNS = "id,status,is_completed,completed_at,payment_status,paid_at,payment_method,cash_amount,card_amount";
 const RETRY_DELAYS_MS = [250, 650];
 const FINISHED_STATUSES = new Set(["served", "unclaimed", "cancelled"]);
+const SALE_STATUSES = new Set(["ready", "served", "unclaimed"]);
 
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
@@ -433,6 +434,11 @@ export const OrdersProvider = ({ children }) => {
     } catch (error) {
       return { error };
     }
+    // سداد الطلب الموجود في انتظار السداد ينهي دورة البيع محاسبيًا
+    // وينقله إلى جاهز، مع بقائه ظاهرًا للكاشير حتى يتم استلامه فعليًا.
+    if (target.status === "awaiting_payment" && newStatus === "paid") {
+      paymentUpdate = { ...paymentUpdate, status: "ready" };
+    }
     const optimistic = { ...target, ...paymentUpdate, paid_at: paymentUpdate.paid_at ? new Date(paymentUpdate.paid_at) : null };
     setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
 
@@ -526,7 +532,10 @@ export const OrdersProvider = ({ children }) => {
       updateOrderPaymentStatus,
       deleteOrder,
       updateOrderPaymentMethod,
-      finishedOrders: orders.filter((order) => order.is_completed && order.status !== "cancelled"),
+      finishedOrders: orders.filter((order) => (
+        order.status !== "cancelled"
+        && (order.is_completed || (SALE_STATUSES.has(order.status) && order.payment_status === "paid"))
+      )),
       cancelledOrders: orders.filter((order) => order.status === "cancelled"),
       addOrder,
       updateOrder,

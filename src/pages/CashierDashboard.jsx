@@ -63,15 +63,15 @@ function Dashboard() {
         (order) =>
           order.status !== "cancelled" &&
           Number.isFinite(
-            new Date(order.completed_at || order.created_at).getTime(),
+            new Date(order.paid_at || order.completed_at || order.created_at).getTime(),
           ) &&
           isWithinWorkdayShifts(
-            new Date(order.completed_at || order.created_at),
+            new Date(order.paid_at || order.completed_at || order.created_at),
             schedule,
           ) &&
           toLocalDateKey(
             shiftBusinessDate(
-              new Date(order.completed_at || order.created_at),
+              new Date(order.paid_at || order.completed_at || order.created_at),
               schedule.startMinutes,
             ),
           ) === operationalTodayKey,

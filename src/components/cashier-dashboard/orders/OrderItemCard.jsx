@@ -116,7 +116,6 @@ function OrderItemCard({ order }) {
         return;
       }
       setConfirmingStatus(null);
-      if (action === "settle_and_serve") await updateOrderStatus(order.id, "served");
       setSending(false);
       return;
     }
@@ -400,7 +399,7 @@ function OrderItemCard({ order }) {
                 {t("paymentRequired")}
               </Typography>
               <Button color="success" variant="contained" onClick={!isPaid ? settleAndDeliver : () => changeStatus("served")} disabled={sending || paymentSaving}>
-                {!isPaid ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : t("markDelivered")}
+                {!isPaid ? (language === "ar" ? "تأكيد السداد" : "Confirm payment") : t("markDelivered")}
               </Button>
               {isPaid && <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => setIsInvoiceOpen(true)} disabled={sending}>
                 {t("printInvoice")}
@@ -415,7 +414,7 @@ function OrderItemCard({ order }) {
         <DialogContent>
           {confirmingStatus === "settle_and_serve" || confirmingStatus === "record_payment" ? (
             <Box sx={{ display: "grid", gap: 1.5 }}>
-              <Typography>{confirmingStatus === "settle_and_serve" ? (language === "ar" ? "اختر طريقة الدفع لتسجيل السداد وتسليم الطلب. طريقة الدفع إلزامية." : "Choose a payment method to record payment and deliver the order. This field is required.") : (language === "ar" ? "اختر طريقة الدفع لتسجيل السداد. لن تتغير مرحلة الطلب." : "Choose a payment method to record payment. The order stage will remain unchanged.")}</Typography>
+              <Typography>{confirmingStatus === "settle_and_serve" ? (language === "ar" ? "اختر طريقة الدفع لتسجيل السداد ونقل الطلب إلى جاهز. طريقة الدفع إلزامية." : "Choose a payment method to record payment and move the order to ready. This field is required.") : (language === "ar" ? "اختر طريقة الدفع لتسجيل السداد. لن تتغير مرحلة الطلب." : "Choose a payment method to record payment. The order stage will remain unchanged.")}</Typography>
               <Typography fontWeight={850}>{language === "ar" ? "إجمالي الطلب: " : "Order total: "}{Number(order.total_price || 0).toFixed(2)} {language === "ar" ? "ر.س" : "SAR"}</Typography>
               <FormControl fullWidth required size="small">
                 <InputLabel id={`settlement-method-${order.id}`}>{language === "ar" ? "طريقة الدفع *" : "Payment method *"}</InputLabel>
@@ -451,7 +450,7 @@ function OrderItemCard({ order }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmingStatus(null)} disabled={sending}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
-          <Button variant="contained" color="success" onClick={confirmReceiptAction} disabled={sending || ((confirmingStatus === "settle_and_serve" || confirmingStatus === "record_payment") && (!settlementMethod || (settlementMethod === "split" && !isValidSplitPayment(Number(order.total_price) || 0, Number(settlementCash) || 0, Number(settlementCard) || 0))))}>{confirmingStatus === "record_payment" ? (language === "ar" ? "تأكيد تسجيل السداد" : "Confirm payment") : confirmingStatus === "settle_and_serve" ? (language === "ar" ? "تأكيد السداد والتسليم" : "Confirm payment & delivery") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</Button>
+          <Button variant="contained" color="success" onClick={confirmReceiptAction} disabled={sending || ((confirmingStatus === "settle_and_serve" || confirmingStatus === "record_payment") && (!settlementMethod || (settlementMethod === "split" && !isValidSplitPayment(Number(order.total_price) || 0, Number(settlementCash) || 0, Number(settlementCard) || 0))))}>{confirmingStatus === "record_payment" ? (language === "ar" ? "تأكيد تسجيل السداد" : "Confirm payment") : confirmingStatus === "settle_and_serve" ? (language === "ar" ? "تأكيد السداد" : "Confirm payment") : (language === "ar" ? "تأكيد الاستلام" : "Confirm receipt")}</Button>
         </DialogActions>
       </Dialog>
     </motion.div>

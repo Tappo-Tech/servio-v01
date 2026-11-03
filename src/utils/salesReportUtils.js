@@ -1,7 +1,7 @@
 import { calculateInclusiveVat, roundMoney, toMinorUnits } from "./taxUtils";
 import { createWorkdayScheduleHourBuckets, getWorkdayScheduleBucketIndex, isWithinWorkdayShifts, shiftBusinessDate } from "./workdayUtils";
 
-const SALES_STATUSES = new Set(["served", "unclaimed"]);
+const SALES_STATUSES = new Set(["ready", "served", "unclaimed"]);
 const pad = (value) => String(value).padStart(2, "0");
 
 export function toLocalDateKey(date) {
@@ -92,7 +92,9 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
 
   for (const order of orders) {
     const saleDate = getSaleDate(order);
-    if (!SALES_STATUSES.has(order?.status) || !isInWorkday(saleDate, schedule)) continue;
+    if (!SALES_STATUSES.has(order?.status)
+      || (order?.status === "ready" && order?.payment_status !== "paid")
+      || !isInWorkday(saleDate, schedule)) continue;
     const amount = roundMoney(order.total_price || 0);
     const vat = calculateInclusiveVat(amount);
     grossMinor += toMinorUnits(vat.gross);

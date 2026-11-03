@@ -42,7 +42,7 @@ function CashierSalesDrawer({ open, onClose }) {
   const filteredOrders = useMemo(() => finishedOrders.filter((order) => {
     const number = String(order.order_number || order.displayOrderNumber || "");
     const matchesSearch = !searchQuery.trim() || number.includes(searchQuery.trim());
-    const matchesDate = !selectedDate || dayjs(order.completed_at || order.created_at).isSame(dayjs(selectedDate), "day");
+    const matchesDate = !selectedDate || dayjs(order.paid_at || order.completed_at || order.created_at).isSame(dayjs(selectedDate), "day");
     const matchesPayment = paymentFilter === "all" || (paymentFilter === "paid" ? order.payment_status === "paid" : paymentFilter === "unpaid" ? order.payment_status !== "paid" : order.payment_method === paymentFilter);
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     const matchesLocation = locationFilter === "all" || locationOf(order, language) === locationFilter;
@@ -52,7 +52,7 @@ function CashierSalesDrawer({ open, onClose }) {
     const openedAt = currentShift?.opened_at ? new Date(currentShift.opened_at).getTime() : null;
     if (!Number.isFinite(openedAt)) return [];
     return finishedOrders.filter((order) => {
-      const saleAt = new Date(order.completed_at || order.created_at).getTime();
+      const saleAt = new Date(order.paid_at || order.completed_at || order.created_at).getTime();
       return Number.isFinite(saleAt) && saleAt >= openedAt;
     });
   }, [finishedOrders, currentShift?.opened_at]);

@@ -186,14 +186,15 @@ function Reports() {
       try {
         const { start, endExclusive } = getUtcDateBounds(range.from, range.to, schedule.startMinutes);
         // نقرأ الأعمدة الضرورية فقط ونقسم النتائج؛ لا نحمّل تاريخًا خارج الفترة ولا نطلب صور الأصناف.
-        const saleDateFilter = `and(completed_at.gte.${start},completed_at.lt.${endExclusive}),and(completed_at.is.null,created_at.gte.${start},created_at.lt.${endExclusive})`;
+        const saleDateFilter = `and(completed_at.gte.${start},completed_at.lt.${endExclusive}),and(completed_at.is.null,paid_at.gte.${start},paid_at.lt.${endExclusive}),and(completed_at.is.null,paid_at.is.null,created_at.gte.${start},created_at.lt.${endExclusive})`;
         const allRows = [];
         for (let offset = 0; active; offset += PAGE_SIZE) {
           const { data, error: queryError } = await supabase
             .from("orders")
-            .select("id,created_at,completed_at,status,total_price,items")
+            .select("id,created_at,completed_at,paid_at,payment_status,status,total_price,items")
             .eq("tenant_id", tenantId).eq("branch_id", branchId)
-            .in("status", ["served", "unclaimed"])
+            .in("status", ["ready", "served", "unclaimed"])
+            .or("status.neq.ready,payment_status.eq.paid")
             .or(saleDateFilter)
             .order("created_at", { ascending: true })
             .order("id", { ascending: true })
