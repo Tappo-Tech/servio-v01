@@ -58,12 +58,12 @@ const COPY = {
     dailyTrend: "المبيعات حسب الساعة",
     periodTrend: "المبيعات حسب اليوم",
     topItems: "الأصناف الأعلى مبيعًا",
-    tableRevenue: "إيراد كل طاولة", table: "الطاولة", tableOrders: "الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
+    tableRevenue: "إيرادات الطاولات", table: "الطاولة", tableOrders: "عدد الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
     rank: "الترتيب",
     item: "الصنف",
     quantity: "الكمية",
     itemSales: "مبيعات الصنف",
-    saveCsv: "حفظ تقرير CSV",
+    saveCsv: "حفظ التقرير بصيغة CSV",
     print: "طباعة البيانات الظاهرة",
     refresh: "تحديث البيانات",
     loading: "جارٍ إعداد التقرير…",
@@ -92,12 +92,12 @@ const COPY = {
     dailyTrend: "Sales by hour",
     periodTrend: "Sales by day",
     topItems: "Top-selling items",
-    tableRevenue: "Revenue by table", table: "Table", tableOrders: "Orders", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
+    tableRevenue: "Table revenue", table: "Table", tableOrders: "Order count", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
     rank: "Rank",
     item: "Item",
     quantity: "Quantity",
     itemSales: "Item sales",
-    saveCsv: "Save CSV report",
+    saveCsv: "Save report as CSV",
     print: "Print visible data",
     refresh: "Refresh data",
     loading: "Preparing report…",
@@ -237,9 +237,12 @@ function Reports() {
     const blobUrl = window.URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = blobUrl;
-    link.download = `servio-sales-${range.from}-${range.to}.csv`;
+    link.download = `servio-sales-report-${range.from}-${range.to}.csv`;
+    link.rel = "noopener";
+    link.style.display = "none";
+    document.body.appendChild(link);
     link.click();
-    window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 0);
+    window.setTimeout(() => { link.remove(); window.URL.revokeObjectURL(blobUrl); }, 0);
   };
 
   const printReportTable = () => {
@@ -360,10 +363,13 @@ function Reports() {
               </CardContent>
             </Card>
 
-            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
-              <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ mb: 1.2 }}>{text.tableRevenue}</Typography>
-                <TableContainer sx={{ overflowX: "auto" }}><Table size="small" sx={{ minWidth: 360 }}><TableHead><TableRow><TableCell>{text.table}</TableCell><TableCell align="right">{text.tableOrders}</TableCell><TableCell align="right">{text.gross}</TableCell></TableRow></TableHead><TableBody>{report.tableRevenue.map((table) => <TableRow key={table.key}><TableCell sx={{ fontWeight: 750 }}>{table.tableNumber || text.unspecifiedTable}</TableCell><TableCell align="right">{new Intl.NumberFormat(locale).format(table.orderCount)}</TableCell><TableCell align="right" sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>{formatMoney(table.revenue)}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+            <Card elevation={0} className="reports-print-card" sx={{ width: "100%", borderRadius: "18px", border: "1px solid", borderColor: "divider", boxShadow: "0px 8px 28px rgba(10,25,47,0.05)", overflow: "hidden" }}>
+              <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+                <Box sx={{ px: { xs: 1.75, sm: 3 }, py: { xs: 1.5, sm: 2 }, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, borderBottom: "1px solid", borderColor: "divider", bgcolor: "rgba(244,121,32,.06)" }}>
+                  <Box><Typography variant="h6" fontWeight={900} color="text.primary">{text.tableRevenue}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: .35 }}>{text.gross}</Typography></Box>
+                  <Chip size="small" label={report.tableRevenue.length} variant="outlined" sx={{ fontWeight: 800, borderColor: "primary.main", color: "primary.main", bgcolor: "background.paper" }} />
+                </Box>
+                <TableContainer sx={{ width: "100%", overflowX: "auto" }}><Table size="small" sx={{ width: "100%", minWidth: 520, tableLayout: "fixed", "& th, & td": { px: { xs: 1.5, sm: 3 }, py: 1.55 }, "& tbody tr:nth-of-type(even)": { bgcolor: "rgba(10,25,47,.025)" }, "& tbody tr:hover": { bgcolor: "rgba(244,121,32,.08)" } }}><TableHead><TableRow sx={{ bgcolor: "secondary.main", "& th": { color: "#fff", fontWeight: 900, borderBottom: 0 } }}><TableCell sx={{ width: "42%" }}>{text.table}</TableCell><TableCell align="right" sx={{ width: "25%" }}>{text.tableOrders}</TableCell><TableCell align="right" sx={{ width: "33%" }}>{text.gross}</TableCell></TableRow></TableHead><TableBody>{report.tableRevenue.map((table) => <TableRow key={table.key}><TableCell sx={{ fontWeight: 800 }}>{table.tableNumber || text.unspecifiedTable}</TableCell><TableCell align="right">{new Intl.NumberFormat(locale).format(table.orderCount)}</TableCell><TableCell align="right" sx={{ fontWeight: 900, whiteSpace: "nowrap", color: "primary.main" }}>{formatMoney(table.revenue)}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
               </CardContent>
             </Card>
 
