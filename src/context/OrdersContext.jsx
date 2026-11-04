@@ -7,6 +7,7 @@ import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
 import { createOrderPaymentStatusUpdate, createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/paymentStatus";
+import { attachDailyTableOrderNumbers } from "../utils/tableOrderUtils";
 
 const OrdersContext = createContext();
 
@@ -73,11 +74,7 @@ const getRealtimeOrder = (eventType, payload) => {
   return payload?.new || payload?.record || null;
 };
 
-const attachSequentialOrderNumbers = (orderList) => {
-  const sorted = [...orderList].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
-  const numbers = new Map(sorted.map((order, index) => [order.id, order.order_number || index + 1]));
-  return orderList.map((order) => ({ ...order, order_number: numbers.get(order.id) }));
-};
+const attachSequentialOrderNumbers = (orderList) => attachDailyTableOrderNumbers(orderList);
 
 export const OrdersProvider = ({ children }) => {
   const { slug, tenantId, isPublic, loading: tenantLoading } = useTenant();
@@ -225,7 +222,7 @@ export const OrdersProvider = ({ children }) => {
       setOrders((current) => {
         const existing = current.find((order) => order.id === incoming.id);
         const merged = mergeOrder(existing, incoming);
-        if (!existing) merged.order_number = Math.max(0, ...current.map((order) => Number(order.order_number) || 0)) + 1;
+        if (!existing) merged.order_number = attachDailyTableOrderNumbers([...current, merged]).find((order) => order.id === merged.id)?.order_number ?? 0;
 
         if (eventType === "INSERT" && !existing && hasCompleteItems(incoming) && !notifiedRealtimeOrders.current.has(incoming.id)) {
           notifiedRealtimeOrders.current.add(incoming.id);
@@ -331,7 +328,7 @@ export const OrdersProvider = ({ children }) => {
       .single();
 
     if (!error && data) {
-      const formatted = { ...formatOrder(data), order_number: Math.max(0, ...orders.map((order) => Number(order.order_number) || 0)) + 1 };
+      const formatted = { ...formatOrder(data), order_number: attachDailyTableOrderNumbers([...orders, data]).find((order) => order.id === data.id)?.order_number ?? 0 };
       setOrders((current) => current.some((order) => order.id === formatted.id)
         ? current.map((order) => order.id === formatted.id ? mergeOrder(order, formatted) : order)
         : [formatted, ...current]);
@@ -449,7 +446,7 @@ export const OrdersProvider = ({ children }) => {
           .from("orders")
           .update(paymentUpdate)
           .eq("id", orderId)
-          .eq("tenant_id", tenantId).eq("branch_id", branchId)
+          .eq("tenant_id", tenantId).eq("branch_id", target.branch_id || branchId)
           .select("id,status,is_completed,completed_at,payment_status,paid_at,payment_method,cash_amount,card_amount")
           .maybeSingle();
       } catch (networkError) {
