@@ -28,6 +28,18 @@ describe("receipt HTML", () => {
     expect(html).not.toContain("#123456");
   });
 
+  test("kitchen tickets use the persisted order number and include the order date and time", () => {
+    const html = buildReceiptHtml({
+      order: { ...order, order_number: 42, displayOrderNumber: 7 },
+      receiptType: "kitchen",
+      language: "en",
+    });
+    expect(html).toContain("Order: #42");
+    expect(html).not.toContain("Order: #7");
+    expect(html).toContain("05/10/26");
+    expect(html).toContain("03:00 AM");
+  });
+
   test.each([["58mm", "58mm"], ["80mm", "80mm"], ["A4", "210mm"]])("uses the requested %s width", (paperWidth, expectedCssWidth) => {
     const html = buildReceiptHtml({ order, paperWidth });
     expect(html).toContain(`size: ${expectedCssWidth} auto`);

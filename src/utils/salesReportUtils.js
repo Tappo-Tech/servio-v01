@@ -88,6 +88,7 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
   let vatMinor = 0;
   let itemQuantity = 0;
   const itemsByKey = new Map();
+  const tablesByKey = new Map();
   const salesOrders = [];
 
   for (const order of orders) {
@@ -100,6 +101,13 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
     grossMinor += toMinorUnits(vat.gross);
     vatMinor += toMinorUnits(vat.vat);
     salesOrders.push(order);
+
+    const tableNumber = String(order?.table_number ?? "").trim();
+    const tableKey = tableNumber || "__unspecified__";
+    const table = tablesByKey.get(tableKey) || { key: tableKey, tableNumber, orderCount: 0, revenueMinor: 0 };
+    table.orderCount += 1;
+    table.revenueMinor += toMinorUnits(amount);
+    tablesByKey.set(tableKey, table);
 
     for (const item of normalizeItems(order.items)) {
       const name = String(item.name || "").trim();
@@ -124,6 +132,9 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
     .map((item) => ({ ...item, revenue: roundMoney(item.revenue) }))
     .sort((a, b) => b.quantity - a.quantity || b.revenue - a.revenue || a.name.localeCompare(b.name))
     .slice(0, 10);
+  const tableRevenue = Array.from(tablesByKey.values())
+    .map(({ revenueMinor, ...table }) => ({ ...table, revenue: roundMoney(revenueMinor / 100) }))
+    .sort((a, b) => b.revenue - a.revenue || a.tableNumber.localeCompare(b.tableNumber));
 
   return {
     orderCount: salesOrders.length,
@@ -133,6 +144,7 @@ export function aggregateSalesReport(orders = [], schedule = { startMinutes: 0, 
     averageOrder: salesOrders.length ? roundMoney(gross / salesOrders.length) : 0,
     itemQuantity: roundMoney(itemQuantity),
     topItems,
+    tableRevenue,
     salesOrders,
   };
 }

@@ -81,7 +81,8 @@ export function buildReceiptHtml({
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemCount = orderItems.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 1)), 0);
-  const shortId = order?.displayOrderNumber || order?.order_number || "—";
+  const shortId = order?.order_number || order?.displayOrderNumber || "—";
+  const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const tableNumber = escapeReceiptHtml(order?.table_number || "—");
   const notes = order?.notes ? `<div class="notes"><strong>${labels.notes}:</strong> ${escapeReceiptHtml(order.notes)}</div>` : "";
   const formatMoney = (value) => `${new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
@@ -115,13 +116,13 @@ export function buildReceiptHtml({
     </style></head><body><main class="receipt">
       <header class="center"><h1 class="title">${escapeReceiptHtml(receiptTitle || labels.kitchen)}</h1></header>
       <div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
+      <div class="center muted">${escapeReceiptHtml(createdAt)}</div>
       <hr class="rule"><div class="count">${labels.itemCount}: ${escapeReceiptHtml(itemCount)}</div>
       <section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>
       ${notes}
     </main></body></html>`;
   }
 
-  const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const storeName = escapeReceiptHtml(storeInfo.store_name || (language === "en" ? "SERVIO Store" : "متجر SERVIO"));
   const safeImage = safeReceiptImageSource(storeInfo.logo_url) || "/logo-icon.webp";
   const logo = `<img class="logo" src="${escapeReceiptHtml(safeImage)}" alt="${escapeReceiptHtml(storeName)}" crossorigin="anonymous" onerror="this.onerror=null;this.src='/logo-icon.webp'">`;

@@ -15,16 +15,16 @@ import { normalizePaymentMethod, normalizePaymentStatus } from "../../../utils/p
 
 const METHOD_LABELS = {
   ar: {
-    cash: "نقدًا",
-    card: "بطاقة / شبكة (مدى)",
-    split: "نقدًا + شبكة",
+    cash: "نقد",
+    card: "شبكة/بطاقة",
+    split: "نقد + شبكة",
     wallet: "محفظة رقمية",
     transfer: "تحويل بنكي",
     other: "أخرى",
   },
   en: {
     cash: "Cash",
-    card: "Card / network (mada)",
+    card: "Card / network",
     split: "Cash + network",
     wallet: "Digital wallet",
     transfer: "Bank transfer",
@@ -47,7 +47,10 @@ export default function PaymentStatusControl({
     ? { label: "حالة الدفع", paid: "مدفوع", unpaid: "غير مدفوع", unknown: "غير محدد", method: "طريقة الدفع", methodUnknown: "غير محددة" }
     : { label: "Payment status", paid: "Paid", unpaid: "Unpaid", unknown: "Not set", method: "Payment method", methodUnknown: "Not specified" };
   const status = normalizePaymentStatus(value);
-  const paymentMethod = normalizePaymentMethod(method) || "__unset";
+  const normalizedMethod = normalizePaymentMethod(method);
+  const paymentMethod = normalizedMethod === "cash" || normalizedMethod === "card" || (allowSplit && normalizedMethod === "split")
+    ? normalizedMethod
+    : "__unset";
   const methodLabels = METHOD_LABELS[isArabic ? "ar" : "en"];
 
   return (
@@ -93,7 +96,7 @@ export default function PaymentStatusControl({
           onChange={(event) => onMethodChange?.(event.target.value === "__unset" ? null : event.target.value)}
         >
           <MenuItem value="__unset"><em>{text.methodUnknown}</em></MenuItem>
-          {Object.entries(methodLabels).filter(([methodValue]) => allowSplit || methodValue !== "split").map(([methodValue, label]) => (
+          {Object.entries(methodLabels).filter(([methodValue]) => methodValue === "cash" || methodValue === "card" || (allowSplit && methodValue === "split")).map(([methodValue, label]) => (
             <MenuItem key={methodValue} value={methodValue}>{label}</MenuItem>
           ))}
         </Select>

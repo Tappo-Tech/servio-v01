@@ -14,15 +14,15 @@ import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, receiptType = "cashier" }) {
   const isKitchen = receiptType === "kitchen";
-  const shortOrderId = order?.displayOrderNumber || order?.order_number || "—";
+  const shortOrderId = order?.order_number || order?.displayOrderNumber || "—";
   const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(value) || 0)} ${currency}`;
   const orderAdjustment = roundMoney(Number(order?.receipt_adjustment) || 0);
   const paymentMethods = language === "ar"
-    ? { cash: "نقدًا", card: "بطاقة / شبكة (مدى)", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى" }
-    : { cash: "Cash", card: "Card / network (mada)", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other" };
+    ? { cash: "نقد", card: "شبكة/بطاقة", split: "نقد + شبكة", wallet: "محفظة رقمية", transfer: "تحويل بنكي", other: "أخرى" }
+    : { cash: "Cash", card: "Card / network", split: "Cash + network", wallet: "Digital wallet", transfer: "Bank transfer", other: "Other" };
   const paymentMethod = paymentMethods[order?.payment_method] || (language === "ar" ? "غير محددة" : "Not specified");
   const label = language === "ar"
     ? { internal: "إيصال داخلي — ليس فاتورة ضريبية", kitchen: "تذكرة المطبخ", total: "الإجمالي", add: "إضافة", remove: "إلغاء", notes: "ملاحظات", order: "رقم الطلب", table: "النوع / الطاولة", payment: "حالة الدفع", paymentMethod: "طريقة الدفع" }
@@ -91,6 +91,7 @@ function InvoiceModal({
   printMode = "order",
   isInternalReceipt = false,
   suppressKitchenReprint = false,
+  hideKitchenReprint = false,
   isEditMode = false,
   kitchenUpdateItems = [],
   onKitchenTicketPrinted,
@@ -248,7 +249,7 @@ function InvoiceModal({
   const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth;
   const showKitchenPrintButton = isEditMode
     ? kitchenUpdateItems.length > 0
-    : (!suppressKitchenReprint || order?._kitchenTicketSent === false);
+    : (!hideKitchenReprint && (!suppressKitchenReprint || order?._kitchenTicketSent === false));
 
   const handlePrint = async () => {
     setPrinting(true);

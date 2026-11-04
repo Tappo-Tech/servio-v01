@@ -27,4 +27,13 @@ describe("printable shift reports", () => {
     const html = buildShiftReportHtml({ status: "open" }, {}, "en");
     expect(html).toContain('src="/logo-icon.webp"');
   });
+
+  test("offers A4 and common thermal printer widths before printing", () => {
+    const html = buildShiftReportHtml({ status: "open" }, {}, "en");
+    expect(html).toContain('<option value="a4">A4</option>');
+    expect(html).toContain('<option value="58">Thermal 58mm</option>');
+    expect(html).toContain('<option value="80">Thermal 80mm</option>');
+    expect(html).toContain('@page thermal58{size:58mm auto');
+    expect(html).toContain('@page thermal80{size:80mm auto');
+  });
 });
