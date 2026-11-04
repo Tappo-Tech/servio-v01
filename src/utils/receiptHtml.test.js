@@ -34,7 +34,7 @@ describe("receipt HTML", () => {
       receiptType: "kitchen",
       language: "en",
     });
-    expect(html).toContain("Order: #42");
+    expect(html).toContain("Order: <strong class=\"order-number\">#42</strong>");
     expect(html).not.toContain("Order: #7");
     expect(html).toContain("05/10/26");
     expect(html).toContain("03:00 AM");

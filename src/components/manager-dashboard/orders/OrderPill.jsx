@@ -14,7 +14,7 @@ import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, receiptType = "cashier" }) {
   const isKitchen = receiptType === "kitchen";
-  const shortOrderId = order?.order_number || order?.displayOrderNumber || "—";
+  const shortOrderId = order?.order_number ?? order?.displayOrderNumber ?? "—";
   const money = (value) => `${new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-SA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

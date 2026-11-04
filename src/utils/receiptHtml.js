@@ -25,6 +25,12 @@ function safeReceiptImageSource(value) {
   return "";
 }
 
+function getReceiptOrderNumber(order) {
+  const value = order?.order_number ?? order?.displayOrderNumber;
+  if (value === null || value === undefined || String(value).trim() === "") return "—";
+  return String(value).trim();
+}
+
 function getItemRows(items, labels, language, formatMoney, receiptType) {
   return items.map((item) => {
     const quantity = Number(item?.quantity || 1);
@@ -81,7 +87,7 @@ export function buildReceiptHtml({
     };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemCount = orderItems.reduce((sum, item) => sum + Math.max(0, Number(item?.quantity || 1)), 0);
-  const shortId = order?.order_number || order?.displayOrderNumber || "—";
+  const shortId = getReceiptOrderNumber(order);
   const createdAt = dayjs(order?.created_at || new Date()).format("DD/MM/YY · hh:mm A");
   const tableNumber = escapeReceiptHtml(order?.table_number || "—");
   const notes = order?.notes ? `<div class="notes"><strong>${labels.notes}:</strong> ${escapeReceiptHtml(order.notes)}</div>` : "";
@@ -102,6 +108,7 @@ export function buildReceiptHtml({
       .title { font-size: 16pt; font-weight: 900; margin: 0 0 3mm; }
       .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 2mm; }
       .meta { font-weight: 900; font-size: 11pt; }
+      .order-number { display: inline-block; white-space: nowrap; direction: ltr; unicode-bidi: isolate; font-size: 14pt; font-weight: 900; }
       .rule { border: 0; border-top: 1px dashed #333; margin: 3mm 0; }
       .item-group { margin: 2.5mm 0; }
       .kitchen-item { display: flex; align-items: flex-start; justify-content: flex-start; gap: 2mm; direction: ${direction}; font-size: 13pt; line-height: 1.35; }
@@ -115,7 +122,7 @@ export function buildReceiptHtml({
       .notes { margin: 3mm 0 0; padding: 2mm; border: 1px dashed #555; font-weight: 700; white-space: pre-wrap; }
     </style></head><body><main class="receipt">
       <header class="center"><h1 class="title">${escapeReceiptHtml(receiptTitle || labels.kitchen)}</h1></header>
-      <div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
+      <div class="row meta"><span>${labels.order}: <strong class="order-number">#${escapeReceiptHtml(shortId)}</strong></span><span>${labels.table}: ${tableNumber}</span></div>
       <div class="center muted">${escapeReceiptHtml(createdAt)}</div>
       <hr class="rule"><div class="count">${labels.itemCount}: ${escapeReceiptHtml(itemCount)}</div>
       <section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>
@@ -162,6 +169,7 @@ export function buildReceiptHtml({
     .item strong { white-space: nowrap; }
     .addons { margin-top: .4mm; padding-inline-start: 2mm; }
     .meta { font-weight: 800; }
+    .order-number { display: inline-block; white-space: nowrap; direction: ltr; unicode-bidi: isolate; font-size: 13pt; font-weight: 900; }
     .amount-row { margin: 1.5mm 0; }
     .payment { font-weight: 900; margin-top: 1.5mm; }
     .total { font-weight: 900; font-size: 12pt; }
@@ -169,7 +177,7 @@ export function buildReceiptHtml({
     .footer { margin-top: 4mm; font-weight: 700; }
   </style></head><body><main class="receipt">
     <header class="center">${logo}<h1 class="store">${storeName}</h1>${address}<div class="muted">${escapeReceiptHtml(receiptTitle || labels.invoice)}</div>${receiptTitle ? `<div class="muted">${labels.invoice}</div>` : ""}${isTest ? `<div class="test">${labels.test}</div>` : ""}<div class="muted">${escapeReceiptHtml(createdAt)}</div></header>
-    <hr class="rule"><div class="row meta"><span>${labels.order}: #${escapeReceiptHtml(shortId)}</span><span>${labels.table}: ${tableNumber}</span></div>
+    <hr class="rule"><div class="row meta"><span>${labels.order}: <strong class="order-number">#${escapeReceiptHtml(shortId)}</strong></span><span>${labels.table}: ${tableNumber}</span></div>
     <hr class="rule"><section>${rows || `<div class="center muted">${language === "en" ? "No items" : "لا توجد أصناف"}</div>`}</section>${notes}
     <hr class="rule">${adjustmentRow}<div class="row total"><span>${labels.total}</span><span>${formatMoney(order?.total_price)}</span></div><div class="row payment"><span>${paymentLabel}</span><span>${escapeReceiptHtml(paymentStatus)}</span></div><div class="row payment"><span>${labels.paymentMethod}</span><span>${escapeReceiptHtml(paymentMethod)}</span></div>${splitPaymentRows}<hr class="rule">
     <footer class="center muted">${contact}<div class="footer">${footer}</div></footer>

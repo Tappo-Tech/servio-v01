@@ -1,7 +1,7 @@
 import { aggregateTableTurnover, attachDailyTableOrderNumbers, getTableCounterKey } from "./tableOrderUtils";
 
 describe("daily table order numbers and turnover", () => {
-  test("starts each table at zero and keeps counters independent per day", () => {
+  test("starts each table at one and keeps counters independent per day", () => {
     const orders = [
       { id: "b", table_number: "5", created_at: "2026-11-04T09:05:00" },
       { id: "a", table_number: "5", created_at: "2026-11-04T09:00:00" },
@@ -10,7 +10,7 @@ describe("daily table order numbers and turnover", () => {
     ];
     const numbered = attachDailyTableOrderNumbers(orders);
     expect(numbered.map((order) => [order.id, order.order_number])).toEqual([
-      ["b", 1], ["a", 0], ["c", 0], ["d", 0],
+      ["b", 2], ["a", 1], ["c", 1], ["d", 1],
     ]);
     expect(getTableCounterKey("داخل - 5")).toBe(getTableCounterKey("5"));
   });

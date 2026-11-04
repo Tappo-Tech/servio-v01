@@ -22,7 +22,7 @@ export function getLocalCalendarDateKey(value) {
 }
 
 /**
- * رقم عرض محلي: كل طاولة لها عداد مستقل، ويعاد إلى 0 مع بداية كل يوم.
+ * رقم عرض محلي: كل طاولة لها عداد مستقل، ويعاد إلى 1 مع بداية كل يوم.
  * لا نكتب هذا الرقم في قاعدة البيانات لأن عزل الفرع والبيانات يبقيان على order.id.
  */
 export function attachDailyTableOrderNumbers(orderList = []) {
@@ -31,11 +31,11 @@ export function attachDailyTableOrderNumbers(orderList = []) {
   const numbers = new Map();
   sorted.forEach((order) => {
     const key = `${getLocalCalendarDateKey(order?.created_at)}|${getTableCounterKey(order?.table_number)}`;
-    const next = counters.get(key) || 0;
+    const next = counters.get(key) || 1;
     numbers.set(order.id, next);
     counters.set(key, next + 1);
   });
-  return orderList.map((order) => ({ ...order, order_number: numbers.get(order.id) ?? 0 }));
+  return orderList.map((order) => ({ ...order, order_number: numbers.get(order.id) ?? 1 }));
 }
 
 export function aggregateTableTurnover(orders = [], schedule = { startMinutes: 0, durationMinutes: 1440 }) {
