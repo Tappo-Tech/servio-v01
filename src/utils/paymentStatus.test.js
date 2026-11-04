@@ -44,6 +44,17 @@ describe("payment helpers", () => {
       .toThrow("اختر طريقة الدفع قبل تسجيل الطلب كمدفوع");
   });
 
+  test("settles an unpaid order atomically with its selected method and matching amounts", () => {
+    const now = () => new Date("2026-10-06T01:00:00.000Z");
+    expect(createOrderPaymentStatusUpdate("paid", { payment_status: "unpaid", total_price: 12.5 }, { method: "cash" }, now)).toEqual({
+      payment_status: "paid",
+      paid_at: "2026-10-06T01:00:00.000Z",
+      payment_method: "cash",
+      cash_amount: 12.5,
+      card_amount: 0,
+    });
+  });
+
   test("creates database-valid amounts for cash, card, split, and non-cash settlement", () => {
     expect(createPaymentSettlementUpdate("cash", { total: 12.5 })).toEqual({
       payment_method: "cash", cash_amount: 12.5, card_amount: 0,

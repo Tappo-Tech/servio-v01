@@ -38,7 +38,7 @@ import {
   getUtcDateBounds,
 } from "../../utils/salesReportUtils";
 import { getWorkdaySchedule } from "../../utils/workdayUtils";
-import { aggregateTableTurnover } from "../../utils/tableOrderUtils";
+import { aggregateTableTurnover, buildTableTurnoverDetails } from "../../utils/tableOrderUtils";
 
 const PAGE_SIZE = 500;
 
@@ -59,7 +59,7 @@ const COPY = {
     dailyTrend: "المبيعات حسب الساعة",
     periodTrend: "المبيعات حسب اليوم",
     topItems: "الأصناف الأعلى مبيعًا",
-    tableRevenue: "إيرادات الطاولات", table: "الطاولة", tableOrders: "عدد الطلبات", unspecifiedTable: "غير محددة", tableTurnover: "سرعة دوران الطاولات", turnsPerTable: "متوسط الطلبات للطاولة", averageDuration: "متوسط مدة الطلب", minutes: "دقيقة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
+    tableRevenue: "إيرادات الطاولات", table: "الطاولة", tableOrders: "عدد الطلبات", unspecifiedTable: "غير محددة", tableTurnover: "سرعة دوران الطاولات", turnsPerTable: "متوسط الطلبات للطاولة", averageDuration: "متوسط مدة الطلب", minutes: "دقيقة", tableOrderDetails: "تفاصيل طلبات الطاولات", orderNumber: "رقم الطلب", orderTime: "وقت الطلب", previousOrderGap: "الفاصل عن الطلب السابق", orderDuration: "مدة الإكمال", noTableOrders: "لا توجد طلبات طاولات فعلية مكتملة في هذه الفترة.", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
     rank: "الترتيب",
     item: "الصنف",
     quantity: "الكمية",
@@ -93,7 +93,7 @@ const COPY = {
     dailyTrend: "Sales by hour",
     periodTrend: "Sales by day",
     topItems: "Top-selling items",
-    tableRevenue: "Table revenue", table: "Table", tableOrders: "Order count", unspecifiedTable: "Unspecified", tableTurnover: "Table turnover", turnsPerTable: "Average orders per table", averageDuration: "Average order duration", minutes: "min", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
+    tableRevenue: "Table revenue", table: "Table", tableOrders: "Order count", unspecifiedTable: "Unspecified", tableTurnover: "Table turnover", turnsPerTable: "Average orders per table", averageDuration: "Average order duration", minutes: "min", tableOrderDetails: "Table order details", orderNumber: "Order number", orderTime: "Order time", previousOrderGap: "Gap since previous order", orderDuration: "Completion time", noTableOrders: "No completed physical-table orders in this period.", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
     rank: "Rank",
     item: "Item",
     quantity: "Quantity",
@@ -118,9 +118,19 @@ function localDateForDisplay(value, locale) {
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(year, month - 1, day));
 }
 
+function formatOrderDateTime(value, locale) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(date);
+}
+
+function formatDuration(value, locale, minutesLabel) {
+  if (value == null || !Number.isFinite(Number(value))) return "—";
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(Number(value))} ${minutesLabel}`;
+}
+
 const printSafe = (value) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
 
-function createReportRows(report, text, from, to, currency) {
+function createReportRows(report, tableTurnoverDetails, text, from, to, currency) {
   return [
     [text.csvTitle],
     [text.csvFrom, from],
@@ -136,6 +146,18 @@ function createReportRows(report, text, from, to, currency) {
     [text.tableRevenue],
     [text.table, text.tableOrders, text.gross, currency],
     ...report.tableRevenue.map((table) => [table.tableNumber || text.unspecifiedTable, table.orderCount, table.revenue, currency]),
+    [],
+    [text.tableOrderDetails],
+    [text.table, text.orderNumber, text.orderTime, text.previousOrderGap, text.orderDuration, text.gross, currency],
+    ...tableTurnoverDetails.flatMap((table) => table.orders.map((order) => [
+      table.table,
+      order.orderNumber,
+      order.createdAt.toISOString(),
+      order.gapMinutes ?? "",
+      order.durationMinutes ?? "",
+      order.totalPrice,
+      currency,
+    ])),
     [],
     [text.topItems],
     [text.rank, text.item, text.quantity, text.itemSales, currency],
@@ -228,6 +250,7 @@ function Reports() {
 
   const report = useMemo(() => aggregateSalesReport(orders, schedule), [orders, schedule]);
   const tableTurnover = useMemo(() => aggregateTableTurnover(orders, schedule), [orders, schedule]);
+  const tableTurnoverDetails = useMemo(() => buildTableTurnoverDetails(orders, schedule), [orders, schedule]);
   const series = useMemo(() => createSalesSeries(orders, range.from, range.to, period, locale, schedule), [orders, range.from, range.to, period, locale, schedule]);
   const currency = storeInfo?.currency || t("currencySar") || text.currency;
   const formatMoney = (value) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency}`;
@@ -235,7 +258,7 @@ function Reports() {
   const toLabel = localDateForDisplay(range.to, locale);
   const rangeLabel = range.from === range.to ? fromLabel : `${fromLabel} – ${toLabel}`;
   const handleCsvDownload = () => {
-    const csv = createCsvText(createReportRows(report, text, range.from, range.to, currency));
+    const csv = createCsvText(createReportRows(report, tableTurnoverDetails, text, range.from, range.to, currency));
     const blobUrl = window.URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = blobUrl;
@@ -254,9 +277,14 @@ function Reports() {
       .map(([label, value]) => `<tr><th>${printSafe(label)}</th><td>${printSafe(value)}</td></tr>`).join("");
     const items = report.topItems.map((item, index) => `<tr><td>${index + 1}</td><td>${printSafe(item.name || text.unknownItem)}</td><td>${printSafe(item.quantity)}</td><td>${printSafe(formatMoney(item.revenue))}</td></tr>`).join("");
     const tableRows = report.tableRevenue.map((table) => `<tr><td>${printSafe(table.tableNumber || text.unspecifiedTable)}</td><td>${printSafe(table.orderCount)}</td><td>${printSafe(formatMoney(table.revenue))}</td></tr>`).join("");
+    const turnoverRows = tableTurnoverDetails.flatMap((table) => table.orders.map((order) => `<tr><td>${printSafe(table.table)}</td><td>${printSafe(order.orderNumber)}</td><td>${printSafe(formatOrderDateTime(order.createdAt, locale))}</td><td>${printSafe(formatDuration(order.gapMinutes, locale, text.minutes))}</td><td>${printSafe(formatDuration(order.durationMinutes, locale, text.minutes))}</td><td>${printSafe(formatMoney(order.totalPrice))}</td></tr>`)).join("");
     const printCss = `@page{size:A4 portrait;margin:12mm}@page thermal58{size:58mm auto;margin:3mm}@page thermal80{size:80mm auto;margin:4mm}body[data-paper="58"]{page:thermal58}body[data-paper="80"]{page:thermal80}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px}.meta{color:#606778;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;table-layout:fixed;overflow-wrap:anywhere}th{background:#171A2F;color:#fff;font-weight:700;text-align:start}th,td{border:1px solid #d9dde5;padding:9px 8px;text-align:start}table.metrics th{background:#f0f2f5;color:#171A2F;width:55%}tbody tr:nth-child(even){background:#f7f8fa}.print-tools{display:flex;gap:12px;align-items:center;padding:12px;margin-bottom:18px;background:#fff7ed;border:1px solid #f47920;border-radius:8px}.print-tools label{font-weight:bold}.print-tools select,.print-tools button{font:inherit;padding:8px;border:1px solid #f47920;border-radius:5px;background:white}.print-tools button{background:#f47920;color:white;font-weight:bold;cursor:pointer}@media print{.print-tools{display:none!important}body[data-paper="58"],body[data-paper="80"]{width:100%;font-size:9pt}body[data-paper="58"] h1,body[data-paper="80"] h1{font-size:14pt}body[data-paper="58"] h2,body[data-paper="80"] h2{font-size:11pt;margin:12px 0 5px}body[data-paper="58"] table,body[data-paper="80"] table{font-size:8pt}body[data-paper="58"] th,body[data-paper="58"] td,body[data-paper="80"] th,body[data-paper="80"] td{padding:3px 2px}.metrics{page-break-inside:avoid}}`;
     printWindow.document.write(`<!doctype html><html lang="${language}" dir="${language === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${printSafe(text.csvTitle)}</title><style>${printCss}</style></head><body data-paper="a4"><div class="print-tools"><label for="paper-size">${printSafe(text.printSize)}</label><select id="paper-size" aria-label="${printSafe(text.printSize)}"><option value="a4">${printSafe(text.printA4)}</option><option value="58">${printSafe(text.print58)}</option><option value="80">${printSafe(text.print80)}</option></select><button type="button" onclick="window.print()">${printSafe(text.startPrint)}</button></div><h1>${printSafe(text.title)}</h1><div class="meta">${printSafe(text.range)}: ${printSafe(rangeLabel)}</div><h2>${printSafe(text.title)}</h2><table class="metrics"><tbody>${metrics}</tbody></table><h2>${printSafe(text.tableRevenue)}</h2><table><thead><tr><th>${printSafe(text.table)}</th><th>${printSafe(text.tableOrders)}</th><th>${printSafe(text.gross)}</th></tr></thead><tbody>${tableRows || `<tr><td colspan="3">${printSafe(text.noData)}</td></tr>`}</tbody></table><h2>${printSafe(text.topItems)}</h2><table><thead><tr><th>${printSafe(text.rank)}</th><th>${printSafe(text.item)}</th><th>${printSafe(text.quantity)}</th><th>${printSafe(text.itemSales)}</th></tr></thead><tbody>${items || `<tr><td colspan="4">${printSafe(text.noData)}</td></tr>`}</tbody></table><script>document.getElementById('paper-size').addEventListener('change',event=>{document.body.dataset.paper=event.target.value});window.onafterprint=()=>window.close()</script></body></html>`);
     printWindow.document.close();
+    const topItemsHeading = Array.from(printWindow.document.querySelectorAll("h2")).find((heading) => heading.textContent === text.topItems);
+    if (topItemsHeading) {
+      topItemsHeading.insertAdjacentHTML("beforebegin", `<h2>${printSafe(text.tableOrderDetails)}</h2><table><thead><tr><th>${printSafe(text.table)}</th><th>${printSafe(text.orderNumber)}</th><th>${printSafe(text.orderTime)}</th><th>${printSafe(text.previousOrderGap)}</th><th>${printSafe(text.orderDuration)}</th><th>${printSafe(text.gross)}</th></tr></thead><tbody>${turnoverRows || `<tr><td colspan="6">${printSafe(text.noTableOrders)}</td></tr>`}</tbody></table>`);
+    }
   };
 
   const metricCards = [
@@ -376,6 +404,46 @@ function Reports() {
                   <MetricCard title={text.turnsPerTable} value={tableTurnover.averageTurnsPerTable} />
                   <MetricCard title={text.averageDuration} value={tableTurnover.averageMinutes == null ? "—" : `${tableTurnover.averageMinutes} ${text.minutes}`} />
                 </Box>
+              </CardContent>
+            </Card>
+            <Card elevation={0} className="reports-print-card" sx={{ width: "100%", borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 8px 28px rgba(10,25,47,0.05)", overflow: "hidden" }}>
+              <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+                <Box sx={{ px: { xs: 1.75, sm: 3 }, py: { xs: 1.5, sm: 2 }, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, borderBottom: "1px solid", borderColor: "divider", bgcolor: "rgba(244,121,32,.06)" }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight={900} color="text.primary">{text.tableOrderDetails}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: .35 }}>{text.previousOrderGap} · {text.orderDuration}</Typography>
+                  </Box>
+                  <Chip size="small" label={tableTurnoverDetails.reduce((count, table) => count + table.orders.length, 0)} variant="outlined" sx={{ fontWeight: 800, borderColor: "primary.main", color: "primary.main", bgcolor: "background.paper" }} />
+                </Box>
+                <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
+                  <Table size="small" sx={{ width: "100%", minWidth: 850, tableLayout: "fixed", "& th, & td": { px: { xs: 1.25, sm: 2 }, py: 1.4 }, "& tbody tr:nth-of-type(even)": { bgcolor: "rgba(10,25,47,.025)" }, "& tbody tr:hover": { bgcolor: "rgba(244,121,32,.08)" } }}>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: "secondary.main", "& th": { color: "#fff", fontWeight: 900, borderBottom: 0 } }}>
+                        <TableCell sx={{ width: "13%" }}>{text.table}</TableCell>
+                        <TableCell align="right" sx={{ width: "11%" }}>{text.orderNumber}</TableCell>
+                        <TableCell align="right" sx={{ width: "21%" }}>{text.orderTime}</TableCell>
+                        <TableCell align="right" sx={{ width: "21%" }}>{text.previousOrderGap}</TableCell>
+                        <TableCell align="right" sx={{ width: "18%" }}>{text.orderDuration}</TableCell>
+                        <TableCell align="right" sx={{ width: "16%" }}>{text.gross}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {tableTurnoverDetails.flatMap((table) => table.orders.map((order) => (
+                        <TableRow key={order.id} hover>
+                          <TableCell sx={{ fontWeight: 850 }}>{table.table}</TableCell>
+                          <TableCell align="right"><Chip size="small" label={`#${order.orderNumber}`} sx={{ fontWeight: 850, bgcolor: "rgba(244,121,32,.1)", color: "primary.dark" }} /></TableCell>
+                          <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{formatOrderDateTime(order.createdAt, locale)}</TableCell>
+                          <TableCell align="right">{formatDuration(order.gapMinutes, locale, text.minutes)}</TableCell>
+                          <TableCell align="right">{formatDuration(order.durationMinutes, locale, text.minutes)}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 850, whiteSpace: "nowrap", color: "primary.main" }}>{formatMoney(order.totalPrice)}</TableCell>
+                        </TableRow>
+                      )))}
+                      {!tableTurnoverDetails.some((table) => table.orders.length > 0) && (
+                        <TableRow><TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>{text.noTableOrders}</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </CardContent>
             </Card>
             <Card elevation={0} className="reports-print-card" sx={{ width: "100%", borderRadius: "18px", border: "1px solid", borderColor: "divider", boxShadow: "0px 8px 28px rgba(10,25,47,0.05)", overflow: "hidden" }}>

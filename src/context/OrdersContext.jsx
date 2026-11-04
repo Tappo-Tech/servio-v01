@@ -6,7 +6,7 @@ import { useBranch } from "./BranchContext";
 import { playRealtimeNotification } from "../utils/realtimeNotifications";
 import { createRequestGuard } from "../utils/requestGuard";
 import { compactOrderItems, parseOrderItems } from "../utils/orderItemPayload";
-import { createOrderPaymentStatusUpdate, createPaymentMethodUpdate, createPaymentStatusUpdate } from "../utils/paymentStatus";
+import { createOrderPaymentStatusUpdate } from "../utils/paymentStatus";
 import { attachDailyTableOrderNumbers } from "../utils/tableOrderUtils";
 
 const OrdersContext = createContext();
@@ -299,9 +299,19 @@ export const OrdersProvider = ({ children }) => {
     }
 
     if (!tenantId) return { error: new Error("لم يكتمل تحميل النشاط بعد") };
-    let paymentMethodUpdate;
+    const totalPrice = Number(newOrder.total_price) || 0;
+    const paymentStatus = newOrder.payment_status === "paid" ? "paid" : "unpaid";
+    let paymentUpdate;
     try {
-      paymentMethodUpdate = createPaymentMethodUpdate(newOrder.payment_method);
+      paymentUpdate = createOrderPaymentStatusUpdate(
+        paymentStatus,
+        { payment_status: "unpaid", total_price: totalPrice },
+        paymentStatus === "paid" ? {
+          method: newOrder.payment_method,
+          cashAmount: newOrder.cash_amount,
+          cardAmount: newOrder.card_amount,
+        } : null,
+      );
     } catch (error) {
       return { error };
     }
@@ -310,7 +320,7 @@ export const OrdersProvider = ({ children }) => {
       .from("orders")
       .insert([{
         items,
-        total_price: Number(newOrder.total_price) || 0,
+        total_price: totalPrice,
         table_number: String(newOrder.table_number || "غير محدد"),
         notes: newOrder.notes ? String(newOrder.notes) : null,
         tenant_id: tenantId,
@@ -319,10 +329,7 @@ export const OrdersProvider = ({ children }) => {
         status: completedAt ? "served" : "pending",
         is_completed: Boolean(completedAt),
         completed_at: completedAt,
-        ...createPaymentStatusUpdate(newOrder.payment_status === "paid" ? "paid" : "unpaid"),
-        ...paymentMethodUpdate,
-        cash_amount: newOrder.cash_amount == null ? null : Number(newOrder.cash_amount),
-        card_amount: newOrder.card_amount == null ? null : Number(newOrder.card_amount),
+        ...paymentUpdate,
       }])
       .select(ORDER_COLUMNS)
       .single();
@@ -343,21 +350,29 @@ export const OrdersProvider = ({ children }) => {
     if (!target) return { error: new Error("الطلب غير موجود") };
     const items = compactOrderItems(changes.items || target.items);
     if (!items.length) return { error: new Error("الطلب لا يحتوي على أصناف") };
-    let paymentMethodUpdate;
+    const totalPrice = Number(changes.total_price ?? target.total_price) || 0;
+    const paymentStatus = changes.payment_status || target.payment_status || "unpaid";
+    const paymentMethod = changes.payment_method ?? target.payment_method ?? null;
+    const cashAmount = changes.cash_amount ?? target.cash_amount ?? null;
+    const cardAmount = changes.card_amount ?? target.card_amount ?? null;
+    let paymentUpdate;
     try {
-      paymentMethodUpdate = createPaymentMethodUpdate(changes.payment_method ?? target.payment_method ?? null);
+      paymentUpdate = paymentStatus === "paid"
+        ? createOrderPaymentStatusUpdate("paid", { payment_status: "unpaid", total_price: totalPrice }, {
+          method: paymentMethod,
+          cashAmount,
+          cardAmount,
+        })
+        : createOrderPaymentStatusUpdate("unpaid", target);
     } catch (error) {
       return { error };
     }
     const payload = {
       items,
-      total_price: Number(changes.total_price ?? target.total_price) || 0,
+      total_price: totalPrice,
       table_number: String(changes.table_number ?? target.table_number ?? "غير محدد"),
       notes: changes.notes ? String(changes.notes) : null,
-      ...createPaymentStatusUpdate(changes.payment_status || target.payment_status || "unpaid"),
-      ...paymentMethodUpdate,
-      cash_amount: changes.cash_amount == null ? (target.cash_amount ?? null) : Number(changes.cash_amount),
-      card_amount: changes.card_amount == null ? (target.card_amount ?? null) : Number(changes.card_amount),
+      ...paymentUpdate,
     };
     const optimistic = formatOrder({ ...target, ...payload });
     setOrders((current) => current.map((order) => order.id === orderId ? optimistic : order));
@@ -469,10 +484,11 @@ export const OrdersProvider = ({ children }) => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
     const target = orders.find((order) => order.id === orderId);
     if (!target) return { error: new Error("الطلب غير موجود") };
+    if (target.payment_status !== "paid") return { error: new Error("اختر طريقة الدفع ثم سجل السداد في عملية واحدة") };
 
     let paymentUpdate;
     try {
-      paymentUpdate = createPaymentMethodUpdate(newMethod);
+      paymentUpdate = createOrderPaymentStatusUpdate("paid", target, { method: newMethod });
     } catch (error) {
       return { error };
     }
@@ -487,7 +503,7 @@ export const OrdersProvider = ({ children }) => {
           .update(paymentUpdate)
           .eq("id", orderId)
           .eq("tenant_id", tenantId).eq("branch_id", branchId)
-          .select("id,payment_method")
+          .select("id,payment_status,paid_at,payment_method,cash_amount,card_amount")
           .maybeSingle();
       } catch (networkError) {
         result = { data: null, error: networkError };
