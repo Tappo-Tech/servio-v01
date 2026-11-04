@@ -36,4 +36,39 @@ describe("printable shift reports", () => {
     expect(html).toContain('@page thermal58{size:58mm auto');
     expect(html).toContain('@page thermal80{size:80mm auto');
   });
+
+  test("includes table turnover metrics and order intervals from the provided shift orders", () => {
+    const html = buildShiftReportHtml({ status: "closed", cash_sales: 30, card_sales: 20 }, {}, "en", [
+      { id: "one", status: "served", table_number: "Table 4", created_at: "2026-10-05T10:00:00Z", completed_at: "2026-10-05T10:20:00Z", total_price: 30 },
+      { id: "two", status: "served", table_number: "Table 4", created_at: "2026-10-05T10:30:00Z", completed_at: "2026-10-05T10:45:00Z", total_price: 20 },
+      { id: "takeaway", status: "served", table_number: "Takeaway", created_at: "2026-10-05T10:35:00Z", completed_at: "2026-10-05T10:40:00Z", total_price: 10 },
+    ], { managerReport: true });
+
+    expect(html).toContain("Table turnover");
+    expect(html).toContain("Average orders per table");
+    expect(html).toContain("Gap since previous order");
+    expect(html).toContain("20 min");
+    expect(html).toContain("30 min");
+    expect(html).toContain("15 min");
+    expect(html).not.toContain("Takeaway");
+  });
+
+  test("shows only supported cash and network totals, not legacy payment categories", () => {
+    const html = buildShiftReportHtml({ status: "closed", cash_sales: 30, card_sales: 20, wallet_sales: 5, transfer_sales: 7, other_sales: 9 }, {}, "en", [], { managerReport: true });
+
+    expect(html).toContain("Cash");
+    expect(html).toContain("Network");
+    expect(html).not.toContain("Wallet");
+    expect(html).not.toContain("Transfer");
+    expect(html).not.toContain("Other methods");
+  });
+
+  test("keeps the original shared cashier printout unchanged unless manager mode is enabled", () => {
+    const html = buildShiftReportHtml({ status: "closed", wallet_sales: 5, transfer_sales: 7, other_sales: 9 }, {}, "en", [{ id: "one", status: "served", table_number: "Table 1", created_at: "2026-10-05T10:00:00Z" }]);
+
+    expect(html).toContain("Wallet");
+    expect(html).toContain("Transfer");
+    expect(html).toContain("Other methods");
+    expect(html).not.toContain("Table turnover");
+  });
 });

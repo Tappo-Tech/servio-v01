@@ -79,7 +79,7 @@ function ManagerDashboard() {
           {activeTab === "manager" && <Analytics />}
           {activeTab === "history" && <OrdersHistory />}
           {activeTab === "reports" && <Reports />}
-          {activeTab === "shifts" && <ShiftReports />}
+          {activeTab === "shifts" && <ShiftReports managerOnlyFeatures />}
           {activeTab === "menu" && <MenuControl />}
           {activeTab === "inventory" && <IngredientInventory canManage />}
           {activeTab === "settings" && <SettingsLayout />}

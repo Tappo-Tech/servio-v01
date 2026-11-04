@@ -21,13 +21,14 @@ import { useUser } from "../../../context/UserContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import { buildAddonChoices, normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions, normalizeSelectedAddons, toggleSelectedAddon } from "../../../utils/menuItemOptions";
 import { getAddonSelectionSignature, getCartLineKey } from "../../../utils/cartItemUtils";
+import { createPaymentSettlementUpdate, isValidSplitPayment } from "../../../utils/paymentStatus";
 
 const PAYMENT_METHODS = {
   ar: [
-    ["cash", "نقدًا"], ["card", "بطاقة / شبكة (مدى)"],
+    ["cash", "نقدًا"], ["card", "بطاقة / شبكة (مدى)"], ["split", "نقد + شبكة"],
   ],
   en: [
-    ["cash", "Cash"], ["card", "Card / network (mada)"],
+    ["cash", "Cash"], ["card", "Card / network (mada)"], ["split", "Cash + network"],
   ],
 };
 
@@ -56,6 +57,8 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
   const [notes, setNotes] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("paid");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
+  const [cardAmount, setCardAmount] = useState("");
   const [addonItem, setAddonItem] = useState(null);
   const [addonDraft, setAddonDraft] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -71,6 +74,9 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
     ));
   }, [availableItems, categoryId, search]);
   const total = cart.reduce((sum, item) => sum + (Number(item.price) || 0) * Number(item.quantity || 0), 0);
+  const validSplitAmounts = paymentMethod === "split"
+    && Number(cashAmount) > 0 && Number(cardAmount) > 0
+    && isValidSplitPayment(total, cashAmount, cardAmount);
   const addonChoices = addonItem ? buildAddonChoices(addonItem, availableItems) : [];
   const addonLimit = addonItem ? normalizeAddonLimit(addonItem.max_addons, addonChoices) : 0;
 
@@ -118,6 +124,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
     if (user?.role === "cashier" && !currentShift?.id) { setError(ar ? "ابدأ الوردية أولًا قبل تسجيل البيع." : "Start your shift before recording a sale."); return; }
     if (!cart.length) { setError(ar ? "أضف صنفًا واحدًا على الأقل." : "Add at least one item."); return; }
     if (paymentStatus === "paid" && !paymentMethod) { setError(ar ? "اختر طريقة الدفع لإتمام البيع." : "Choose a payment method to complete the sale."); return; }
+    if (paymentStatus === "paid" && paymentMethod === "split" && !validSplitAmounts) { setError(ar ? "أدخل مبلغًا موجبًا للنقد والشبكة، ويجب أن يساوي مجموعهما إجمالي الطلب." : "Enter positive cash and network amounts that add up exactly to the order total."); return; }
     if (cart.some((row) => !availableItems.some((item) => String(item.id) === String(row.id)))) {
       setError(ar ? "توجد أصناف نفدت أو توقفت؛ أزلها من السلة ثم حدّث المنيو." : "Some items are unavailable. Remove them and refresh the menu.");
       return;
@@ -135,8 +142,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
         notes: notes.trim() || null,
         payment_status: paymentStatus,
         payment_method: paymentStatus === "paid" ? paymentMethod : null,
-        cash_amount: paymentStatus !== "paid" ? null : paymentMethod === "cash" ? total : 0,
-        card_amount: paymentStatus !== "paid" ? null : paymentMethod === "card" ? total : 0,
+        ...(paymentStatus === "paid" ? createPaymentSettlementUpdate(paymentMethod, { total, cashAmount, cardAmount }) : { cash_amount: null, card_amount: null }),
         completeImmediately: paymentStatus === "paid",
       });
       if (result?.error || !result?.data) throw result?.error || new Error(ar ? "تعذر حفظ الطلب." : "Could not save the order.");
@@ -208,16 +214,23 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
             {orderType === "dineIn" && <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth size="small" label={ar ? "رقم الطاولة (اختياري)" : "Table number (optional)"} value={tableNumber} onChange={(event) => setTableNumber(event.target.value)} /></Grid>}
             <Grid size={{ xs: 12 }}><TextField fullWidth size="small" label={ar ? "ملاحظات الطلب (اختياري)" : "Order notes (optional)"} value={notes} onChange={(event) => setNotes(event.target.value)} /></Grid>
             <Grid size={{ xs: 12 }}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}  sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}  sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
                 <Typography variant="body2" fontWeight={850}>{ar ? "حالة الدفع" : "Payment status"}</Typography>
-                <ToggleButtonGroup size="small" exclusive value={paymentStatus} onChange={(_, value) => { if (value) { setPaymentStatus(value); if (value === "unpaid") setPaymentMethod(""); } }}>
+                <ToggleButtonGroup size="small" exclusive value={paymentStatus} onChange={(_, value) => { if (value) { setPaymentStatus(value); if (value === "unpaid") { setPaymentMethod(""); setCashAmount(""); setCardAmount(""); } } }}>
                   <ToggleButton value="paid">{ar ? "مدفوع" : "Paid"}</ToggleButton>
                   <ToggleButton value="unpaid">{ar ? "غير مدفوع" : "Unpaid"}</ToggleButton>
                 </ToggleButtonGroup>
               </Stack>
             </Grid>
             {paymentStatus === "paid" && <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth size="small" required><InputLabel id="cashier-order-payment">{ar ? "طريقة الدفع *" : "Payment method *"}</InputLabel><Select labelId="cashier-order-payment" required label={ar ? "طريقة الدفع *" : "Payment method *"} value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}><MenuItem value=""><em>{ar ? "اختر طريقة الدفع" : "Select a payment method"}</em></MenuItem>{PAYMENT_METHODS[ar ? "ar" : "en"].map(([method, label]) => <MenuItem key={method} value={method}>{label}</MenuItem>)}</Select></FormControl>
+              <FormControl fullWidth size="small" required><InputLabel id="cashier-order-payment">{ar ? "طريقة الدفع *" : "Payment method *"}</InputLabel><Select labelId="cashier-order-payment" required label={ar ? "طريقة الدفع *" : "Payment method *"} value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setCashAmount(""); setCardAmount(""); setError(""); }}><MenuItem value=""><em>{ar ? "اختر طريقة الدفع" : "Select a payment method"}</em></MenuItem>{PAYMENT_METHODS[ar ? "ar" : "en"].map(([method, label]) => <MenuItem key={method} value={method}>{label}</MenuItem>)}</Select></FormControl>
+            </Grid>}
+            {paymentStatus === "paid" && paymentMethod === "split" && <Grid size={{ xs: 12 }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
+                <TextField fullWidth size="small" type="number" label={ar ? "المبلغ نقدًا" : "Cash amount"} value={cashAmount} onChange={(event) => setCashAmount(event.target.value)} slotProps={{ htmlInput: { min: 0, max: total, step: "0.01" } }} />
+                <TextField fullWidth size="small" type="number" label={ar ? "المبلغ شبكة" : "Network amount"} value={cardAmount} onChange={(event) => setCardAmount(event.target.value)} slotProps={{ htmlInput: { min: 0, max: total, step: "0.01" } }} />
+              </Stack>
+              {(cashAmount !== "" || cardAmount !== "") && !validSplitAmounts && <Typography variant="caption" color="error.main">{ar ? "يجب أن يكون المبلغان موجبين ومجموعهما مساويًا للإجمالي: " : "Both amounts must be positive and sum to the total: "}{formatAmount(total, language)} {currency}</Typography>}
             </Grid>}
           </Grid>
           <Stack direction="row"   sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 , justifyContent: "space-between", alignItems: "center"}}>
@@ -229,7 +242,7 @@ export default function CashierQuickOrderDialog({ open, onClose }) {
       </DialogContent>
       <DialogActions sx={{ p: 2, gap: 1 }}>
         <Button onClick={onClose} disabled={saving}>{ar ? "إلغاء" : "Cancel"}</Button>
-        <Button variant="contained" startIcon={<ShoppingCartCheckoutRoundedIcon />} onClick={checkout} disabled={saving || !cart.length || (paymentStatus === "paid" && !paymentMethod)}>
+        <Button variant="contained" startIcon={<ShoppingCartCheckoutRoundedIcon />} onClick={checkout} disabled={saving || !cart.length || (paymentStatus === "paid" && (!paymentMethod || (paymentMethod === "split" && !validSplitAmounts)))}>
           {saving ? (ar ? "جارٍ حفظ الطلب…" : "Saving order…") : (ar ? "حفظ البيع" : "Save sale")}
         </Button>
       </DialogActions>

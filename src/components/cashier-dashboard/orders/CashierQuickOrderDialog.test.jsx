@@ -44,7 +44,7 @@ test("يمنع حفظ البيع قبل اختيار طريقة الدفع ثم 
 
   fireEvent.mouseDown(screen.getByRole("combobox", { name: /طريقة الدفع/ }));
   const paymentOptions = await screen.findAllByRole("option");
-  expect(paymentOptions.map((option) => option.textContent)).toEqual(["اختر طريقة الدفع", "نقدًا", "بطاقة / شبكة (مدى)"]);
+  expect(paymentOptions.map((option) => option.textContent)).toEqual(["اختر طريقة الدفع", "نقدًا", "بطاقة / شبكة (مدى)", "نقد + شبكة"]);
   fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
   expect(saveButton.disabled).toBe(false);
   fireEvent.click(saveButton);
@@ -73,5 +73,30 @@ test("يوجه الطلب غير المدفوع إلى قائمة الطلبات
     payment_status: "unpaid",
     payment_method: null,
     completeImmediately: false,
+  });
+});
+
+test("يسجل الدفع المختلط بعد مطابقة النقد والشبكة لإجمالي الطلب فقط", async () => {
+  render(<CashierQuickOrderDialog open onClose={jest.fn()} />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "إضافة" }));
+  fireEvent.mouseDown(screen.getByRole("combobox", { name: /طريقة الدفع/ }));
+  fireEvent.click(await screen.findByRole("option", { name: "نقد + شبكة" }));
+  const saveButton = screen.getByRole("button", { name: "حفظ البيع" });
+  expect(saveButton.disabled).toBe(true);
+
+  fireEvent.change(screen.getByRole("spinbutton", { name: "المبلغ نقدًا" }), { target: { value: "2" } });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "المبلغ شبكة" }), { target: { value: "1.5" } });
+  expect(saveButton.disabled).toBe(false);
+  fireEvent.click(saveButton);
+
+  await waitFor(() => expect(addOrder).toHaveBeenCalledTimes(1));
+  expect(addOrder.mock.calls[0][0]).toMatchObject({
+    payment_status: "paid",
+    payment_method: "split",
+    cash_amount: 2,
+    card_amount: 1.5,
+    total_price: 3.5,
+    completeImmediately: true,
   });
 });

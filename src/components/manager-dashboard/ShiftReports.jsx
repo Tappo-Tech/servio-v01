@@ -6,6 +6,8 @@ import LocalPrintshopOutlinedIcon from "@mui/icons-material/LocalPrintshopOutlin
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
 import { useShift } from "../../context/ShiftContext";
+import supabase from "../../supabase";
+import { useTenant } from "../../context/TenantContext";
 import { useStore } from "../../context/StoreInfoContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { buildShiftReportHtml } from "../../utils/shiftReportHtml";
@@ -16,8 +18,9 @@ function Metric({ label, value, detail }) {
   return <Card elevation={0} sx={{ height: "100%", minWidth: 0, border: "1px solid", borderColor: "divider", borderRadius: 3 }}><CardContent sx={{ p: { xs: 1.45, sm: 2.25 }, "&:last-child": { pb: { xs: 1.45, sm: 2.25 } } }}><Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ fontSize: { xs: ".75rem", sm: ".875rem" } }}>{label}</Typography><Typography variant="h5" fontWeight={950} sx={{ mt: .7, fontSize: { xs: "1.05rem", sm: "1.5rem" }, overflowWrap: "anywhere", fontVariantNumeric: "tabular-nums" }}>{value}</Typography>{detail && <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflowWrap: "anywhere" }}>{detail}</Typography>}</CardContent></Card>;
 }
 
-export default function ShiftReports() {
+export default function ShiftReports({ managerOnlyFeatures = false }) {
   const { sessions, currentShift, loadSessions } = useShift();
+  const { tenantId } = useTenant();
   const { storeInfo = {} } = useStore();
   const { language } = useLanguage();
   const ar = language !== "en";
@@ -26,6 +29,7 @@ export default function ShiftReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [printingSessionId, setPrintingSessionId] = useState(null);
   const text = ar ? {
     title: "تقارير الورديات", subtitle: "سجل إغلاق ورديات الكاشير واطبع تقريرًا تفصيليًا لكل جلسة.", week: "7 أيام", month: "30 يومًا", all: "الكل", refresh: "تحديث", printAll: "طباعة البيانات الظاهرة", open: "مفتوحة", closed: "مغلقة", cashier: "الكاشير", start: "البداية", end: "النهاية", total: "إجمالي المبيعات", cash: "نقدًا", card: "شبكة", opening: "بداية الكاش", closing: "نهاية الكاش", print: "طباعة التقرير", empty: "لا توجد ورديات ضمن الفترة المحددة.", loading: "جارٍ تحميل الورديات…", error: "تعذر تحميل سجل الورديات. تحقق من الاتصال والصلاحيات ثم أعد المحاولة.", count: "عدد الورديات", totalSales: "إجمالي المبيعات المسجلة", note: "تُعرض أحدث 200 جلسة محفوظة. الطباعة تشمل البيانات الظاهرة ضمن الفترة المحددة.", currency: "ر.س",
   } : {
@@ -58,15 +62,52 @@ export default function ShiftReports() {
   const recordedSales = closed.reduce((sum, session) => sum + Number(session.total_sales || 0), 0);
   const openCount = filtered.filter((session) => session.status === "open").length;
 
-  const printSession = (session) => {
+  const printSession = async (session) => {
     const printWindow = window.open("", "_blank", "width=900,height=760");
     if (!printWindow) {
       setError(ar ? "اسمح بفتح النوافذ المنبثقة لطباعة التقرير." : "Allow pop-up windows to print this report.");
       return;
     }
+    setPrintingSessionId(session.id);
     printWindow.document.open();
-    printWindow.document.write(buildShiftReportHtml(session, storeInfo, language));
+    printWindow.document.write(`<html><body style="font-family:Arial,sans-serif;padding:24px">${ar ? "جارٍ إعداد تقرير الوردية…" : "Preparing shift report…"}</body></html>`);
     printWindow.document.close();
+    if (!managerOnlyFeatures) {
+      printWindow.document.open();
+      printWindow.document.write(buildShiftReportHtml(session, storeInfo, language));
+      printWindow.document.close();
+      return;
+    }
+    try {
+      if (!tenantId || !session?.id) throw new Error("Missing shift scope");
+      const pageSize = 500;
+      const orders = [];
+      for (let offset = 0; ; offset += pageSize) {
+        let query = supabase.from("orders")
+          .select("id,created_at,completed_at,status,payment_status,total_price,table_number")
+          .eq("tenant_id", tenantId)
+          .eq("cashier_session_id", session.id)
+          .in("status", ["ready", "served", "unclaimed"])
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (session.branch_id) query = query.eq("branch_id", session.branch_id);
+        const { data, error: queryError } = await query;
+        if (queryError) throw queryError;
+        const page = data || [];
+        orders.push(...page);
+        if (page.length < pageSize) break;
+      }
+      printWindow.document.open();
+      printWindow.document.write(buildShiftReportHtml(session, storeInfo, language, orders, { managerReport: true }));
+      printWindow.document.close();
+    } catch (loadError) {
+      printWindow.close();
+      setError(ar ? "تعذر تحميل طلبات الوردية للطباعة. حدّث البيانات ثم أعد المحاولة." : "Could not load shift orders for printing. Refresh and try again.");
+      console.error("تعذر تحميل طلبات الوردية للطباعة:", { code: loadError?.code, message: loadError?.message });
+    } finally {
+      setPrintingSessionId(null);
+    }
   };
 
   const printFilteredShifts = () => {
@@ -122,7 +163,7 @@ export default function ShiftReports() {
                 <Typography fontWeight={950} sx={{ overflowWrap: "anywhere", fontVariantNumeric: "tabular-nums" }}>{money(session.total_sales)}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflowWrap: "anywhere" }}>{text.cash}: {money(session.cash_sales)} · {text.card}: {money(session.card_sales)}</Typography>
               </Box>
-              <Button className="shift-report-no-print" fullWidth variant="outlined" startIcon={<LocalPrintshopOutlinedIcon />} onClick={() => printSession(session)} sx={{ fontWeight: 800, whiteSpace: "normal" }}>{text.print}</Button>
+              <Button className="shift-report-no-print" fullWidth variant="outlined" startIcon={<LocalPrintshopOutlinedIcon />} disabled={managerOnlyFeatures && printingSessionId === session.id} onClick={() => printSession(session)} sx={{ fontWeight: 800, whiteSpace: "normal" }}>{managerOnlyFeatures && printingSessionId === session.id ? (ar ? "جارٍ تجهيز الطباعة…" : "Preparing print…") : text.print}</Button>
             </Paper>;
           })}
         </Stack>}
