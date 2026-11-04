@@ -38,6 +38,7 @@ import {
   getUtcDateBounds,
 } from "../../utils/salesReportUtils";
 import { getWorkdaySchedule } from "../../utils/workdayUtils";
+import { aggregateTableTurnover } from "../../utils/tableOrderUtils";
 
 const PAGE_SIZE = 500;
 
@@ -58,7 +59,7 @@ const COPY = {
     dailyTrend: "المبيعات حسب الساعة",
     periodTrend: "المبيعات حسب اليوم",
     topItems: "الأصناف الأعلى مبيعًا",
-    tableRevenue: "إيرادات الطاولات", table: "الطاولة", tableOrders: "عدد الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
+    tableRevenue: "إيرادات الطاولات", table: "الطاولة", tableOrders: "عدد الطلبات", unspecifiedTable: "غير محددة", tableTurnover: "سرعة دوران الطاولات", turnsPerTable: "متوسط الطلبات للطاولة", averageDuration: "متوسط مدة الطلب", minutes: "دقيقة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
     rank: "الترتيب",
     item: "الصنف",
     quantity: "الكمية",
@@ -92,7 +93,7 @@ const COPY = {
     dailyTrend: "Sales by hour",
     periodTrend: "Sales by day",
     topItems: "Top-selling items",
-    tableRevenue: "Table revenue", table: "Table", tableOrders: "Order count", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
+    tableRevenue: "Table revenue", table: "Table", tableOrders: "Order count", unspecifiedTable: "Unspecified", tableTurnover: "Table turnover", turnsPerTable: "Average orders per table", averageDuration: "Average order duration", minutes: "min", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
     rank: "Rank",
     item: "Item",
     quantity: "Quantity",
@@ -226,6 +227,7 @@ function Reports() {
   }, [tenantId, branchId, tenantLoading, range.from, range.to, refreshKey, text.error, schedule.startMinutes]);
 
   const report = useMemo(() => aggregateSalesReport(orders, schedule), [orders, schedule]);
+  const tableTurnover = useMemo(() => aggregateTableTurnover(orders, schedule), [orders, schedule]);
   const series = useMemo(() => createSalesSeries(orders, range.from, range.to, period, locale, schedule), [orders, range.from, range.to, period, locale, schedule]);
   const currency = storeInfo?.currency || t("currencySar") || text.currency;
   const formatMoney = (value) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency}`;
@@ -363,6 +365,19 @@ function Reports() {
               </CardContent>
             </Card>
 
+            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 1, mb: 1.5 }}>
+                  <Box><Typography variant="h6" fontWeight={900} color="text.primary">{text.tableTurnover}</Typography><Typography variant="body2" color="text.secondary">{text.tableOrders}</Typography></Box>
+                  <Chip size="small" label={tableTurnover.tableCount} variant="outlined" />
+                </Stack>
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0,1fr))" }, gap: 1.25 }}>
+                  <MetricCard title={text.table} value={tableTurnover.tableCount} />
+                  <MetricCard title={text.turnsPerTable} value={tableTurnover.averageTurnsPerTable} />
+                  <MetricCard title={text.averageDuration} value={tableTurnover.averageMinutes == null ? "—" : `${tableTurnover.averageMinutes} ${text.minutes}`} />
+                </Box>
+              </CardContent>
+            </Card>
             <Card elevation={0} className="reports-print-card" sx={{ width: "100%", borderRadius: "18px", border: "1px solid", borderColor: "divider", boxShadow: "0px 8px 28px rgba(10,25,47,0.05)", overflow: "hidden" }}>
               <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
                 <Box sx={{ px: { xs: 1.75, sm: 3 }, py: { xs: 1.5, sm: 2 }, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, borderBottom: "1px solid", borderColor: "divider", bgcolor: "rgba(244,121,32,.06)" }}>
