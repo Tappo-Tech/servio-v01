@@ -5,9 +5,10 @@ import { useBranch } from "./BranchContext";
 import { createRequestGuard } from "../utils/requestGuard";
 import { normalizeAddonItemIds, normalizeAddonLimit, normalizeAddonOptions } from "../utils/menuItemOptions";
 import { getCustomerMenuItems, withIngredientAvailability } from "../utils/menuAvailability";
+import { isCompleteMenuOrder } from "../utils/menuOrder";
 
 const MenuContext = createContext();
-const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,branch_id,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
+const MENU_ITEM_COLUMNS = "id,created_at,name,price,category_id,description,allergens,tags,available,tenant_id,branch_id,sort_order,recommendation_item_ids,addon_options,free_addon_item_ids,max_addons";
 
 export const MenuProvider = ({ children }) => {
   const { slug, tenantId, isPublic, isTracking, loading: tenantLoading } = useTenant();
@@ -120,7 +121,7 @@ export const MenuProvider = ({ children }) => {
           ]);
         } else {
           [itemsResult, categoriesResult, ingredientsResult, ingredientLinksResult] = await Promise.all([
-            supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).eq("branch_id", branchId).order("created_at", { ascending: true }),
+            supabase.from("menu_items").select(MENU_ITEM_COLUMNS).eq("tenant_id", tenantId).eq("branch_id", branchId).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
             supabase.from("categories").select("*").eq("tenant_id", tenantId).eq("branch_id", branchId).order("created_at", { ascending: true }),
             supabase.from("menu_ingredients").select("id,name,available,tenant_id,branch_id,created_at").eq("tenant_id", tenantId).eq("branch_id", branchId).order("name", { ascending: true }),
             supabase.from("menu_item_ingredients").select("menu_item_id,ingredient_id,is_primary,tenant_id,branch_id").eq("tenant_id", tenantId).eq("branch_id", branchId),
@@ -312,6 +313,21 @@ export const MenuProvider = ({ children }) => {
       .select(MENU_ITEM_COLUMNS).eq("id", row.id).eq("tenant_id", tenantId).eq("branch_id", row.branch_id).maybeSingle();
     return { data, error: readError || (!data ? new Error("لم يتم العثور على الصنف داخل الفرع المحدد") : null) };
   };
+
+  const reorderMenuItems = (orderedIds) => guard("menu:reorder-items", async () => {
+    if (isPublic || !tenantId || !branchId || !Array.isArray(orderedIds)) return { error: new Error("غير مصرح أو لم يتم تحديد الفرع") };
+    const currentIds = items.map((item) => String(item.id));
+    const requestedIds = orderedIds.map(String);
+    if (!isCompleteMenuOrder(currentIds, requestedIds)) {
+      return { error: new Error("قائمة الترتيب لا تطابق أصناف هذا الفرع") };
+    }
+    const { error } = await supabase.rpc("save_menu_item_order", { p_item_ids: requestedIds, p_branch_id: branchId });
+    if (!error) {
+      const positions = new Map(requestedIds.map((id, index) => [id, index]));
+      setItems((current) => [...current].map((item) => ({ ...item, sort_order: positions.get(String(item.id)) })).sort((a, b) => a.sort_order - b.sort_order));
+    }
+    return { error };
+  });
 
   const addNewItem = (newItem) => guard("menu:add-item", async () => {
     if (isPublic || !tenantId) return { error: new Error("غير مصرح") };
@@ -528,7 +544,7 @@ export const MenuProvider = ({ children }) => {
   const filteredMenu = useMemo(() => items.filter((item) => (selectedCategory === "all" || selectedCategory === item.category_id) && (!searchQuery.trim() || item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) || item.description?.toLowerCase().includes(searchQuery.trim().toLowerCase()))), [items, selectedCategory, searchQuery]);
 
   return (
-    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: getCustomerMenuItems(filteredMenu), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu, loadItemImage }}>
+    <MenuContext.Provider value={{ items, filteredMenu, customerMenu: getCustomerMenuItems(filteredMenu), categoriesList, addonComplements, ingredients, menuItemIngredients, selectedCategory, searchQuery, setSearchQuery, handleAlignment, reorderMenuItems, addNewItem, updateItem, deleteItem, toggleAvailable, addIngredient, updateIngredient, setIngredientAvailability, addCategory, updateCategory, updateCategoryPrintRoute, updateCategoryPrintRoutes, deleteCategory, addAddonComplement, deleteAddonComplement, menuLoading, menuRefreshing, menuError, menuRealtimeStatus, refreshMenu, loadItemImage }}>
       {children}
     </MenuContext.Provider>
   );

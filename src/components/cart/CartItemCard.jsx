@@ -36,9 +36,10 @@ function CartItemCard({ cartItemDetails }) {
   return (
     <Card
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: addonChoices.length ? "stretch" : "center",
+        display: "grid",
+        gridTemplateColumns: "minmax(0,1fr) auto",
+        gridTemplateAreas: '"details image" "addons addons" "custom custom" "price price"',
+        alignItems: "start",
         p: 1.5,
         mb: 2,
         gap: 1,
@@ -49,8 +50,8 @@ function CartItemCard({ cartItemDetails }) {
         backgroundColor: "background.paper",
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minWidth: 0, pl: 1.2 }}>
-        <Box sx={{ textAlign: "start" }}>
+      <Box sx={{ display: "contents" }}>
+        <Box sx={{ textAlign: "start", gridArea: "details", minWidth: 0, pl: 1.2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.5, fontSize: "1rem" }}>
             {cartItemDetails.name}
           </Typography>
@@ -73,7 +74,7 @@ function CartItemCard({ cartItemDetails }) {
         </Box>
 
         {maxAddons > 0 && addonChoices.length > 0 && (
-          <Box sx={{ mt: 1.25, p: 1.1, border: "1px solid rgba(244,121,32,.18)", borderRadius: "15px", background: "linear-gradient(135deg, rgba(255,248,241,.98), rgba(255,255,255,.98))", overflow: "hidden" }}>
+          <Box data-testid="cart-item-addon-box" sx={{ gridArea: "addons", gridColumn: "1 / -1", width: "100%", boxSizing: "border-box", mt: 1.25, p: 1.1, border: "1px solid rgba(244,121,32,.18)", borderRadius: "15px", background: "linear-gradient(135deg, rgba(255,248,241,.98), rgba(255,255,255,.98))", overflow: "hidden" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 0.8 }}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="caption" sx={{ display: "block", fontWeight: 900, color: "text.primary" }}>
@@ -138,6 +139,8 @@ function CartItemCard({ cartItemDetails }) {
               ? (quantity > 1 ? `فصل ${quantity} وحدات من ${cartItemDetails.name} لتخصيص إضافات كل قطعة` : `طلب وحدة أخرى من ${cartItemDetails.name} بإضافات مستقلة`)
               : (quantity > 1 ? `Separate all ${quantity} ${cartItemDetails.name} units to customize each unit’s add-ons` : `Order another ${cartItemDetails.name} unit with independent add-ons`)}
             sx={{
+              gridArea: "custom",
+              width: "100%",
               alignSelf: "stretch",
               mt: 0.5,
               px: 1,
@@ -160,7 +163,7 @@ function CartItemCard({ cartItemDetails }) {
           </Button>
         )}
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1.5, gap: 1 }}>
+        <Box sx={{ display: "flex", gridArea: "price", justifyContent: "space-between", alignItems: "center", mt: 1.5, gap: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "primary.main", fontSize: "0.95rem", whiteSpace: "nowrap" }}>
             {cartItemDetails.price} {isArabic ? "ر.س" : "SAR"}
           </Typography>
@@ -181,7 +184,7 @@ function CartItemCard({ cartItemDetails }) {
         component="img"
         image={cartItemDetails.image || "/logo-icon.webp"}
         alt={cartItemDetails.name}
-        sx={{ width: { xs: 76, sm: 95 }, height: { xs: 76, sm: 95 }, flexShrink: 0, borderRadius: "12px", objectFit: "cover" }}
+        sx={{ gridArea: "image", justifySelf: "end", alignSelf: "start", width: { xs: 76, sm: 95 }, height: { xs: 76, sm: 95 }, flexShrink: 0, borderRadius: "12px", objectFit: "cover" }}
       />
     </Card>
   );

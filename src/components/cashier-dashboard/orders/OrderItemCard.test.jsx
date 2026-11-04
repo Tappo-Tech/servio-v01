@@ -10,6 +10,7 @@ jest.mock("../../manager-dashboard/orders/OrderPill", () => ({ __esModule: true,
 
 const updateOrderStatus = jest.fn();
 const updateOrderPaymentStatus = jest.fn();
+const updateOrderPaymentMethod = jest.fn();
 
 const makeOrder = (overrides = {}) => ({
   id: "order-1",
@@ -26,38 +27,31 @@ const makeOrder = (overrides = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useOrders.mockReturnValue({ updateOrderStatus, updateOrderPaymentStatus });
+  useOrders.mockReturnValue({ updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod });
   useLanguage.mockReturnValue({ language: "ar", t: (key) => key });
   updateOrderPaymentStatus.mockResolvedValue({ data: { id: "order-1", payment_status: "paid" }, error: null });
   updateOrderStatus.mockResolvedValue({ data: { id: "order-1" }, error: null });
+  updateOrderPaymentMethod.mockResolvedValue({ data: { id: "order-1" }, error: null });
 });
 
-test("يسجل الدفع من مرحلة الطلب الحالية دون تغيير مرحلة الطلب", async () => {
-  render(<OrderItemCard order={makeOrder({ status: "preparing" })} />);
+test("يسجل الدفع فور الضغط باستخدام الطريقة المحددة مسبقًا دون نافذة تأكيد", async () => {
+  render(<OrderItemCard order={makeOrder({ status: "preparing", payment_method: "cash" })} />);
 
   fireEvent.click(screen.getByRole("button", { name: "مدفوع" }));
-  await screen.findByText("اختر طريقة الدفع لتسجيل السداد. لن تتغير مرحلة الطلب.");
-  fireEvent.mouseDown(screen.getByRole("combobox", { name: "طريقة الدفع *" }));
-  fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
-  fireEvent.click(screen.getByRole("button", { name: "تأكيد تسجيل السداد" }));
-
-  await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", {
-    method: "cash", cashAmount: 0, cardAmount: 0,
-  }));
+  await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", { method: "cash" }));
   expect(updateOrderStatus).not.toHaveBeenCalled();
+  expect(screen.queryByText("تسجيل سداد الطلب")).toBeNull();
 });
 
-test("يسجل سداد طلب انتظار الدفع وينقله إلى جاهز دون اعتباره مستلمًا", async () => {
-  render(<OrderItemCard order={makeOrder()} />);
+test("يعرض حقل طريقة الدفع في انتظار السداد ويسجل بها فورًا", async () => {
+  render(<OrderItemCard order={makeOrder({ payment_method: "card" })} />);
 
+  const paymentSelect = screen.getByRole("combobox", { name: "طريقة الدفع" });
+  fireEvent.mouseDown(paymentSelect);
+  expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["غير محددة", "نقد", "شبكة/بطاقة"]);
+  fireEvent.click(screen.getByRole("option", { name: "شبكة/بطاقة" }));
   fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد" }));
-  fireEvent.mouseDown(screen.getByRole("combobox", { name: "طريقة الدفع *" }));
-  fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
-  fireEvent.click(screen.getByRole("button", { name: "تأكيد السداد" }));
-
-  await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", {
-    method: "cash", cashAmount: 0, cardAmount: 0,
-  }));
+  await waitFor(() => expect(updateOrderPaymentStatus).toHaveBeenCalledWith("order-1", "paid", { method: "card" }));
   expect(updateOrderStatus).not.toHaveBeenCalled();
 });
 

@@ -27,6 +27,7 @@ import LanguageToggle from "../components/LanguageToggle";
 import { useLanguage } from "../context/LanguageContext";
 import supabase from "../supabase";
 import { slugifyName } from "../utils/slug";
+import { registrationErrorMessage, validateAdminRegistration } from "../utils/registrationErrors";
 
 const CURRENCIES = [
   { value: "SAR", labelKey: "currencySar" },
@@ -185,45 +186,53 @@ export default function AdminRegister() {
   };
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (
-      !formData.email ||
-      !formData.password ||
-      !formData.store_name ||
-      !formData.store_slug ||
-      !formData.full_name
-    ) {
-      setErrorMsg(t("required"));
+    if (loading) return;
+    setErrorMsg("");
+    const validationError = validateAdminRegistration(formData);
+    if (validationError) {
+      const messages = {
+        required: t("required"),
+        email: arabic ? "يرجى إدخال بريد إلكتروني صحيح." : "Enter a valid email address.",
+        password: arabic ? "يجب ألا تقل كلمة المرور عن 6 أحرف." : "Password must be at least 6 characters.",
+        storeName: arabic ? "يجب ألا يقل اسم النشاط عن حرفين." : "Business name must be at least 2 characters.",
+        slug: arabic ? "رابط النشاط غير صالح. استخدم أحرفًا إنجليزية صغيرة وأرقامًا وافصل بينها بشرطة عند الحاجة." : "Business link is invalid. Use lowercase English letters and numbers, with hyphens if needed.",
+      };
+      setErrorMsg(messages[validationError]);
       return;
     }
     setLoading(true);
-    setErrorMsg("");
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: {
-          full_name: formData.full_name,
-          store_name: formData.store_name,
-          store_slug: formData.store_slug,
-          phone: formData.phone,
-          currency: formData.currency || "SAR",
-          role: "admin",
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: formData.full_name.trim(),
+            store_name: formData.store_name.trim(),
+            store_slug: formData.store_slug.trim().toLowerCase(),
+            phone: formData.phone.trim(),
+            currency: formData.currency || "SAR",
+            role: "admin",
+          },
         },
-      },
-    });
-    if (error)
-      setErrorMsg(
-        error.message.includes("already registered")
-          ? t("emailAlready")
-          : error.message,
-      );
-    else if (data.session) {
-      const { error: provisioningError } = await supabase.rpc("ensure_profile_for_current_user");
-      if (provisioningError) setErrorMsg(provisioningError.message);
-      else navigate("/manager");
-    } else setEmailSent(true);
-    setLoading(false);
+      });
+      if (error) {
+        setErrorMsg(registrationErrorMessage(error, arabic));
+      } else if (data?.session) {
+        const { error: provisioningError } = await supabase.rpc("ensure_profile_for_current_user");
+        if (provisioningError) setErrorMsg(registrationErrorMessage(provisioningError, arabic));
+        else navigate("/manager");
+      } else if (data?.user) {
+        setEmailSent(true);
+      } else {
+        setErrorMsg(registrationErrorMessage(null, arabic));
+      }
+    } catch (error) {
+      setErrorMsg(registrationErrorMessage(error, arabic));
+    } finally {
+      setLoading(false);
+    }
   };
   const resendConfirmation = async () => {
     setLoading(true);

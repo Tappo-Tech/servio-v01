@@ -24,8 +24,8 @@ export function buildShiftReportHtml(session, storeInfo = {}, language = "ar") {
   const currency = escapeHtml(storeInfo.currency || (ar ? "ر.س" : "SAR"));
   const money = (value) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency}`;
   const labels = ar
-    ? { title: "تقرير وردية الكاشير", cashier: "الكاشير", opened: "بداية الوردية", closed: "نهاية الوردية", status: "الحالة", open: "مفتوحة", completed: "مغلقة", opening: "رصيد بداية الكاش", closing: "رصيد نهاية الكاش", total: "إجمالي المبيعات", cash: "نقدًا", card: "بطاقة / شبكة", wallet: "محفظة", transfer: "تحويل", other: "طرق أخرى", notes: "ملاحظات", generated: "تقرير تشغيلي" }
-    : { title: "Cashier shift report", cashier: "Cashier", opened: "Shift opened", closed: "Shift closed", status: "Status", open: "Open", completed: "Closed", opening: "Opening cash", closing: "Closing cash", total: "Total sales", cash: "Cash", card: "Card / network", wallet: "Wallet", transfer: "Transfer", other: "Other methods", notes: "Notes", generated: "Operations report" };
+    ? { title: "تقرير وردية الكاشير", cashier: "الكاشير", opened: "بداية الوردية", closed: "نهاية الوردية", status: "الحالة", open: "مفتوحة", completed: "مغلقة", opening: "رصيد بداية الكاش", closing: "رصيد نهاية الكاش", total: "إجمالي المبيعات", cash: "نقدًا", card: "بطاقة / شبكة", wallet: "محفظة", transfer: "تحويل", other: "طرق أخرى", notes: "ملاحظات", generated: "تقرير تشغيلي", printSize: "مقاس الطباعة", print: "طباعة", a4: "A4", thermal58: "حراري 58mm", thermal80: "حراري 80mm" }
+    : { title: "Cashier shift report", cashier: "Cashier", opened: "Shift opened", closed: "Shift closed", status: "Status", open: "Open", completed: "Closed", opening: "Opening cash", closing: "Closing cash", total: "Total sales", cash: "Cash", card: "Card / network", wallet: "Wallet", transfer: "Transfer", other: "Other methods", notes: "Notes", generated: "Operations report", printSize: "Print size", print: "Print", a4: "A4", thermal58: "Thermal 58mm", thermal80: "Thermal 80mm" };
   const cashier = session?.cashier_name || session?.cashier_username || (ar ? "كاشير" : "Cashier");
   const logo = safeImageSource(storeInfo.logo_url);
   const rows = [
@@ -42,7 +42,34 @@ export function buildShiftReportHtml(session, storeInfo = {}, language = "ar") {
     [labels.transfer, money(session?.transfer_sales)],
     [labels.other, money(session?.other_sales)],
   ];
-  return `<!doctype html><html lang="${ar ? "ar" : "en"}" dir="${ar ? "rtl" : "ltr"}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(labels.title)}</title><style>
-    @page{size:A4 portrait;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;color:#171a2f;margin:0;line-height:1.6}.report{max-width:760px;margin:0 auto}.brand{text-align:center;padding-bottom:18px;border-bottom:2px solid #f47920}.logo{width:72px;height:72px;object-fit:contain;margin:0 auto 8px;display:block}.brand h1{font-size:24px;margin:0;font-weight:800}.brand p{margin:4px 0 0;color:#64748b}.store{font-size:15px;color:#64748b;margin:10px 0 0}.summary{margin:22px 0 12px;font-size:13px;color:#64748b}.meta{display:flex;justify-content:space-between;gap:12px;margin:14px 0;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}.meta strong{color:#171a2f}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:12px 14px;border-bottom:1px solid #e2e8f0;text-align:start}th{background:#f8fafc;color:#475569;font-size:13px}td:last-child{font-weight:700;text-align:end}.notes{margin-top:18px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;white-space:pre-wrap}.footer{margin-top:22px;text-align:center;color:#64748b;font-size:12px}@media print{.meta{background:#fff}}
-  </style></head><body><main class="report"><header class="brand"><img class="logo" src="${escapeHtml(logo)}" alt="${escapeHtml(storeInfo.store_name || "SERVIO")}" onerror="this.onerror=null;this.src='/logo-icon.webp'"><h1>${escapeHtml(labels.title)}</h1><p>${escapeHtml(labels.generated)}</p><div class="store">${escapeHtml(storeInfo.store_name || "SERVIO")}</div></header><section class="meta"><span>${escapeHtml(labels.cashier)}: <strong>${escapeHtml(cashier)}</strong></span><span>${escapeHtml(labels.status)}: <strong>${escapeHtml(session?.status === "open" ? labels.open : labels.completed)}</strong></span></section><table><thead><tr><th>${ar ? "البيان" : "Description"}</th><th>${ar ? "القيمة" : "Value"}</th></tr></thead><tbody>${rows.map(([label, value]) => `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`).join("")}</tbody></table>${session?.notes ? `<section class="notes"><strong>${escapeHtml(labels.notes)}:</strong> ${escapeHtml(session.notes)}</section>` : ""}<footer class="footer">${escapeHtml(storeInfo.receipt_footer || (ar ? "شكرًا لزيارتكم" : "Thank you for your business"))}</footer></main><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));</script></body></html>`;
+  const styles = `<style>
+    @page{size:A4 portrait;margin:16mm}
+    @page thermal58{size:58mm auto;margin:3mm}
+    @page thermal80{size:80mm auto;margin:4mm}
+    body[data-paper="58"]{page:thermal58}
+    body[data-paper="80"]{page:thermal80}
+    *{box-sizing:border-box}
+    body{font-family:Arial,Tahoma,sans-serif;color:#171a2f;margin:0;line-height:1.6}
+    .report{max-width:760px;margin:0 auto}
+    .brand{text-align:center;padding-bottom:18px;border-bottom:2px solid #f47920}
+    .logo{width:72px;height:72px;object-fit:contain;margin:0 auto 8px;display:block}
+    .brand h1{font-size:24px;margin:0;font-weight:800}
+    .brand p{margin:4px 0 0;color:#64748b}
+    .store{font-size:15px;color:#64748b;margin:10px 0 0}
+    .summary{margin:22px 0 12px;font-size:13px;color:#64748b}
+    .meta{display:flex;justify-content:space-between;gap:12px;margin:14px 0;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+    .meta strong{color:#171a2f}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:12px 14px;border-bottom:1px solid #e2e8f0;text-align:start}
+    th{background:#f8fafc;color:#475569;font-size:13px}
+    td:last-child{font-weight:700;text-align:end}
+    .notes{margin-top:18px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;white-space:pre-wrap}
+    .footer{margin-top:22px;text-align:center;color:#64748b;font-size:12px}
+    .print-tools{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 18px;padding:10px;background:#fff7ed;border:1px solid #f47920;border-radius:8px}
+    .print-tools label{font-weight:700}
+    .print-tools select,.print-tools button{font:inherit;padding:8px;border:1px solid #f47920;border-radius:5px;background:#fff}
+    .print-tools button{background:#f47920;color:#fff;font-weight:700;cursor:pointer}
+    @media print{.print-tools{display:none!important}body[data-paper="58"],body[data-paper="80"]{width:100%;font-size:9pt}.brand{padding-bottom:8px}.logo{width:40px;height:40px}.brand h1{font-size:13pt}.brand p,.store{font-size:8pt}.meta{display:block;padding:5px;margin:7px 0}.meta span{display:block}table{margin-top:5px}th,td{padding:4px 3px;font-size:8pt}.notes{margin-top:8px;padding:6px}.footer{margin-top:8px}}
+  </style>`;
+  return `<!doctype html><html lang="${ar ? "ar" : "en"}" dir="${ar ? "rtl" : "ltr"}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(labels.title)}</title>${styles}</head><body data-paper="a4"><main class="report"><div class="print-tools"><label for="paper-size">${escapeHtml(labels.printSize)}</label><select id="paper-size"><option value="a4">${escapeHtml(labels.a4)}</option><option value="58">${escapeHtml(labels.thermal58)}</option><option value="80">${escapeHtml(labels.thermal80)}</option></select><button type="button" onclick="window.print()">${escapeHtml(labels.print)}</button></div><header class="brand"><img class="logo" src="${escapeHtml(logo)}" alt="${escapeHtml(storeInfo.store_name || "SERVIO")}" onerror="this.onerror=null;this.src='/logo-icon.webp'"><h1>${escapeHtml(labels.title)}</h1><p>${escapeHtml(labels.generated)}</p><div class="store">${escapeHtml(storeInfo.store_name || "SERVIO")}</div></header><section class="meta"><span>${escapeHtml(labels.cashier)}: <strong>${escapeHtml(cashier)}</strong></span><span>${escapeHtml(labels.status)}: <strong>${escapeHtml(session?.status === "open" ? labels.open : labels.completed)}</strong></span></section><table><thead><tr><th>${ar ? "البيان" : "Description"}</th><th>${ar ? "القيمة" : "Value"}</th></tr></thead><tbody>${rows.map(([label, value]) => `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`).join("")}</tbody></table>${session?.notes ? `<section class="notes"><strong>${escapeHtml(labels.notes)}:</strong> ${escapeHtml(session.notes)}</section>` : ""}<footer class="footer">${escapeHtml(storeInfo.receipt_footer || (ar ? "شكرًا لزيارتكم" : "Thank you for your business"))}</footer></main><script>document.getElementById('paper-size').addEventListener('change',event=>{document.body.dataset.paper=event.target.value});window.onafterprint=()=>window.close()</script></body></html>`;
 }

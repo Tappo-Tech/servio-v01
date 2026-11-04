@@ -58,6 +58,7 @@ const COPY = {
     dailyTrend: "المبيعات حسب الساعة",
     periodTrend: "المبيعات حسب اليوم",
     topItems: "الأصناف الأعلى مبيعًا",
+    tableRevenue: "إيراد كل طاولة", table: "الطاولة", tableOrders: "الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
     rank: "الترتيب",
     item: "الصنف",
     quantity: "الكمية",
@@ -91,6 +92,7 @@ const COPY = {
     dailyTrend: "Sales by hour",
     periodTrend: "Sales by day",
     topItems: "Top-selling items",
+    tableRevenue: "Revenue by table", table: "Table", tableOrders: "Orders", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
     rank: "Rank",
     item: "Item",
     quantity: "Quantity",
@@ -129,6 +131,10 @@ function createReportRows(report, text, from, to, currency) {
     [text.orders, report.orderCount],
     [text.average, report.averageOrder, currency],
     [text.itemQuantity, report.itemQuantity],
+    [],
+    [text.tableRevenue],
+    [text.table, text.tableOrders, text.gross, currency],
+    ...report.tableRevenue.map((table) => [table.tableNumber || text.unspecifiedTable, table.orderCount, table.revenue, currency]),
     [],
     [text.topItems],
     [text.rank, text.item, text.quantity, text.itemSales, currency],
@@ -191,7 +197,7 @@ function Reports() {
         for (let offset = 0; active; offset += PAGE_SIZE) {
           const { data, error: queryError } = await supabase
             .from("orders")
-            .select("id,created_at,completed_at,paid_at,payment_status,status,total_price,items")
+            .select("id,created_at,completed_at,paid_at,payment_status,status,total_price,items,table_number")
             .eq("tenant_id", tenantId).eq("branch_id", branchId)
             .in("status", ["ready", "served", "unclaimed"])
             .or("status.neq.ready,payment_status.eq.paid")
@@ -242,7 +248,9 @@ function Reports() {
     const metrics = [[text.gross, formatMoney(report.gross)], [text.net, formatMoney(report.net)], [text.vat, formatMoney(report.vat)], [text.orders, new Intl.NumberFormat(locale).format(report.orderCount)], [text.average, formatMoney(report.averageOrder)], [text.itemQuantity, new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(report.itemQuantity)]]
       .map(([label, value]) => `<tr><th>${printSafe(label)}</th><td>${printSafe(value)}</td></tr>`).join("");
     const items = report.topItems.map((item, index) => `<tr><td>${index + 1}</td><td>${printSafe(item.name || text.unknownItem)}</td><td>${printSafe(item.quantity)}</td><td>${printSafe(formatMoney(item.revenue))}</td></tr>`).join("");
-    printWindow.document.write(`<!doctype html><html lang="${language}" dir="${language === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${printSafe(text.csvTitle)}</title><style>@page{size:A4 portrait;margin:12mm}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px}.meta{color:#606778;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}th{background:#171A2F;color:#fff;font-weight:700;text-align:start}th,td{border:1px solid #d9dde5;padding:9px 8px;text-align:start}table.metrics th{background:#f0f2f5;color:#171A2F;width:55%}tbody tr:nth-child(even){background:#f7f8fa}</style></head><body><h1>${printSafe(text.title)}</h1><div class="meta">${printSafe(text.range)}: ${printSafe(rangeLabel)}</div><h2>${printSafe(text.title)}</h2><table class="metrics"><tbody>${metrics}</tbody></table><h2>${printSafe(text.topItems)}</h2><table><thead><tr><th>${printSafe(text.rank)}</th><th>${printSafe(text.item)}</th><th>${printSafe(text.quantity)}</th><th>${printSafe(text.itemSales)}</th></tr></thead><tbody>${items || `<tr><td colspan="4">${printSafe(text.noData)}</td></tr>`}</tbody></table><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script></body></html>`);
+    const tableRows = report.tableRevenue.map((table) => `<tr><td>${printSafe(table.tableNumber || text.unspecifiedTable)}</td><td>${printSafe(table.orderCount)}</td><td>${printSafe(formatMoney(table.revenue))}</td></tr>`).join("");
+    const printCss = `@page{size:A4 portrait;margin:12mm}@page thermal58{size:58mm auto;margin:3mm}@page thermal80{size:80mm auto;margin:4mm}body[data-paper="58"]{page:thermal58}body[data-paper="80"]{page:thermal80}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171A2F;margin:0}h1{font-size:22px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px}.meta{color:#606778;font-size:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;table-layout:fixed;overflow-wrap:anywhere}th{background:#171A2F;color:#fff;font-weight:700;text-align:start}th,td{border:1px solid #d9dde5;padding:9px 8px;text-align:start}table.metrics th{background:#f0f2f5;color:#171A2F;width:55%}tbody tr:nth-child(even){background:#f7f8fa}.print-tools{display:flex;gap:12px;align-items:center;padding:12px;margin-bottom:18px;background:#fff7ed;border:1px solid #f47920;border-radius:8px}.print-tools label{font-weight:bold}.print-tools select,.print-tools button{font:inherit;padding:8px;border:1px solid #f47920;border-radius:5px;background:white}.print-tools button{background:#f47920;color:white;font-weight:bold;cursor:pointer}@media print{.print-tools{display:none!important}body[data-paper="58"],body[data-paper="80"]{width:100%;font-size:9pt}body[data-paper="58"] h1,body[data-paper="80"] h1{font-size:14pt}body[data-paper="58"] h2,body[data-paper="80"] h2{font-size:11pt;margin:12px 0 5px}body[data-paper="58"] table,body[data-paper="80"] table{font-size:8pt}body[data-paper="58"] th,body[data-paper="58"] td,body[data-paper="80"] th,body[data-paper="80"] td{padding:3px 2px}.metrics{page-break-inside:avoid}}`;
+    printWindow.document.write(`<!doctype html><html lang="${language}" dir="${language === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${printSafe(text.csvTitle)}</title><style>${printCss}</style></head><body data-paper="a4"><div class="print-tools"><label for="paper-size">${printSafe(text.printSize)}</label><select id="paper-size" aria-label="${printSafe(text.printSize)}"><option value="a4">${printSafe(text.printA4)}</option><option value="58">${printSafe(text.print58)}</option><option value="80">${printSafe(text.print80)}</option></select><button type="button" onclick="window.print()">${printSafe(text.startPrint)}</button></div><h1>${printSafe(text.title)}</h1><div class="meta">${printSafe(text.range)}: ${printSafe(rangeLabel)}</div><h2>${printSafe(text.title)}</h2><table class="metrics"><tbody>${metrics}</tbody></table><h2>${printSafe(text.tableRevenue)}</h2><table><thead><tr><th>${printSafe(text.table)}</th><th>${printSafe(text.tableOrders)}</th><th>${printSafe(text.gross)}</th></tr></thead><tbody>${tableRows || `<tr><td colspan="3">${printSafe(text.noData)}</td></tr>`}</tbody></table><h2>${printSafe(text.topItems)}</h2><table><thead><tr><th>${printSafe(text.rank)}</th><th>${printSafe(text.item)}</th><th>${printSafe(text.quantity)}</th><th>${printSafe(text.itemSales)}</th></tr></thead><tbody>${items || `<tr><td colspan="4">${printSafe(text.noData)}</td></tr>`}</tbody></table><script>document.getElementById('paper-size').addEventListener('change',event=>{document.body.dataset.paper=event.target.value});window.onafterprint=()=>window.close()</script></body></html>`);
     printWindow.document.close();
   };
 
@@ -279,20 +287,20 @@ function Reports() {
             onChange={(_, value) => { if (value) setPeriod(value); }}
             aria-label={text.range}
             size="small"
-            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" }, bgcolor: "background.paper", borderRadius: "10px", border: "1px solid", borderColor: "divider", p: "3px", flexWrap: "wrap", "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "7px !important", m: "2px" }, "& .MuiToggleButton-root": { px: { xs: 1.3, sm: 2.2 }, py: 1, fontWeight: 700, flex: { xs: 1, sm: "initial" } }, "& .MuiToggleButton-root.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } } }}
+            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" }, bgcolor: "background.paper", borderRadius: "10px", border: "2px solid #f47920", p: "3px", flexWrap: "wrap", "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "7px !important", m: "2px" }, "& .MuiToggleButton-root": { px: { xs: 1.8, sm: 2.6 }, py: 1.35, fontSize: "1rem", fontWeight: 800, flex: { xs: 1, sm: "initial" } }, "& .MuiToggleButton-root.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } } }}
           >
             <ToggleButton value="daily">{text.daily}</ToggleButton>
             <ToggleButton value="weekly">{text.weekly}</ToggleButton>
             <ToggleButton value="monthly">{text.monthly}</ToggleButton>
           </ToggleButtonGroup>
           <Stack direction="row" spacing={1}  useFlexGap sx={{ flexWrap: "wrap" }}>
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={refreshReport} disabled={loading} sx={{ fontWeight: 700, borderRadius: "10px" }}>
+            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={refreshReport} disabled={loading} sx={{ fontWeight: 800, borderRadius: "10px", border: "2px solid #f47920", px: 2, py: 1.15, fontSize: "1rem" }}>
               {text.refresh}
             </Button>
-            <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={handleCsvDownload} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
+            <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={handleCsvDownload} disabled={loading || Boolean(error)} sx={{ fontWeight: 800, borderRadius: "10px", border: "2px solid #f47920", px: 2, py: 1.15, fontSize: "1rem" }}>
               {text.saveCsv}
             </Button>
-            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={printReportTable} disabled={loading || Boolean(error)} sx={{ fontWeight: 700, borderRadius: "10px" }}>
+            <Button variant="contained" startIcon={<LocalPrintshopOutlinedIcon />} onClick={printReportTable} disabled={loading || Boolean(error)} sx={{ fontWeight: 800, borderRadius: "10px", border: "2px solid #f47920", px: 2, py: 1.15, fontSize: "1rem" }}>
               {text.print}
             </Button>
           </Stack>
@@ -349,6 +357,13 @@ function Reports() {
                     }}
                   />
                 </Box>
+              </CardContent>
+            </Card>
+
+            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ mb: 1.2 }}>{text.tableRevenue}</Typography>
+                <TableContainer sx={{ overflowX: "auto" }}><Table size="small" sx={{ minWidth: 360 }}><TableHead><TableRow><TableCell>{text.table}</TableCell><TableCell align="right">{text.tableOrders}</TableCell><TableCell align="right">{text.gross}</TableCell></TableRow></TableHead><TableBody>{report.tableRevenue.map((table) => <TableRow key={table.key}><TableCell sx={{ fontWeight: 750 }}>{table.tableNumber || text.unspecifiedTable}</TableCell><TableCell align="right">{new Intl.NumberFormat(locale).format(table.orderCount)}</TableCell><TableCell align="right" sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>{formatMoney(table.revenue)}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
               </CardContent>
             </Card>
 

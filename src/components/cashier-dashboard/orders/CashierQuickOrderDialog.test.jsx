@@ -43,6 +43,8 @@ test("يمنع حفظ البيع قبل اختيار طريقة الدفع ثم 
   expect(addOrder).not.toHaveBeenCalled();
 
   fireEvent.mouseDown(screen.getByRole("combobox", { name: /طريقة الدفع/ }));
+  const paymentOptions = await screen.findAllByRole("option");
+  expect(paymentOptions.map((option) => option.textContent)).toEqual(["اختر طريقة الدفع", "نقدًا", "بطاقة / شبكة (مدى)"]);
   fireEvent.click(await screen.findByRole("option", { name: "نقدًا" }));
   expect(saveButton.disabled).toBe(false);
   fireEvent.click(saveButton);

@@ -58,9 +58,15 @@ function MenuControl() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categorySaving, setCategorySaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [sortMode, setSortMode] = useState(false);
+  const [draggedId, setDraggedId] = useState(null);
+  const [sortSaving, setSortSaving] = useState(false);
+  const [sortError, setSortError] = useState("");
 
   const {
     filteredMenu = [],
+    items = [],
+    reorderMenuItems,
     categoriesList = [],
     addonComplements = [],
     searchQuery,
@@ -180,6 +186,9 @@ function MenuControl() {
             {t("menuCategories")}
           </Button>
 
+          <Button onClick={() => { setSortError(""); setSortMode((value) => !value); }} variant={sortMode ? "contained" : "outlined"} sx={{ fontWeight: 700, borderRadius: "8px", px: 2 }}>
+            {language === "ar" ? (sortMode ? "إنهاء الترتيب" : "ترتيب الأصناف") : (sortMode ? "Done sorting" : "Reorder items")}
+          </Button>
           <Button
             onClick={() => setPrinterRoutingOpen(true)}
             variant="outlined"
@@ -213,6 +222,14 @@ function MenuControl() {
           </Button>
         </Box>
       </Box>
+
+      {sortMode && <Box sx={{ mb: 2 }}>
+        <Alert severity="info" sx={{ mb: 1 }}>{language === "ar" ? "اسحب الأصناف لتغيير ترتيب ظهورها في المنيو العامة. الترتيب خاص بالفرع الحالي." : "Drag items to change their order on the public menu. This order is saved for the selected branch."}</Alert>
+        {sortError && <Alert severity="error" sx={{ mb: 1 }}>{sortError}</Alert>}
+        <List aria-label={language === "ar" ? "ترتيب أصناف المنيو" : "Menu item order"}>
+          {[...items].sort((a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER) || String(a.created_at).localeCompare(String(b.created_at))).map((item) => <ListItem key={item.id} draggable={!sortSaving} onDragStart={() => setDraggedId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={async (event) => { event.preventDefault(); if (!draggedId || draggedId === item.id || sortSaving) return; const ordered = [...items].sort((a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER) || String(a.created_at).localeCompare(String(b.created_at))); const from = ordered.findIndex((entry) => entry.id === draggedId); const to = ordered.findIndex((entry) => entry.id === item.id); const [moved] = ordered.splice(from, 1); ordered.splice(to, 0, moved); setSortSaving(true); const result = await reorderMenuItems(ordered.map((entry) => entry.id)); setSortError(result?.error?.message || ""); setSortSaving(false); setDraggedId(null); }} sx={{ mb: .5, border: "1px solid", borderColor: "divider", borderRadius: 2, bgcolor: "background.paper", cursor: "grab" }}><ListItemText primary={item.name} secondary={language === "ar" ? "اسحب لإعادة الترتيب" : "Drag to reorder"} /><Typography aria-hidden sx={{ color: "text.secondary" }}>⠿</Typography></ListItem>)}
+        </List>
+      </Box>}
 
       {menuError && (
         <Alert
