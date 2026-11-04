@@ -58,7 +58,13 @@ const COPY = {
     dailyTrend: "المبيعات حسب الساعة",
     periodTrend: "المبيعات حسب اليوم",
     topItems: "الأصناف الأعلى مبيعًا",
-    tableRevenue: "إيراد كل طاولة", table: "الطاولة", tableOrders: "الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
+    tableRevenue: "إيراد كل طاولة",
+    tableRevenueDescription: "توزيع دخل الفترة حسب الطاولات، مرتّباً من الأعلى إلى الأقل.",
+    tableRevenueTotal: "إجمالي دخل الطاولات",
+    tablesTracked: "طاولات عليها مبيعات",
+    tableShare: "حصة من إجمالي الدخل",
+    topRevenueTable: "أعلى طاولة دخلاً",
+    table: "الطاولة", tableOrders: "الطلبات", unspecifiedTable: "غير محددة", printSize: "مقاس الطباعة", printA4: "A4", print58: "حراري 58mm", print80: "حراري 80mm", startPrint: "فتح نافذة الطباعة",
     rank: "الترتيب",
     item: "الصنف",
     quantity: "الكمية",
@@ -92,7 +98,13 @@ const COPY = {
     dailyTrend: "Sales by hour",
     periodTrend: "Sales by day",
     topItems: "Top-selling items",
-    tableRevenue: "Revenue by table", table: "Table", tableOrders: "Orders", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
+    tableRevenue: "Revenue by table",
+    tableRevenueDescription: "Revenue distribution by table for the selected period, ranked highest to lowest.",
+    tableRevenueTotal: "Total table revenue",
+    tablesTracked: "Tables with sales",
+    tableShare: "Share of total revenue",
+    topRevenueTable: "Top-earning table",
+    table: "Table", tableOrders: "Orders", unspecifiedTable: "Unspecified", printSize: "Print size", printA4: "A4", print58: "Thermal 58mm", print80: "Thermal 80mm", startPrint: "Open print dialog",
     rank: "Rank",
     item: "Item",
     quantity: "Quantity",
@@ -232,6 +244,11 @@ function Reports() {
   const fromLabel = localDateForDisplay(range.from, locale);
   const toLabel = localDateForDisplay(range.to, locale);
   const rangeLabel = range.from === range.to ? fromLabel : `${fromLabel} – ${toLabel}`;
+  const tableRevenueTotal = report.tableRevenue.reduce((total, table) => total + (Number(table.revenue) || 0), 0);
+  const trackedTableCount = report.tableRevenue.filter((table) => Boolean(table.tableNumber)).length;
+  const tableOrderCount = report.tableRevenue.reduce((total, table) => total + (Number(table.orderCount) || 0), 0);
+  const topRevenueTable = report.tableRevenue.find((table) => Boolean(table.tableNumber)) || report.tableRevenue[0] || null;
+  const formatPercent = (value) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(value);
   const handleCsvDownload = () => {
     const csv = createCsvText(createReportRows(report, text, range.from, range.to, currency));
     const blobUrl = window.URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -360,10 +377,63 @@ function Reports() {
               </CardContent>
             </Card>
 
-            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "16px", border: "1px solid", borderColor: "divider", boxShadow: "0px 4px 20px rgba(0,0,0,0.02)" }}>
-              <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ mb: 1.2 }}>{text.tableRevenue}</Typography>
-                <TableContainer sx={{ overflowX: "auto" }}><Table size="small" sx={{ minWidth: 360 }}><TableHead><TableRow><TableCell>{text.table}</TableCell><TableCell align="right">{text.tableOrders}</TableCell><TableCell align="right">{text.gross}</TableCell></TableRow></TableHead><TableBody>{report.tableRevenue.map((table) => <TableRow key={table.key}><TableCell sx={{ fontWeight: 750 }}>{table.tableNumber || text.unspecifiedTable}</TableCell><TableCell align="right">{new Intl.NumberFormat(locale).format(table.orderCount)}</TableCell><TableCell align="right" sx={{ fontWeight: 800, whiteSpace: "nowrap" }}>{formatMoney(table.revenue)}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+            <Card elevation={0} className="reports-print-card" sx={{ borderRadius: "20px", border: "1px solid", borderColor: "divider", boxShadow: "0px 8px 30px rgba(0,0,0,0.035)" }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2.5, lg: 3 } }}>
+                <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 1.5 }}>
+                  <Stack direction="row" spacing={1.2} sx={{ alignItems: "center", minWidth: 0 }}>
+                    <Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "14px", bgcolor: "rgba(244,121,32,.10)", color: "primary.main" }}>
+                      <AssessmentOutlinedIcon sx={{ fontSize: 25 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="h6" fontWeight={850} color="text.primary" sx={{ lineHeight: 1.3 }}>{text.tableRevenue}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35 }}>{text.tableRevenueDescription}</Typography>
+                    </Box>
+                  </Stack>
+                  <Chip label={`${new Intl.NumberFormat(locale).format(trackedTableCount)} ${text.tablesTracked}`} sx={{ alignSelf: { xs: "flex-start", sm: "center" }, fontWeight: 750, bgcolor: "rgba(244,121,32,.08)", color: "primary.dark", border: "1px solid rgba(244,121,32,.22)" }} />
+                </Stack>
+
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" }, gap: 1.25, mt: 2.25 }}>
+                  {[
+                    { label: text.tableRevenueTotal, value: formatMoney(tableRevenueTotal) },
+                    { label: text.tableOrders, value: new Intl.NumberFormat(locale).format(tableOrderCount) },
+                    { label: text.topRevenueTable, value: topRevenueTable ? `${topRevenueTable.tableNumber ? `${text.table} ${topRevenueTable.tableNumber}` : text.unspecifiedTable} · ${formatMoney(topRevenueTable.revenue)}` : "—" },
+                  ].map((metric) => (
+                    <Box key={metric.label} sx={{ minWidth: 0, p: 1.5, borderRadius: "14px", border: "1px solid", borderColor: "divider", bgcolor: "background.default" }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={700}>{metric.label}</Typography>
+                      <Typography variant="h6" fontWeight={850} sx={{ mt: 0.35, overflowWrap: "anywhere", fontSize: { xs: "1rem", sm: "1.15rem" } }}>{metric.value}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                {report.tableRevenue.length ? (
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 1.25, mt: 2 }}>
+                    {report.tableRevenue.map((table, index) => {
+                      const share = tableRevenueTotal > 0 ? Math.max(0, Math.min(1, table.revenue / tableRevenueTotal)) : 0;
+                      const tableLabel = table.tableNumber ? `${text.table} ${table.tableNumber}` : text.unspecifiedTable;
+                      return (
+                        <Box key={table.key} component="article" aria-label={`${tableLabel}: ${formatMoney(table.revenue)}`} sx={{ minWidth: 0, p: { xs: 1.5, sm: 1.75 }, borderRadius: "16px", border: "1px solid", borderColor: "divider", bgcolor: "background.paper", transition: "border-color .18s ease, box-shadow .18s ease", "&:hover": { borderColor: "primary.light", boxShadow: "0 5px 18px rgba(23,26,47,.06)" } }}>
+                          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1.25 }}>
+                            <Stack direction="row" spacing={1.1} sx={{ alignItems: "center", minWidth: 0 }}>
+                              <Box sx={{ width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "12px", bgcolor: index === 0 ? "rgba(244,121,32,.13)" : "action.hover", color: index === 0 ? "primary.dark" : "text.secondary", fontWeight: 850 }}>{new Intl.NumberFormat(locale).format(index + 1)}</Box>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="subtitle1" fontWeight={800} noWrap>{tableLabel}</Typography>
+                                <Typography variant="caption" color="text.secondary">{new Intl.NumberFormat(locale).format(table.orderCount)} {text.tableOrders}</Typography>
+                              </Box>
+                            </Stack>
+                            <Typography variant="subtitle1" fontWeight={850} color="text.primary" sx={{ textAlign: "end", whiteSpace: "nowrap", fontSize: { xs: ".92rem", sm: "1rem" } }}>{formatMoney(table.revenue)}</Typography>
+                          </Stack>
+                          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1, mt: 1.5, mb: 0.65 }}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={650}>{text.tableShare}</Typography>
+                            <Typography variant="caption" color="text.primary" fontWeight={800}>{formatPercent(share)}</Typography>
+                          </Stack>
+                          <Box role="progressbar" aria-label={`${text.tableShare} ${tableLabel}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} sx={{ height: 7, overflow: "hidden", borderRadius: 999, bgcolor: "action.hover" }}>
+                            <Box sx={{ width: `${share * 100}%`, height: "100%", borderRadius: 999, bgcolor: index === 0 ? "primary.main" : "primary.light", transition: "width .25s ease" }} />
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                ) : <Typography color="text.secondary" sx={{ py: 3, textAlign: "center" }}>{text.noData}</Typography>}
               </CardContent>
             </Card>
 
