@@ -72,13 +72,15 @@ describe("printable shift reports", () => {
     expect(html).not.toContain("Table turnover");
   });
 
-  test("uses the system default page size for manager shift reports", () => {
+  test("offers the system default and thermal page sizes for manager shift reports", () => {
     const html = buildShiftReportHtml({ status: "closed" }, {}, "en", [], { managerReport: true });
 
-    expect(html).toContain("@page{margin:12mm}");
+    expect(html).toContain('<option value="system">System default</option>');
+    expect(html).toContain('<option value="58">Thermal 58mm</option>');
+    expect(html).toContain('<option value="80">Thermal 80mm</option>');
     expect(html).not.toContain("size:A4");
-    expect(html).not.toContain("Thermal 58mm");
-    expect(html).not.toContain('id="paper-size"');
+    expect(html).not.toContain("@page{margin:12mm}");
+    expect(html).toContain("@page thermal58{size:58mm auto;margin:2mm}");
     expect(html).toContain("onclick=\"window.print()\"");
   });
 });
