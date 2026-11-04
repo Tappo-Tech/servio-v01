@@ -32,13 +32,14 @@ import InvoiceModal from "../../manager-dashboard/orders/OrderPill";
 import PaymentStatusControl from "./PaymentStatusControl";
 
 function OrderItemCard({ order }) {
-  const { updateOrderStatus, updateOrderPaymentStatus, updateOrderPaymentMethod } = useOrders();
+  const { updateOrderStatus, updateOrderPaymentStatus } = useOrders();
   const { t, language } = useLanguage();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [confirmingStatus, setConfirmingStatus] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(order.payment_method || null);
   const [, setTimeTick] = useState(0);
   const isPaid = order.payment_status === "paid";
   const isAwaitingPayment = order.status === "awaiting_payment";
@@ -48,8 +49,11 @@ function OrderItemCard({ order }) {
     : order.status === "preparing"
       ? { accent: "#2878C8", soft: "rgba(40,120,200,.10)", label: language === "ar" ? "قيد التحضير" : "Preparing" }
       : isAwaitingPayment
-        ? { accent: "#B66A00", soft: "rgba(244,173,52,.16)", label: language === "ar" ? "ينتظر السداد" : "Awaiting payment" }
-        : { accent: "#159A68", soft: "rgba(21,154,104,.11)", label: language === "ar" ? "جاهز" : "Ready" };
+      ? { accent: "#B66A00", soft: "rgba(244,173,52,.16)", label: language === "ar" ? "ينتظر السداد" : "Awaiting payment" }
+      : { accent: "#159A68", soft: "rgba(21,154,104,.11)", label: language === "ar" ? "جاهز" : "Ready" };
+  useEffect(() => {
+    setSelectedPaymentMethod(order.payment_method || null);
+  }, [order.id, order.payment_method]);
   useEffect(() => {
     const timer = window.setInterval(() => setTimeTick((tick) => tick + 1), 1000);
     return () => window.clearInterval(timer);
@@ -80,7 +84,7 @@ function OrderItemCard({ order }) {
   };
   const recordSelectedPayment = async () => {
     if (sending || paymentSaving) return;
-    const method = order.payment_method;
+    const method = selectedPaymentMethod;
     if (!method) {
       setPaymentError(language === "ar" ? "اختر طريقة الدفع من الحقل أولًا." : "Choose a payment method in the field first.");
       return;
@@ -118,10 +122,15 @@ function OrderItemCard({ order }) {
   };
   const changePaymentMethod = async (method) => {
     if (paymentSaving) return;
-    setPaymentSaving(true);
     setPaymentError("");
-    const result = await updateOrderPaymentMethod(order.id, method);
-    if (result?.error) setPaymentError(language === "ar" ? "تعذر حفظ طريقة الدفع. أعد المحاولة." : "Could not save payment method. Retry.");
+    setSelectedPaymentMethod(method);
+    if (!isPaid) return;
+    setPaymentSaving(true);
+    const result = await updateOrderPaymentStatus(order.id, "paid", { method });
+    if (result?.error) {
+      setPaymentError(language === "ar" ? "تعذر حفظ طريقة الدفع. أعد المحاولة." : "Could not save payment method. Retry.");
+      setSelectedPaymentMethod(order.payment_method || null);
+    }
     setPaymentSaving(false);
   };
   const orderItems = Array.isArray(order?.items) ? order.items : [];
@@ -197,7 +206,7 @@ function OrderItemCard({ order }) {
         </Box>
 
         <Box sx={{ mx: { xs: 1.25, sm: 1.5 }, mb: 1.15, p: 1.1, borderRadius: "12px", border: `1px solid ${statusVisual.accent}30`, bgcolor: statusVisual.soft, display: "flex", flexDirection: "column", gap: 0.55, minWidth: 0 }}>
-          <PaymentStatusControl value={order.payment_status} method={order.payment_method} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={sending || paymentSaving || (isReady && isPaid)} language={language} />
+          <PaymentStatusControl value={order.payment_status} method={selectedPaymentMethod} onChange={changePaymentStatus} onMethodChange={changePaymentMethod} disabled={sending || paymentSaving || (isReady && isPaid)} language={language} />
           {isReady && isPaid && <Typography variant="caption" color="success.dark" sx={{ fontWeight: 800 }}>
             {language === "ar" ? "جاهز للاستلام — حالة الدفع مثبتة حتى يتم التسليم." : "Ready for pickup — payment status is locked until delivery."}
           </Typography>}

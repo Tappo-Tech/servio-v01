@@ -38,6 +38,65 @@ export function attachDailyTableOrderNumbers(orderList = []) {
   return orderList.map((order) => ({ ...order, order_number: numbers.get(order.id) ?? 1 }));
 }
 
+function isWithinSchedule(created, schedule) {
+  const startMinutes = Math.max(0, Number(schedule?.startMinutes) || 0);
+  const durationMinutes = Math.min(1440, Math.max(0, Number(schedule?.durationMinutes) || 1440));
+  const businessOffset = ((created.getHours() * 60 + created.getMinutes()) - startMinutes + 1440) % 1440;
+  return businessOffset < durationMinutes;
+}
+
+function tableLabel(tableNumber) {
+  return String(tableNumber || "—").replace(/^(داخل|طاولة|table|dine\s*in)\s*[-:]?\s*/i, "");
+}
+
+/**
+ * تفاصيل الطلبات المكتملة على الطاولات الفعلية في الفترة المعروضة.
+ * الفاصل يقاس من وقت إنشاء الطلب السابق على الطاولة نفسها؛ والمدة من الإنشاء إلى الإكمال.
+ */
+export function buildTableTurnoverDetails(orders = [], schedule = { startMinutes: 0, durationMinutes: 1440 }) {
+  const eligibleOrders = orders.filter((order) => {
+    if (!["served", "unclaimed"].includes(order?.status) || !isPhysicalTable(order?.table_number)) return false;
+    const created = order?.created_at ? new Date(order.created_at) : null;
+    return created && !Number.isNaN(created.getTime()) && isWithinSchedule(created, schedule);
+  });
+  const numbered = attachDailyTableOrderNumbers(eligibleOrders);
+  const groups = new Map();
+
+  numbered.forEach((order) => {
+    const key = getTableCounterKey(order.table_number);
+    const group = groups.get(key) || { key, table: tableLabel(order.table_number), orders: [] };
+    const created = new Date(order.created_at);
+    const completed = order.completed_at ? new Date(order.completed_at) : null;
+    const validCompleted = completed && !Number.isNaN(completed.getTime()) && completed >= created ? completed : null;
+    group.orders.push({
+      id: order.id,
+      orderNumber: order.order_number,
+      createdAt: created,
+      completedAt: validCompleted,
+      totalPrice: Number(order.total_price) || 0,
+    });
+    groups.set(key, group);
+  });
+
+  return [...groups.values()]
+    .map((group) => {
+      group.orders.sort((a, b) => a.createdAt - b.createdAt || String(a.id).localeCompare(String(b.id)));
+      let previousCreatedAt = null;
+      const ordersWithIntervals = group.orders.map((order) => {
+        const gapMinutes = previousCreatedAt
+          ? Math.round(((order.createdAt - previousCreatedAt) / 60000) * 10) / 10
+          : null;
+        const durationMinutes = order.completedAt
+          ? Math.round(((order.completedAt - order.createdAt) / 60000) * 10) / 10
+          : null;
+        previousCreatedAt = order.createdAt;
+        return { ...order, gapMinutes, durationMinutes };
+      });
+      return { ...group, orders: ordersWithIntervals };
+    })
+    .sort((a, b) => String(a.table).localeCompare(String(b.table), "ar", { numeric: true }));
+}
+
 export function aggregateTableTurnover(orders = [], schedule = { startMinutes: 0, durationMinutes: 1440 }) {
   const rowsByKey = new Map();
   const validStatuses = new Set(["served", "unclaimed"]);
@@ -45,13 +104,11 @@ export function aggregateTableTurnover(orders = [], schedule = { startMinutes: 0
     if (!validStatuses.has(order?.status) || !isPhysicalTable(order?.table_number)) return;
     const created = order?.created_at ? new Date(order.created_at) : null;
     const completed = order?.completed_at ? new Date(order.completed_at) : null;
-    if (!created || Number.isNaN(created.getTime())) return;
-    const businessOffset = ((created.getHours() * 60 + created.getMinutes()) - Number(schedule.startMinutes || 0) + 1440) % 1440;
-    if (businessOffset >= Number(schedule.durationMinutes || 1440)) return;
+    if (!created || Number.isNaN(created.getTime()) || !isWithinSchedule(created, schedule)) return;
     const key = getTableCounterKey(order.table_number);
     const existing = rowsByKey.get(key) || {
       key,
-      table: String(order.table_number || "—").replace(/^(داخل|dine\s*in)\s*[-:]?\s*/i, ""),
+      table: tableLabel(order.table_number),
       turns: 0,
       revenue: 0,
       durationTotal: 0,
