@@ -71,4 +71,14 @@ describe("printable shift reports", () => {
     expect(html).toContain("Other methods");
     expect(html).not.toContain("Table turnover");
   });
+
+  test("uses the system default page size for manager shift reports", () => {
+    const html = buildShiftReportHtml({ status: "closed" }, {}, "en", [], { managerReport: true });
+
+    expect(html).toContain("@page{margin:12mm}");
+    expect(html).not.toContain("size:A4");
+    expect(html).not.toContain("Thermal 58mm");
+    expect(html).not.toContain('id="paper-size"');
+    expect(html).toContain("onclick=\"window.print()\"");
+  });
 });
