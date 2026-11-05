@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import NotificationSettingsCard from "./NotificationSettingsCard";
 import supabase from "../../supabase";
 
@@ -41,4 +41,8 @@ test("does not prompt for permission on page render and explains unsupported con
   expect(await screen.findByText(/does not support Web Push/i)).toBeTruthy();
   expect(window.Notification.requestPermission).not.toHaveBeenCalled();
   expect(screen.getByText(/New orders and service calls are sent to cashier subscriptions/i)).toBeTruthy();
+  fireEvent.click(screen.getByText(/Notifications and printing guide/i));
+  expect(await screen.findByText("Current compatibility matrix")).toBeTruthy();
+  expect(screen.getAllByText("Code path only; no physical printer tested.")).toHaveLength(2);
+  expect(screen.getAllByText(/TA-80U 80 mm thermal/).length).toBeGreaterThan(0);
 });
