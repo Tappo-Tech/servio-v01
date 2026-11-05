@@ -8,6 +8,8 @@ import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import { useOrders } from "../context/OrdersContext";
 import { useStore } from "../context/StoreInfoContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
+import supabase from "../supabase";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
@@ -28,11 +30,13 @@ import ShiftReports from "../components/manager-dashboard/ShiftReports";
 import { useMenu } from "../context/MenuContext";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
 import NewTableOrderAlert from "../components/cashier-dashboard/orders/NewTableOrderAlert";
 import IngredientInventory from "../components/manager-dashboard/IngredientInventory";
 import CashierItemAvailability from "../components/cashier-dashboard/CashierItemAvailability";
 import { getPrinterSettings, printKitchenTicketGroups } from "../utils/qzPrinting";
 import { buildOrderReceiptGroups } from "../utils/categoryReceiptUtils";
+import NotificationSettingsCard from "../components/cashier-dashboard/NotificationSettingsCard";
 
 const AUTO_PRINT_KEY = "servio.cashier.autoPrintAfterSave";
 
@@ -46,6 +50,7 @@ function Dashboard() {
   const { storeInfo = {} } = useStore();
   const { items = [], categoriesList = [], menuLoading, updateCategoryPrintRoutes } = useMenu();
   const { t, language } = useLanguage();
+  const { selectedBranchId } = useBranch();
   const categoryPrinterNames = useMemo(
     () =>
       categoriesList
@@ -92,6 +97,28 @@ function Dashboard() {
     }
   });
   const autoPrintedPublicOrders = useRef(new Set());
+
+  useEffect(() => {
+    let active = true;
+    const syncPushLanguage = async () => {
+      try {
+        if (!window.isSecureContext || !navigator.serviceWorker || !selectedBranchId) return;
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        const subscription = await registration?.pushManager?.getSubscription();
+        if (!active || !subscription) return;
+        await supabase.rpc("save_cashier_notification_subscription", {
+          p_subscription: subscription.toJSON(),
+          p_branch_id: selectedBranchId,
+          p_language: language === "en" ? "en" : "ar",
+          p_device_label: "Cashier device",
+        });
+      } catch {
+        // A language sync is best-effort and must never interrupt cashier work.
+      }
+    };
+    void syncPushLanguage();
+    return () => { active = false; };
+  }, [language, selectedBranchId]);
 
   useEffect(() => {
     const incoming = newTableOrderAlert;
@@ -321,6 +348,12 @@ function Dashboard() {
                 }
               />
               <Tab
+                value="notifications"
+                icon={<NotificationsActiveRoundedIcon />}
+                iconPosition="start"
+                label={language === "ar" ? "الإشعارات والدليل" : "Notifications & guide"}
+              />
+              <Tab
                 value="shifts"
                 icon={<AccessTimeRoundedIcon />}
                 iconPosition="start"
@@ -335,6 +368,10 @@ function Dashboard() {
               <IngredientInventory />
             ) : activeTab === "availability" ? (
               <CashierItemAvailability />
+            ) : activeTab === "notifications" ? (
+              <Box sx={{ maxWidth: 1100, mx: "auto", py: { xs: 1, md: 2 } }}>
+                <NotificationSettingsCard />
+              </Box>
             ) : (
               <Stack spacing={2.5} sx={{ maxWidth: 1100, mx: "auto", py: { xs: 1, md: 2 } }}>
                 <PrinterSetupDialog
