@@ -11,6 +11,12 @@ import {
   Chip,
   Divider,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
@@ -50,6 +56,15 @@ const copy = {
     addDevice: "كرر التفعيل على كل جهاز تريد استقبال الإشعارات عليه. إزالة الجهاز توقف إرسال الإشعارات إليه من SERVIO، وقد تحتاج أيضًا إلى إيقاف إذن الموقع من إعدادات النظام.",
     printGuideTitle: "إعداد الطباعة وحالتها",
     printGuide: "على Windows وmacOS يستخدم زر الطباعة الصامتة جسر QZ Tray المحلي بعد التحقق من الاتصال والثقة والطابعة المحفوظة. عند فشل الطباعة لا تفتح نافذة النظام تلقائيًا؛ اختر الإجراء اليدوي بشكل منفصل. على Android وiPhone/iPad تقتصر طباعة الويب على نافذة الطباعة التي يفتحها المستخدم، وتحتاج طابعة/خدمة نظام متوافقة (مثل AirPrint في الأجهزة الداعمة). لا يؤكد SERVIO خروج الورقة فعليًا؛ حالة الإرسال تعني قبول المهمة من الجسر أو نظام الطباعة فقط. قد تختلف النتيجة حسب طراز الطابعة وطريقة الاتصال. الطراز المرجعي في الاختبارات البرمجية TA-80U حراري 80 مم؛ لم تُجرَ اختبارات ميدانية فعلية للطابعات أو الهواتف.",
+    printMatrixTitle: "مصفوفة التوافق الحالية",
+    printMatrixHeaders: ["النظام", "الاتصال والطابعة", "المسار المتاح", "حالة التحقق"],
+    printMatrixRows: [
+      ["Windows", "USB / Bluetooth / Wi‑Fi عبر تعريف Windows", "صامت عبر QZ Tray عند تشغيله وثقة الشهادة واكتشاف الطابعة؛ أو نافذة النظام يدويًا.", "مسار برمجي فقط؛ لم تُختبر طابعة فعلية."],
+      ["macOS", "USB / Bluetooth / Wi‑Fi عبر تعريف macOS", "QZ Tray صامت عند تثبيته ودعم التعريف؛ أو نافذة النظام يدويًا.", "مسار برمجي فقط؛ لم تُختبر طابعة فعلية."],
+      ["Android", "الاتصال الذي تدعمه خدمة الطباعة/تطبيق الشركة المصنّعة", "نافذة طباعة النظام يدويًا فقط؛ لا طباعة ويب صامتة مباشرة.", "يعتمد على خدمة الجهاز؛ لم يُختبر هاتف أو طراز."],
+      ["iPhone / iPad", "طابعة متوافقة مع AirPrint عبر الشبكة", "نافذة طباعة النظام يدويًا فقط؛ لا طباعة ويب صامتة مباشرة عبر USB/Bluetooth.", "يتطلب AirPrint؛ لم يُختبر جهاز أو طراز فعلي."],
+    ],
+    printProtocolNote: "TA‑80U حراري 80 مم هو مرجع برمجي لمسار صورة ESC/POS مع أمر قصّ؛ لم يُتحقق منه على جهاز فعلي. طباعة A4 تمر عبر تعريف النظام. «قُبلت المهمة» لا تعني تأكيد خروج الورقة.",
     helpLink: "فتح دليل الإعداد العام",
     diagnostics: "للدعم، أرسل نوع الجهاز وإصدار النظام والمتصفح ووقت حدوث المشكلة، دون بيانات العملاء. لا ترسل رمز PIN أو عنوان اشتراك الإشعار أو مفاتيح سرية. استخدم قناة دعم SERVIO المعتادة لدى نشاطك.",
     branch: "الفرع",
@@ -81,6 +96,15 @@ const copy = {
     addDevice: "Enable notifications separately on every device. Removing a device stops SERVIO from sending to it; you may also need to disable site notifications in the operating-system settings.",
     printGuideTitle: "Printer setup and status",
     printGuide: "On Windows and macOS, the silent-print button uses the local QZ Tray bridge after checking its connection, trust, and saved printer. A failure never opens the OS print dialog automatically; choose the separate manual action if needed. On Android and iPhone/iPad, web printing is limited to the user-opened system print dialog and a compatible system printer/service (such as AirPrint on supported devices). SERVIO cannot confirm that paper physically came out: status means the bridge or OS print queue accepted the job. Results vary by printer model and connection. TA-80U 80 mm thermal is the software reference model; no physical printer or phone testing has been performed.",
+    printMatrixTitle: "Current compatibility matrix",
+    printMatrixHeaders: ["Platform", "Connection / printer", "Available path", "Verification status"],
+    printMatrixRows: [
+      ["Windows", "USB / Bluetooth / Wi‑Fi through the Windows driver", "Silent through QZ Tray when running, trusted, and the printer is discovered; or use the OS dialog manually.", "Code path only; no physical printer tested."],
+      ["macOS", "USB / Bluetooth / Wi‑Fi through the macOS driver", "Silent QZ Tray path when installed and supported by the driver; or use the OS dialog manually.", "Code path only; no physical printer tested."],
+      ["Android", "Connections provided by the system print service or manufacturer app", "User-opened system print dialog only; no direct silent web printing.", "Depends on the device service; no phone or model tested."],
+      ["iPhone / iPad", "AirPrint-compatible printer over the network", "User-opened system print dialog only; no direct silent USB/Bluetooth web printing.", "Requires AirPrint; no physical device or model tested."],
+    ],
+    printProtocolNote: "TA-80U 80 mm thermal is a code-level reference for ESC/POS raster output and a cut command; it has not been verified on physical hardware. A4 printing uses the OS driver. “Accepted” does not confirm paper output.",
     helpLink: "Open the public setup guide",
     diagnostics: "For support, share the device type, OS/browser versions, and approximate issue time without customer data. Never send a PIN, push subscription endpoint, or secret keys. Use your business's usual SERVIO support channel.",
     branch: "Branch",
@@ -271,7 +295,18 @@ export default function NotificationSettingsCard() {
               <Stack spacing={2}>
                 <Box><Typography sx={{ fontWeight: 850, mb: 0.5 }}>{t.notifyGuideTitle}</Typography><Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.9 }}>{t.notifyGuide}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1, lineHeight: 1.8 }}>{t.addDevice}</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1, lineHeight: 1.8 }}>{language === "en" ? (standalone ? "This window is running as an installed web app." : "On iPhone/iPad, add SERVIO to the Home Screen before enabling background push.") : (standalone ? "يعمل SERVIO في نافذة تطبيق ويب مثبت." : "على iPhone/iPad أضف SERVIO إلى الشاشة الرئيسية قبل تفعيل إشعارات الخلفية.")}</Typography></Box>
                 <Divider />
-                <Box><Typography sx={{ fontWeight: 850, mb: 0.5 }}>{t.printGuideTitle}</Typography><Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.9 }}>{t.printGuide}</Typography></Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 850, mb: 0.5 }}>{t.printGuideTitle}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.9 }}>{t.printGuide}</Typography>
+                  <Typography sx={{ fontWeight: 850, mt: 1.5, mb: 0.75 }}>{t.printMatrixTitle}</Typography>
+                  <TableContainer sx={{ overflowX: "auto", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+                    <Table size="small" aria-label={t.printMatrixTitle} sx={{ minWidth: 720 }}>
+                      <TableHead><TableRow>{t.printMatrixHeaders.map((header) => <TableCell key={header} sx={{ fontWeight: 850 }}>{header}</TableCell>)}</TableRow></TableHead>
+                      <TableBody>{t.printMatrixRows.map((row) => <TableRow key={row[0]}>{row.map((cell, index) => <TableCell key={`${row[0]}-${index}`} sx={{ verticalAlign: "top" }}>{cell}</TableCell>)}</TableRow>)}</TableBody>
+                    </Table>
+                  </TableContainer>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75, lineHeight: 1.7 }}>{t.printProtocolNote}</Typography>
+                </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>{t.diagnostics}</Typography>
                 <Button component="a" href="/printer-setup/" target="_blank" rel="noopener noreferrer" variant="outlined" size="small" sx={{ alignSelf: "flex-start" }}>{t.helpLink}</Button>
               </Stack>
