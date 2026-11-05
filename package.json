@@ -24,6 +24,7 @@
     "react-router-dom": "^7.18.3",
     "react-scripts": "5.0.1",
     "uuid": "^14.0.2",
+    "web-push": "^3.6.7",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
