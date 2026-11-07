@@ -27,7 +27,9 @@ const COPY = {
     installGuide: "خطوات التثبيت",
     refresh: "الاتصال واكتشاف الطابعات",
     refreshBusy: "جارٍ الاتصال…",
-    paper: "مقاس الورق",
+    paper: "المقاس الافتراضي / طباعة النظام",
+    printerPaper: "مقاس الورق لهذه الطابعة",
+    printerPaperHelp: "حدد المقاس الفعلي لكل طابعة؛ يختار QZ تنسيق الإرسال المناسب تلقائيًا.",
     printers: "طابعات فواتير الكاشير",
     cashierHelp: "تُرسل إليها فواتير الكاشير بعد السداد؛ يمكنك اختيار طابعة واحدة أو عدة طابعات لهذا الجهاز.",
     kitchenPrinter: "طابعة تذكرة المطبخ",
@@ -70,7 +72,9 @@ const COPY = {
     installGuide: "Installation steps",
     refresh: "Connect and discover printers",
     refreshBusy: "Connecting…",
-    paper: "Paper size",
+    paper: "Default size / system printing",
+    printerPaper: "Paper size for this printer",
+    printerPaperHelp: "Choose each printer's actual paper size; QZ selects the matching output format automatically.",
     printers: "Cashier invoice printers",
     cashierHelp: "Cashier invoices are sent here after payment; choose one or more printers for this device.",
     kitchenPrinter: "Kitchen ticket printer",
@@ -167,6 +171,13 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
       const selected = current.printers.includes(name);
       return { ...current, printers: selected ? current.printers.filter((printer) => printer !== name) : [...current.printers, name] };
     });
+  };
+
+  const setPrinterPaperWidth = (printer, paperWidth) => {
+    setSettings((current) => ({
+      ...current,
+      printerPaperWidths: { ...(current.printerPaperWidths || {}), [printer]: paperWidth },
+    }));
   };
 
   const save = () => {
@@ -290,11 +301,24 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
           <Box>
             <Typography fontWeight={800} sx={{ mb: 0.5 }}>{text.printers}</Typography>
             <Typography variant="caption" color="text.secondary" display="block">{text.cashierHelp}</Typography>
-            <Typography variant="caption" color="text.secondary">{text.selectHint}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{text.selectHint} {text.printerPaperHelp}</Typography>
             {availablePrinters.length ? (
               <FormGroup sx={{ mt: 0.5, maxHeight: 220, overflowY: "auto" }}>
-                {printerOptions.map((printer) => (
-                  <FormControlLabel key={printer} control={<Checkbox checked={settings.printers.includes(printer)} onChange={() => togglePrinter(printer)} />} label={availablePrinters.includes(printer) ? printer : `${printer} · ${text.notDetected}`} />
+                {printerOptions.map((printer, index) => (
+                  <Box key={printer} sx={{ py: 0.5, px: 0.25 }}>
+                    <FormControlLabel control={<Checkbox checked={settings.printers.includes(printer)} onChange={() => togglePrinter(printer)} />} label={availablePrinters.includes(printer) ? printer : `${printer} · ${text.notDetected}`} />
+                    {settings.printers.includes(printer) && <FormControl fullWidth size="small" sx={{ mt: 0.25, pl: 4 }}>
+                      <InputLabel id={`servio-printer-paper-${index}`}>{text.printerPaper}</InputLabel>
+                      <Select
+                        labelId={`servio-printer-paper-${index}`}
+                        value={settings.printerPaperWidths?.[printer] || settings.paperWidth}
+                        label={text.printerPaper}
+                        onChange={(event) => setPrinterPaperWidth(printer, event.target.value)}
+                      >
+                        {Object.entries(text.sizes).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+                      </Select>
+                    </FormControl>}
+                  </Box>
                 ))}
               </FormGroup>
             ) : (
@@ -316,6 +340,17 @@ export default function PrinterSetupDialog({ open, onClose, language = "ar", aut
                 {kitchenPrinterOptions.map((printer) => <MenuItem key={printer} value={printer}>{printer}</MenuItem>)}
               </Select>
             </FormControl>
+            {settings.kitchenPrinter && <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+              <InputLabel id="servio-kitchen-paper-width-label">{text.printerPaper}</InputLabel>
+              <Select
+                labelId="servio-kitchen-paper-width-label"
+                value={settings.printerPaperWidths?.[settings.kitchenPrinter] || settings.paperWidth}
+                label={text.printerPaper}
+                onChange={(event) => setPrinterPaperWidth(settings.kitchenPrinter, event.target.value)}
+              >
+                {Object.entries(text.sizes).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+              </Select>
+            </FormControl>}
             {settings.kitchenPrinter && !availablePrinters.includes(settings.kitchenPrinter) && connected && (
               <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.6 }}>{text.kitchenNotFound}</Typography>
             )}

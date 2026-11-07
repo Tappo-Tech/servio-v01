@@ -11,6 +11,7 @@ describe("portable SERVIO printer settings file", () => {
     const content = createPrinterSettingsFile({
       printers: [" Receipt Printer ", "Office Laser", "Ignored Third Printer"],
       paperWidth: "58mm",
+      printerPaperWidths: { "Receipt Printer": "58mm", "Office Laser": "A4" },
       kitchenPrinter: "Kitchen Printer",
       categoryPrinters: { drinks: "Drink Printer" },
       unpaidInvoicePolicy: "kitchen_only",
@@ -18,9 +19,10 @@ describe("portable SERVIO printer settings file", () => {
 
     expect(JSON.parse(content)).toEqual({
       app: "SERVIO",
-      schemaVersion: 3,
+      schemaVersion: 4,
       printers: ["Receipt Printer", "Office Laser", "Ignored Third Printer"],
       paperWidth: "58mm",
+      printerPaperWidths: { "Receipt Printer": "58mm", "Office Laser": "A4" },
       kitchenPrinter: "Kitchen Printer",
       categoryPrinters: { drinks: "Drink Printer" },
       unpaidInvoicePolicy: "kitchen_only",
@@ -28,14 +30,14 @@ describe("portable SERVIO printer settings file", () => {
       autoPrintAfterSave: false,
     });
     expect(parsePrinterSettingsFile(content)).toEqual({
-      settings: { printers: ["Receipt Printer", "Office Laser", "Ignored Third Printer"], paperWidth: "58mm", kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drink Printer" }, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false },
+      settings: { printers: ["Receipt Printer", "Office Laser", "Ignored Third Printer"], paperWidth: "58mm", printerPaperWidths: { "Receipt Printer": "58mm", "Office Laser": "A4" }, kitchenPrinter: "Kitchen Printer", categoryPrinters: { drinks: "Drink Printer" }, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false },
       autoPrintAfterSave: false,
     });
   });
 
   test("imports older version 1 files with safe defaults for new printer routes", () => {
     expect(parsePrinterSettingsFile(JSON.stringify({ app: "SERVIO", schemaVersion: 1, printers: ["Receipt Printer"], paperWidth: "80mm" }))).toEqual({
-      settings: { printers: ["Receipt Printer"], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false },
+      settings: { printers: ["Receipt Printer"], paperWidth: "80mm", printerPaperWidths: {}, kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false },
       autoPrintAfterSave: undefined,
     });
   });

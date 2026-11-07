@@ -7,8 +7,8 @@ const DISCOVERED_PRINTERS_KEY = "servio.qzDiscoveredPrinters.v1";
 const PAPER_WIDTHS = ["58mm", "80mm", "A4"];
 const PAPER_WIDTH_MM = { "58mm": 58, "80mm": 80, A4: 210 };
 const UNPAID_INVOICE_POLICIES = new Set(["kitchen_only", "kitchen_and_cashier"]);
-const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false };
-const SETTINGS_FILE_VERSION = 3;
+const DEFAULT_SETTINGS = { printers: [], paperWidth: "80mm", printerPaperWidths: {}, kitchenPrinter: "", categoryPrinters: {}, unpaidInvoicePolicy: "kitchen_only", autoPrintPublicOrders: false };
+const SETTINGS_FILE_VERSION = 4;
 let securityConfigured = false;
 let connectionPromise = null;
 let qzLoadPromise = null;
@@ -64,6 +64,11 @@ function configureSecurity(qz) {
 
 function normalizePrinterSettings(settings) {
   const kitchenPrinter = typeof settings?.kitchenPrinter === "string" ? settings.kitchenPrinter.trim() : "";
+  const printerPaperWidths = settings?.printerPaperWidths && typeof settings.printerPaperWidths === "object" && !Array.isArray(settings.printerPaperWidths)
+    ? Object.fromEntries(Object.entries(settings.printerPaperWidths)
+      .filter(([name, width]) => name.trim() && PAPER_WIDTHS.includes(width))
+      .map(([name, width]) => [name.trim(), width]))
+    : {};
   const categoryPrinters = settings?.categoryPrinters && typeof settings.categoryPrinters === "object" && !Array.isArray(settings.categoryPrinters)
     ? Object.fromEntries(Object.entries(settings.categoryPrinters)
       .filter(([categoryId, name]) => categoryId.trim() && typeof name === "string" && name.trim())
@@ -74,6 +79,7 @@ function normalizePrinterSettings(settings) {
       ? [...new Set(settings.printers.filter((name) => typeof name === "string" && name.trim()).map((name) => name.trim()))]
       : [],
     paperWidth: PAPER_WIDTHS.includes(settings?.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth,
+    printerPaperWidths,
     kitchenPrinter,
     categoryPrinters,
     unpaidInvoicePolicy: UNPAID_INVOICE_POLICIES.has(settings?.unpaidInvoicePolicy) ? settings.unpaidInvoicePolicy : DEFAULT_SETTINGS.unpaidInvoicePolicy,
@@ -131,6 +137,7 @@ export function createPrinterSettingsFile(settings, autoPrintAfterSave = true) {
     schemaVersion: SETTINGS_FILE_VERSION,
     printers: normalized.printers,
     paperWidth: normalized.paperWidth,
+    printerPaperWidths: normalized.printerPaperWidths,
     kitchenPrinter: normalized.kitchenPrinter,
     categoryPrinters: normalized.categoryPrinters,
     unpaidInvoicePolicy: normalized.unpaidInvoicePolicy,
@@ -146,7 +153,7 @@ export function parsePrinterSettingsFile(contents) {
   } catch {
     throw new Error("ملف الإعداد غير صالح أو ليس JSON صحيحًا.");
   }
-  if (!payload || payload.app !== "SERVIO" || ![1, 2, SETTINGS_FILE_VERSION].includes(payload.schemaVersion)) {
+  if (!payload || payload.app !== "SERVIO" || ![1, 2, 3, SETTINGS_FILE_VERSION].includes(payload.schemaVersion)) {
     throw new Error("هذا ليس ملف إعداد طابعة SERVIO مدعومًا.");
   }
   if (!Array.isArray(payload.printers) || payload.printers.some((name) => typeof name !== "string" || !name.trim())) {
@@ -166,6 +173,9 @@ export function parsePrinterSettingsFile(contents) {
   }
   if (payload.kitchenPrinter !== undefined && typeof payload.kitchenPrinter !== "string") {
     throw new Error("اسم طابعة المطبخ في الملف غير صالح.");
+  }
+  if (payload.printerPaperWidths !== undefined && (!payload.printerPaperWidths || typeof payload.printerPaperWidths !== "object" || Array.isArray(payload.printerPaperWidths))) {
+    throw new Error("تعيينات مقاس الورق للطابعات في الملف غير صالحة.");
   }
   if (payload.categoryPrinters !== undefined && (!payload.categoryPrinters || typeof payload.categoryPrinters !== "object" || Array.isArray(payload.categoryPrinters))) {
     throw new Error("تعيينات طابعات التصنيفات في الملف غير صالحة.");
@@ -219,6 +229,11 @@ export async function reconnectSavedPrinters(additionalPrinterNames = []) {
   return { availablePrinters, savedPrinterNames, matchedPrinters, missingPrinters };
 }
 
+export function resolvePrinterPaperWidth(settings, printerName) {
+  const normalized = normalizePrinterSettings(settings);
+  return normalized.printerPaperWidths[printerName] || normalized.paperWidth;
+}
+
 export async function printReceipt(order, storeInfo, options = {}) {
   const settings = options.settings || getPrinterSettings();
   const printers = Array.isArray(options.printersOverride) ? options.printersOverride : settings.printers;
@@ -227,20 +242,22 @@ export async function printReceipt(order, storeInfo, options = {}) {
     error.code = "QZ_NO_PRINTERS_SELECTED";
     throw error;
   }
-  const width = PAPER_WIDTHS.includes(settings.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth;
-  const html = buildReceiptHtml({ ...options, order, storeInfo, language: options.language, currency: options.currency, paperWidth: width });
-  // تجهيز صورة الإيصال والاتصال بـ QZ مستقلان؛ تشغيلهما بالتوازي يقلل زمن الانتظار خصوصًا عند أول طباعة.
+  const defaultWidth = PAPER_WIDTHS.includes(settings.paperWidth) ? settings.paperWidth : DEFAULT_SETTINGS.paperWidth;
+  const widthsByPrinter = Object.fromEntries(printers.map((printer) => [printer, resolvePrinterPaperWidth(settings, printer)]));
+  const imagePromisesByWidth = new Map();
+  const getImages = (width) => {
+    if (!imagePromisesByWidth.has(width)) {
+      const html = buildReceiptHtml({ ...options, order, storeInfo, language: options.language, currency: options.currency, paperWidth: width });
+      imagePromisesByWidth.set(width, renderReceiptHtmlToImages(html, width));
+    }
+    return imagePromisesByWidth.get(width);
+  };
+  // جهّز الصورة المناسبة لكل مقاس مستقلًا؛ مشاركة صورة 80mm مع طابعة A4 أو 58mm
+  // تسبّب قصًّا/تحجيمًا خاطئًا، خصوصًا عندما تكون الطابعات المحددة من أنواع مختلفة.
   const qzPromise = connectQzTray();
-  const imagesPromise = renderReceiptHtmlToImages(html, width);
-  const [qz, images] = await Promise.all([qzPromise, imagesPromise]);
-  if (!images.length) throw new Error("تعذر إنشاء صورة الإيصال للطباعة");
   const succeeded = [];
   const failed = [];
-  const pageWidth = PAPER_WIDTH_MM[width];
-  const isEscPosThermal = width !== "A4";
-  // TA-80U وأغلب طابعات الإيصالات الحرارية تحتاج تحويل الصورة إلى أوامر ESC/POS
-  // بدل إرسال PNG إلى تعريف Windows. هذا المسار يرسل البيانات مباشرة إلى طابور ESC/POS.
-  const createPrintData = () => isEscPosThermal
+  const createPrintData = (images, width) => width !== "A4"
     ? images.flatMap((image) => [
       { type: "raw", format: "image", flavor: "base64", data: image.data, options: { language: "escpos", dotDensity: "double", imageEncoding: "gs_v_0" } },
       { type: "raw", format: "command", flavor: "hex", data: "0A0A0A0A1D5600" },
@@ -248,6 +265,11 @@ export async function printReceipt(order, storeInfo, options = {}) {
     : images.map((image) => ({ type: "pixel", format: "image", flavor: "base64", data: image.data }));
   // الطابعات مستقلة؛ إرسال النسخ بالتوازي يمنع تأخر الطابعة الثانية بسبب الأولى.
   const printResults = await Promise.allSettled(printers.map(async (printer) => {
+    const width = widthsByPrinter[printer] || defaultWidth;
+    const [qz, images] = await Promise.all([qzPromise, getImages(width)]);
+    if (!images.length) throw new Error("تعذر إنشاء صورة الإيصال للطباعة");
+    const pageWidth = PAPER_WIDTH_MM[width];
+    const isEscPosThermal = width !== "A4";
     const config = qz.configs.create(printer, {
       margins: 0,
       rasterize: !isEscPosThermal,
@@ -256,7 +278,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
       ...(isEscPosThermal ? {} : { size: { width: pageWidth, height: 297 }, colorType: "grayscale", interpolation: "bicubic" }),
       jobName: `SERVIO ${options.receiptType === "kitchen" ? "Kitchen" : "Receipt"}`,
     });
-    await qz.print(config, createPrintData());
+    await qz.print(config, createPrintData(images, width));
     return printer;
   }));
   printResults.forEach((result, index) => {
@@ -272,7 +294,7 @@ export async function printReceipt(order, storeInfo, options = {}) {
     error.failedPrinters = failed;
     throw error;
   }
-  return { printers: succeeded, paperWidth: width };
+  return { printers: succeeded, paperWidth: defaultWidth };
 }
 
 export async function printKitchenTicket(order, storeInfo, options = {}) {
