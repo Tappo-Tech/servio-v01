@@ -1,5 +1,5 @@
 // اختبارات الوحدة والانحدار الخاصة بالوحدة `categoryReceiptUtils` وسلوكها المتوقع.
-import { buildOrderReceiptGroups } from "./categoryReceiptUtils";
+import { buildOrderReceiptGroups, buildSystemPrintSections } from "./categoryReceiptUtils";
 import { calculateInclusiveVat } from "./taxUtils";
 
 describe("category-specific receipt groups", () => {
@@ -83,6 +83,35 @@ describe("category-specific receipt groups", () => {
     expect(groups[1].isSeparate).toBe(true);
     expect(groups[1].printerName).toBe("");
     expect(groups.reduce((sum, group) => sum + group.order.total_price, 0)).toBe(17);
+  });
+
+  test("builds one system-print packet with separated station tickets and one full cashier receipt", () => {
+    const order = {
+      id: "order-system-packet",
+      total_price: 17,
+      items: [
+        { id: "meal", category_id: "food", name: "وجبة", price: 12, quantity: 1 },
+        { id: "drink", category_id: "drinks", name: "مشروب", price: 5, quantity: 1 },
+      ],
+    };
+    const groups = buildOrderReceiptGroups(order, [
+      { id: "food", name: "الأطعمة", separate_print: false },
+      { id: "drinks", name: "المشروبات", separate_print: true },
+    ]);
+    const sections = buildSystemPrintSections({ order, groups, includeCashierReceipt: true });
+
+    expect(sections).toHaveLength(3);
+    expect(sections.slice(0, 2).map((section) => section.order.items.map((item) => item.id))).toEqual([["meal"], ["drink"]]);
+    expect(sections.slice(0, 2).every((section) => section.receiptType === "kitchen")).toBe(true);
+    expect(sections[2]).toMatchObject({ key: "cashier:full-order", order, receiptType: "cashier" });
+    expect(sections.filter((section) => section.receiptType === "cashier")).toHaveLength(1);
+  });
+
+  test("builds station-only system packets for unpaid orders without adding an internal receipt", () => {
+    const order = { total_price: 5, items: [{ id: "drink", category_id: "drinks", name: "مشروب", price: 5, quantity: 1 }] };
+    const groups = buildOrderReceiptGroups(order, [{ id: "drinks", name: "المشروبات", separate_print: true }]);
+
+    expect(buildSystemPrintSections({ order, groups, includeCashierReceipt: false })).toHaveLength(1);
   });
 
   test("classifies older order snapshots from the current menu item id", () => {

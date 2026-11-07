@@ -115,3 +115,21 @@ export function buildOrderReceiptGroups(order, categories = [], menuItems = [], 
     };
   });
 }
+
+export function buildSystemPrintSections({ order, groups = [], includeCashierReceipt = false, receiptType = "kitchen" }) {
+  const ticketSections = groups.map((group, index) => ({
+    key: String(group.key ?? `ticket:${index}`),
+    order: group.order,
+    receiptTitle: group.receiptTitle || null,
+    receiptType,
+    isTest: false,
+  }));
+  if (!includeCashierReceipt || !order) return ticketSections;
+  return [...ticketSections, {
+    key: "cashier:full-order",
+    order,
+    receiptTitle: null,
+    receiptType: "cashier",
+    isTest: false,
+  }];
+}

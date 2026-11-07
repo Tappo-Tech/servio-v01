@@ -9,7 +9,7 @@ import { useStore } from "../../../context/StoreInfoContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useMenu } from "../../../context/MenuContext";
 import { roundMoney } from "../../../utils/taxUtils";
-import { buildOrderReceiptGroups } from "../../../utils/categoryReceiptUtils";
+import { buildOrderReceiptGroups, buildSystemPrintSections } from "../../../utils/categoryReceiptUtils";
 import { getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, resolveInvoicePrintPlan } from "../../../utils/qzPrinting";
 
 function ReceiptPreview({ order, storeInfo, language, currency, isTest, receiptTitle, receiptType = "cashier" }) {
@@ -104,6 +104,7 @@ function InvoiceModal({
   const [printState, setPrintState] = useState(null);
   const [printing, setPrinting] = useState(false);
   const [retryState, setRetryState] = useState(null);
+  const systemPrintLockRef = useRef(false);
   const currency = storeInfo.currency || t("currencySar");
   const receiptGroups = useMemo(
     () => buildOrderReceiptGroups(order, categoriesList, menuItems, language),
@@ -239,10 +240,20 @@ function InvoiceModal({
     return () => window.clearTimeout(timer);
   }, [autoPrint, open, order?.id, order, storeInfo, language, currency, isTest, printMode, isEditMode, menuLoading, menuError, receiptGroups, getPrintErrorMessage, getPrintSuccessMessage, onKitchenTicketPrinted]);
 
-  if (!order) return null;
-
   const printerSettings = getPrinterSettings();
   const printPlan = resolveInvoicePrintPlan(order, printerSettings);
+  const systemPrintSections = useMemo(() => {
+    if (isTest) return order ? [{ key: "test", order, receiptTitle: null, receiptType: "cashier", isTest: true }] : [];
+    if (isInternalReceipt || printMode === "cashier") {
+      return order ? [{ key: "cashier:full-order", order, receiptTitle: null, receiptType: "cashier", isTest: false }] : [];
+    }
+    if (isEditMode || printMode === "kitchen-update") {
+      return buildSystemPrintSections({ order: kitchenUpdateOrder, groups: kitchenUpdateGroups, receiptType: "kitchen" });
+    }
+    return buildSystemPrintSections({ order, groups: receiptGroups, includeCashierReceipt: Boolean(printPlan.cashier) });
+  }, [isTest, order, isInternalReceipt, printMode, isEditMode, kitchenUpdateOrder, kitchenUpdateGroups, receiptGroups, printPlan.cashier]);
+  if (!order) return null;
+
   const activeRetryState = retryState?.orderId === order?.id ? retryState : null;
   const paperWidth = printerSettings.paperWidth;
   const browserPageSize = paperWidth === "A4" ? "A4 portrait" : `${paperWidth} auto`;
@@ -332,16 +343,19 @@ function InvoiceModal({
     }
   };
 
-  const handleBrowserFallback = async () => {
-    if (isTest) {
-      window.print();
-      return;
-    }
-    if (printMode === "kitchen-update") {
-      await handleKitchenPrint();
-      return;
-    }
-    // نافذة النظام مخصصة للإيصال الداخلي فقط؛ لا نعيد إرسال تذكرة مطبخ قد طُبعت.
+  const handleSystemGroupedPrint = () => {
+    if (systemPrintLockRef.current || !systemPrintSections.length) return;
+    systemPrintLockRef.current = true;
+    document.body.dataset.servioSystemPrint = "packet";
+    const cleanup = () => {
+      delete document.body.dataset.servioSystemPrint;
+      systemPrintLockRef.current = false;
+      window.removeEventListener("afterprint", cleanup);
+      setPrintState({ severity: "info", message: language === "ar" ? "أُغلق حوار الطباعة. تحقق من قائمة النظام لمعرفة ما إذا أُرسلت المهمة للطابعة؛ لا يستطيع المتصفح تأكيد خروج الورق." : "The print dialog closed. Check the system print queue to confirm the job was sent; the browser cannot confirm that paper was physically printed." });
+    };
+    window.addEventListener("afterprint", cleanup, { once: true });
+    setPrintState(null);
+    // One synchronous print invocation from this user gesture creates one OS print job.
     window.print();
   };
 
@@ -362,6 +376,24 @@ function InvoiceModal({
               padding: 2mm !important;
             }
             #printable-invoice .receipt-group:not(:last-child) {
+              break-after: page !important;
+              page-break-after: always !important;
+            }
+            #system-print-packet { display: none !important; }
+            body[data-servio-system-print="packet"] #printable-invoice,
+            body[data-servio-system-print="packet"] #printable-invoice * { visibility: hidden !important; }
+            body[data-servio-system-print="packet"] #system-print-packet {
+              display: block !important;
+              visibility: visible !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: ${browserReceiptWidth} !important;
+              max-width: ${browserReceiptWidth} !important;
+              padding: 2mm !important;
+            }
+            body[data-servio-system-print="packet"] #system-print-packet * { visibility: visible !important; }
+            body[data-servio-system-print="packet"] #system-print-packet .receipt-group:not(:last-child) {
               break-after: page !important;
               page-break-after: always !important;
             }
@@ -403,12 +435,24 @@ function InvoiceModal({
           receiptType={printMode === "kitchen-update" ? "kitchen" : "cashier"}
           receiptTitle={printMode === "kitchen-update" ? (language === "ar" ? "تعديل على الطلب" : "Order modification") : null}
         />
+        <Box id="system-print-packet" aria-hidden="true" sx={{ display: "none" }}>
+          {systemPrintSections.map((section) => <ReceiptPreview
+            key={section.key}
+            order={section.order}
+            storeInfo={storeInfo}
+            language={language}
+            currency={currency}
+            isTest={section.isTest}
+            receiptTitle={section.receiptTitle}
+            receiptType={section.receiptType}
+          />)}
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, flexWrap: "wrap", gap: 1, "& .MuiButton-root": { minWidth: { xs: "100%", sm: "auto" } } }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
-        {printMode !== "kitchen-update" && <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)} title={language === "ar" ? "يفتح نافذة طباعة الإيصال الداخلي فقط دون إعادة إرسال تذكرة المطبخ." : "Opens the internal-receipt print dialog only; it does not resend the kitchen ticket."}>
-          {isTest ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)") : (language === "ar" ? "الإيصال الداخلي عبر النظام" : "Internal receipt (system dialog)")}
+        {printMode !== "kitchen-update" && <Button variant="text" onClick={handleSystemGroupedPrint} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || !systemPrintSections.length} title={language === "ar" ? "يفتح واجهة النظام مرة واحدة؛ كل مجموعة مفصولة تظهر كتذكرة مستقلة في مهمة طباعة واحدة على الطابعة المختارة." : "Opens the system print dialog once; each configured group is a separate ticket section in one print job sent to the selected printer."}>
+          {isTest ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)") : (language === "ar" ? "طباعة بالنظام — كل التذاكر" : "System print — all tickets")}
         </Button>}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
           {showKitchenPrintButton && <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
