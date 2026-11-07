@@ -9,7 +9,7 @@ jest.mock("./receiptImageRenderer", () => ({
 }));
 
 import supabase from "../supabase";
-import { discoverPrinters, getDiscoveredPrinters, getPrinterSettings, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, reconnectSavedPrinters, resolveInvoicePrintPlan, savePrinterSettings } from "./qzPrinting";
+import { createPrinterSettingsFile, discoverPrinters, getDiscoveredPrinters, getPrinterSettings, parsePrinterSettingsFile, printKitchenTicketGroups, printOrderByPaymentStatus, printReceipt, printReceiptGroups, reconnectSavedPrinters, resolveInvoicePrintPlan, resolvePrinterPaperWidth, savePrinterSettings } from "./qzPrinting";
 import { renderReceiptHtmlToImages } from "./receiptImageRenderer";
 
 function makeQzMock() {
@@ -40,6 +40,7 @@ describe("QZ Tray printer integration", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    renderReceiptHtmlToImages.mockClear();
     qz = makeQzMock();
     window.qz = qz;
     windowPrintSpy = jest.spyOn(window, "print").mockImplementation(() => {});
@@ -116,6 +117,44 @@ describe("QZ Tray printer integration", () => {
       failedPrinters: ["Virtual Thermal 58mm"],
     });
     expect(qz.print).toHaveBeenCalledTimes(2);
+  });
+
+  test("uses ESC/POS at the thermal width and pixel/A4 output for a standard printer in the same job", async () => {
+    const settings = savePrinterSettings({
+      printers: ["Thermal 58mm", "Office A4"],
+      paperWidth: "80mm",
+      printerPaperWidths: { "Thermal 58mm": "58mm", "Office A4": "A4" },
+    });
+
+    await printReceipt({ id: "mixed-format", items: [{ name: "Meal", quantity: 1, price: 10 }], total_price: 10 }, {}, { settings });
+
+    expect(qz.configs.create).toHaveBeenCalledWith("Thermal 58mm", expect.objectContaining({ rasterize: false, scaleContent: false, units: "mm" }));
+    expect(qz.configs.create).toHaveBeenCalledWith("Office A4", expect.objectContaining({ rasterize: true, scaleContent: true, size: { width: 210, height: 297 } }));
+    const callsByPrinter = Object.fromEntries(qz.print.mock.calls.map(([config, data]) => [config.printer, data]));
+    expect(callsByPrinter["Thermal 58mm"][0]).toMatchObject({ type: "raw", format: "image", options: { language: "escpos", imageEncoding: "gs_v_0" } });
+    expect(callsByPrinter["Office A4"][0]).toMatchObject({ type: "pixel", format: "image" });
+    expect([...new Set(renderReceiptHtmlToImages.mock.calls.map(([, width]) => width))].sort()).toEqual(["58mm", "A4"]);
+  });
+
+  test("preserves older printer settings files and resolves their default paper size", () => {
+    const legacy = parsePrinterSettingsFile(JSON.stringify({
+      app: "SERVIO",
+      schemaVersion: 3,
+      printers: ["Legacy printer"],
+      paperWidth: "58mm",
+    }));
+    expect(legacy.settings.printerPaperWidths).toEqual({});
+    expect(resolvePrinterPaperWidth(legacy.settings, "Legacy printer")).toBe("58mm");
+
+    const current = createPrinterSettingsFile({
+      printers: ["Thermal", "Office"],
+      paperWidth: "80mm",
+      printerPaperWidths: { Thermal: "58mm", Office: "A4", Invalid: "receipt" },
+    });
+    const payload = JSON.parse(current);
+    expect(payload.schemaVersion).toBe(4);
+    expect(payload.printerPaperWidths).toEqual({ Thermal: "58mm", Office: "A4" });
+    expect(parsePrinterSettingsFile(current).settings.printerPaperWidths).toEqual({ Thermal: "58mm", Office: "A4" });
   });
 
   test("prints every category receipt as a separate job to each selected printer", async () => {

@@ -52,4 +52,33 @@ describe("PrinterSetupDialog setup package links", () => {
     expect(guideLink.getAttribute("href")).toBe("/printer-setup/");
     expect(guideLink.getAttribute("target")).toBe("_blank");
   });
+
+  test("shows a paper profile for each selected cashier printer and the kitchen printer", async () => {
+    getPrinterSettings.mockReturnValue({
+      printers: ["Thermal A", "Office A4"],
+      paperWidth: "80mm",
+      printerPaperWidths: { "Thermal A": "58mm", "Office A4": "A4", Kitchen: "80mm" },
+      kitchenPrinter: "Kitchen",
+      categoryPrinters: {},
+      unpaidInvoicePolicy: "kitchen_only",
+    });
+    getDiscoveredPrinters.mockReturnValue(["Thermal A", "Office A4", "Kitchen"]);
+    reconnectSavedPrinters.mockResolvedValue({ availablePrinters: ["Thermal A", "Office A4", "Kitchen"] });
+
+    render(
+      <PrinterSetupDialog
+        open
+        onClose={() => {}}
+        language="en"
+        autoPrint={false}
+        onAutoPrintChange={() => {}}
+      />,
+    );
+
+    expect(await screen.findByText(/Choose each printer's actual paper size/)).toBeTruthy();
+    expect(screen.getAllByRole("combobox", { name: "Paper size for this printer" })).toHaveLength(3);
+    expect(screen.getByText("Thermal A")).toBeTruthy();
+    expect(screen.getByText("Office A4")).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Kitchen ticket printer" })).toBeTruthy();
+  });
 });

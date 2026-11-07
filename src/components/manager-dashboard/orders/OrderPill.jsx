@@ -1,7 +1,7 @@
 import { FullscreenDialog as Dialog } from "../../common/FullscreenOverlays";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Alert, Box, Button, DialogActions, DialogContent, Divider, Chip, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, DialogActions, DialogContent, Divider, Chip, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import dayjs from "dayjs";
 
@@ -104,6 +104,9 @@ function InvoiceModal({
   const [printState, setPrintState] = useState(null);
   const [printing, setPrinting] = useState(false);
   const [retryState, setRetryState] = useState(null);
+  const [systemPrintRequest, setSystemPrintRequest] = useState(null);
+  const [systemKitchenConfirmation, setSystemKitchenConfirmation] = useState(null);
+  const [browserPaperWidth, setBrowserPaperWidth] = useState(() => getPrinterSettings().paperWidth);
   const currency = storeInfo.currency || t("currencySar");
   const receiptGroups = useMemo(
     () => buildOrderReceiptGroups(order, categoriesList, menuItems, language),
@@ -117,6 +120,24 @@ function InvoiceModal({
     () => isEditMode ? buildOrderReceiptGroups(kitchenUpdateOrder, categoriesList, menuItems, language) : [],
     [isEditMode, kitchenUpdateOrder, categoriesList, menuItems, language],
   );
+
+  useEffect(() => {
+    if (open) setBrowserPaperWidth(getPrinterSettings().paperWidth);
+  }, [open]);
+
+  useEffect(() => {
+    if (!systemPrintRequest) return undefined;
+    const printTimer = window.setTimeout(() => window.print(), 120);
+    const handleAfterPrint = () => {
+      setSystemPrintRequest(null);
+      if (systemPrintRequest.requiresKitchenConfirmation) setSystemKitchenConfirmation(systemPrintRequest);
+    };
+    window.addEventListener("afterprint", handleAfterPrint, { once: true });
+    return () => {
+      window.clearTimeout(printTimer);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [systemPrintRequest]);
 
   const getPrintErrorMessage = useCallback((error) => {
     const base = error?.message || (language === "ar" ? "تعذرت الطباعة عبر QZ Tray" : "QZ Tray printing failed");
@@ -244,12 +265,14 @@ function InvoiceModal({
   const printerSettings = getPrinterSettings();
   const printPlan = resolveInvoicePrintPlan(order, printerSettings);
   const activeRetryState = retryState?.orderId === order?.id ? retryState : null;
-  const paperWidth = printerSettings.paperWidth;
+  const paperWidth = browserPaperWidth;
   const browserPageSize = paperWidth === "A4" ? "A4 portrait" : `${paperWidth} auto`;
-  const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth;
+  const browserReceiptWidth = paperWidth === "A4" ? "190mm" : paperWidth === "58mm" ? "54mm" : "76mm";
   const showKitchenPrintButton = isEditMode
     ? kitchenUpdateItems.length > 0
     : (!hideKitchenReprint && (!suppressKitchenReprint || order?._kitchenTicketSent === false));
+  const systemKitchenGroups = isEditMode ? kitchenUpdateGroups : receiptGroups;
+  const canSystemPrintKitchen = !isTest && showKitchenPrintButton && systemKitchenGroups.length === 1 && !systemKitchenGroups[0]?.isSeparate;
 
   const handlePrint = async () => {
     setPrinting(true);
@@ -333,16 +356,30 @@ function InvoiceModal({
   };
 
   const handleBrowserFallback = async () => {
-    if (isTest) {
-      window.print();
-      return;
-    }
     if (printMode === "kitchen-update") {
-      await handleKitchenPrint();
+      setSystemPrintRequest({ order: kitchenUpdateOrder, receiptType: "kitchen", receiptTitle: language === "ar" ? "تعديل على الطلب" : "Order modification", requiresKitchenConfirmation: true, isModification: true, orderId: order.id, items: order.items });
       return;
     }
-    // نافذة النظام مخصصة للإيصال الداخلي فقط؛ لا نعيد إرسال تذكرة مطبخ قد طُبعت.
-    window.print();
+    // نافذة النظام مخصصة لإيصال الكاشير؛ لا تعيد إرسال تذكرة المطبخ أو تغيّر توجيهها.
+    setSystemPrintRequest({ order, receiptType: "cashier" });
+  };
+
+  const handleKitchenSystemPrint = () => {
+    if (!canSystemPrintKitchen) return;
+    setSystemPrintRequest({ order, receiptType: "kitchen", receiptTitle: language === "ar" ? "تذكرة المطبخ" : "Kitchen ticket", requiresKitchenConfirmation: true, orderId: order.id, items: order.items });
+  };
+
+  const confirmSystemKitchenPrint = () => {
+    if (!systemKitchenConfirmation) return;
+    if (systemKitchenConfirmation.isModification) onKitchenUpdatePrinted?.(systemKitchenConfirmation.orderId, systemKitchenConfirmation.items);
+    else onKitchenTicketPrinted?.(systemKitchenConfirmation.orderId, systemKitchenConfirmation.items);
+    setSystemKitchenConfirmation(null);
+    setPrintState({ severity: "success", message: language === "ar" ? "تم تأكيد طباعة التذكرة عبر نافذة النظام." : "System-dialog ticket print confirmed." });
+  };
+
+  const cancelSystemKitchenConfirmation = () => {
+    setSystemKitchenConfirmation(null);
+    setPrintState({ severity: "info", message: language === "ar" ? "لم تُعلَّم التذكرة كمرسلة؛ أُلغيت الطباعة أو لم يتم تأكيدها." : "The ticket was not marked sent; printing was canceled or not confirmed." });
   };
 
   return (
@@ -359,7 +396,8 @@ function InvoiceModal({
               top: 0 !important;
               width: ${browserReceiptWidth} !important;
               max-width: ${browserReceiptWidth} !important;
-              padding: 2mm !important;
+              padding: 4mm 0 !important;
+              box-sizing: border-box !important;
             }
             #printable-invoice .receipt-group:not(:last-child) {
               break-after: page !important;
@@ -394,21 +432,50 @@ function InvoiceModal({
             {language === "ar" ? "تعذر تحميل إعدادات التصنيفات؛ أعد المحاولة قبل الطباعة." : "Category printing settings could not be loaded. Retry before printing."}
           </Alert>
         )}
+        {systemKitchenConfirmation && <Alert
+          severity="info"
+          action={<Stack direction="row" spacing={0.5}>
+            <Button color="inherit" size="small" onClick={confirmSystemKitchenPrint}>{language === "ar" ? "تمت الطباعة" : "Printed"}</Button>
+            <Button color="inherit" size="small" onClick={cancelSystemKitchenConfirmation}>{language === "ar" ? "لم تُطبع" : "Not printed"}</Button>
+          </Stack>}
+          sx={{ mb: 1.5, "@media print": { display: "none" } }}
+        >
+          {language === "ar" ? "هل خرجت التذكرة بنجاح من نافذة طباعة النظام؟ أكد ذلك فقط بعد استلامها." : "Did the system dialog print the ticket successfully? Confirm only after receiving it."}
+        </Alert>}
         <ReceiptPreview
-          order={printMode === "kitchen-update" ? kitchenUpdateOrder : order}
+          order={systemPrintRequest?.order || (printMode === "kitchen-update" ? kitchenUpdateOrder : order)}
           storeInfo={storeInfo}
           language={language}
           currency={currency}
           isTest={isTest}
-          receiptType={printMode === "kitchen-update" ? "kitchen" : "cashier"}
-          receiptTitle={printMode === "kitchen-update" ? (language === "ar" ? "تعديل على الطلب" : "Order modification") : null}
+          receiptType={systemPrintRequest?.receiptType || (printMode === "kitchen-update" ? "kitchen" : "cashier")}
+          receiptTitle={systemPrintRequest?.receiptTitle || (printMode === "kitchen-update" ? (language === "ar" ? "تعديل على الطلب" : "Order modification") : null)}
         />
       </DialogContent>
 
       <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, flexWrap: "wrap", gap: 1, "& .MuiButton-root": { minWidth: { xs: "100%", sm: "auto" } } }}>
         <Button onClick={onClose} color="inherit">{language === "ar" ? "إغلاق" : "Close"}</Button>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 180 } }}>
+          <InputLabel id="servio-system-print-paper-width">{language === "ar" ? "مقاس طباعة النظام" : "System print size"}</InputLabel>
+          <Select
+            labelId="servio-system-print-paper-width"
+            value={browserPaperWidth}
+            label={language === "ar" ? "مقاس طباعة النظام" : "System print size"}
+            onChange={(event) => setBrowserPaperWidth(event.target.value)}
+          >
+            <MenuItem value="58mm">{language === "ar" ? "حراري 58 مم" : "58 mm thermal"}</MenuItem>
+            <MenuItem value="80mm">{language === "ar" ? "حراري 80 مم" : "80 mm thermal"}</MenuItem>
+            <MenuItem value="A4">{language === "ar" ? "A4 عادي" : "A4 standard"}</MenuItem>
+          </Select>
+        </FormControl>
         {printMode !== "kitchen-update" && <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || (!isTest && !printPlan.cashier)} title={language === "ar" ? "يفتح نافذة طباعة الإيصال الداخلي فقط دون إعادة إرسال تذكرة المطبخ." : "Opens the internal-receipt print dialog only; it does not resend the kitchen ticket."}>
           {isTest ? (language === "ar" ? "نافذة النظام (اختبار)" : "System dialog (test)") : (language === "ar" ? "الإيصال الداخلي عبر النظام" : "Internal receipt (system dialog)")}
+        </Button>}
+        {printMode === "kitchen-update" && canSystemPrintKitchen && <Button variant="text" onClick={handleBrowserFallback} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || Boolean(systemKitchenConfirmation)}>
+          {language === "ar" ? "تحديث المطبخ عبر النظام" : "Kitchen update (system dialog)"}
+        </Button>}
+        {printMode !== "kitchen-update" && canSystemPrintKitchen && <Button variant="text" onClick={handleKitchenSystemPrint} color="inherit" disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState) || Boolean(systemKitchenConfirmation)}>
+          {language === "ar" ? "تذكرة المطبخ عبر النظام" : "Kitchen ticket (system dialog)"}
         </Button>}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
           {showKitchenPrintButton && <Button variant="outlined" startIcon={<PrintIcon />} onClick={handleKitchenPrint} disabled={printing || menuLoading || Boolean(menuError) || Boolean(activeRetryState)}>
